@@ -1,0 +1,33 @@
+---
+title: Documentation discipline
+last_updated: 2026-05-24
+---
+
+# Documentation discipline
+
+## Where docs live
+
+- **Per-repo CLAUDE.md** — Claude Code instructions specific to that repo.
+- **Per-repo README.md** — human onboarding + 30-second pitch.
+- **`layers/specs/`** — cross-repo knowledge: ADRs, concept docs, handbook, business concept, kanban.
+- **`docs/superpowers/specs/`** in the workbench — design docs produced by the brainstorming skill.
+- **`docs/superpowers/plans/`** in the workbench — implementation plans produced by the writing-plans skill.
+
+## Quality bar
+
+- Run the `md-quality-review` skill before merging non-trivial markdown changes.
+- ISO dates everywhere (YYYY-MM-DD).
+- Mermaid for diagrams (use the `mermaid-converter` skill to upgrade ASCII diagrams).
+- One source of truth — if a fact appears in two places, pick one and link from the other.
+
+## Frontmatter
+
+Markdown documents with metadata use YAML frontmatter:
+
+```yaml
+---
+title: ...
+last_updated: YYYY-MM-DD
+status: draft | accepted | superseded | archived
+---
+```

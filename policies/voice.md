@@ -1,0 +1,26 @@
+---
+title: Writing voice
+last_updated: 2026-05-24
+---
+
+# Writing voice
+
+## For all docs (specs, ADRs, READMEs, concept docs)
+
+- **Direct.** Lead with the fact or the decision; explain after.
+- **Terse but complete.** No filler; no "as we discussed previously" hedges.
+- **Concrete over abstract.** A file path beats a category name; a count beats "several".
+- **Honest about uncertainty.** Use "I don't know" and "this is a guess" where they apply.
+- **No emojis** in code, specs, or commits unless explicitly requested.
+
+## For commit messages + PR descriptions
+
+- Imperative mood.
+- The *why* belongs in the body, not the title.
+- Reference issues by `#N` or the full `owner/repo#N` form across repos.
+
+## For inline code comments
+
+- Default: no comments. Well-named identifiers are documentation.
+- Add a comment only when the *why* is non-obvious — a hidden constraint, a subtle invariant, a workaround for a specific bug.
+- Don't reference the current task or the PR ("added for ticket-123", "used by Y") — that rot s fast and lives in PR descriptions, not in code.

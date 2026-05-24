@@ -1,0 +1,33 @@
+# Exercir — team-sports domain
+# Status: product (only confirmed product as of 2026-05-24)
+# Spec reference: docs/superpowers/specs/2026-05-24-de-braighter-clean-structure-design.md §3
+
+name: exercir
+domain: team-sports
+status: product
+repo: github.com/braighter-io/exercir
+local: domains/exercir/
+
+# Hints for orchestrator judgment, not enforcement. All agents and skills
+# remain available; these lists describe the typical curation.
+enabled:
+  agents:
+    suggested:
+      - designer
+      - implementer
+      - reviewer
+      - charter-checker
+      - qa-engineer
+      - local-ci
+      - ui-pro
+      - test-pro
+      - prisma-pro
+      - swiss-pro
+  skills:
+    suggested:
+      - architecture-concierge
+      - diff-refactor-engine
+      - story-runner
+      - md-quality-review
+      - reactive-forms-cva-governance
+      - nx-tag-architecture-governance
