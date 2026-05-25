@@ -27,3 +27,4 @@ Thumbs.db
 
 # Local-only settings (Claude Code)
 .claude/settings.local.json
+_attic/
