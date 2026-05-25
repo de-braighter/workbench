@@ -4,7 +4,7 @@ The cluster root + Claude-Code-native workbench for the de Braighter ecosystem.
 
 This repository is both:
 
-1. **A git repo** (`braighter-io/workbench`) holding canonical `.claude/agents/`, `.claude/skills/`, policies, templates, workflows, and project descriptors.
+1. **A git repo** (`de-braighter/workbench`) holding canonical `.claude/agents/`, `.claude/skills/`, policies, templates, workflows, and project descriptors.
 2. **The cluster root** — sibling layer + domain + attic repos clone into `layers/`, `domains/`, and `attic/` (each with its own `.git`, ignored at this repo's level).
 
 Claude Code is **always launched from this directory**. `.claude/` here applies to all work across the cluster.
