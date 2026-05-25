@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `D:/development/projects/de-braighter/` is **both**:
 
-1. The git repo `braighter-io/workbench` — canonical `.claude/agents/`, `.claude/skills/`, settings, policies, templates, workflows, project descriptors, and design docs.
+1. The git repo `de-braighter/workbench` — canonical `.claude/agents/`, `.claude/skills/`, settings, policies, templates, workflows, project descriptors, and design docs.
 2. The cluster root — sibling layer + domain + attic repos clone into `layers/`, `domains/`, and `attic/`.
 
 **Claude Code is always launched from this directory.** `.claude/` here applies to all work across the cluster. Do not launch Claude Code from inside a sibling repo (you would lose access to the agents and skills).
@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Layout
 
 ```
-de-braighter/                     ← this repo (braighter-io/workbench)
+de-braighter/                     ← this repo (de-braighter/workbench)
 ├── .claude/
 │   ├── agents/                   ← 22 canonical agent definitions
 │   ├── skills/                   ← 39 canonical skill folders
@@ -56,7 +56,7 @@ The current Exercir / substrate / design-system / specs / platform code still li
 
 ## Naming
 
-- GitHub org: `braighter-io` (kept for now; future migration TBD).
+- GitHub org: `de-braighter` (renamed from `braighter-io` 2026-05-25; old URLs auto-redirect).
 - Local cluster + npm scope: `de-braighter` / `@de-braighter`.
 - Substrate packages: `@de-braighter/substrate-contracts`, `@de-braighter/substrate-runtime`.
 - Domain names: freely chosen per domain. `exercir` (team sports). Working names for prototypes: `conservation`, `vector`, `org-twin`.
