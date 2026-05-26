@@ -124,7 +124,7 @@ export function resolveButtonHost(
 export function shouldBlockActivation(loading: boolean): boolean;  // === loading
 ```
 
-`resolveButtonHost` always emits the base `db-btn`, then `db-btn--<variant>`, `db-btn--<size>`, and `is-loading` iff loading. Class merge-safety: the host `[class]` string binding is **additive** to a consumer's static `class="…"` (Angular's per-token class binding never removes static classes) — to be re-confirmed by a directive smoke check during implementation; if Angular's behaviour surprises, fall back to per-token `[class.x]` bindings (the pure contract is unchanged either way).
+`resolveButtonHost` always emits the base `db-btn`, then `db-btn--<variant>`, `db-btn--<size>`, and `is-loading` iff loading. Class merge-safety **(verified during implementation)**: the host `[class]` string binding compiles to Ivy `ɵɵclassMap`, which **merges** with a consumer's static `class="…"` (non-conflicting static classes always survive). Confirmed via angular.dev `guide/templates/binding` + the compiled instruction (Angular 21.2.9). The "string binding clobbers static class" belief is a pre-Ivy (ViewEngine) misconception. The `[class]` binding stays — no fallback to per-token bindings needed.
 
 **Tests** (the TDD target): a table over all 4×3 variant×size combos asserting `classes`; `is-loading` present iff loading; `ariaBusy` is `'true'` iff loading else `null`; `shouldBlockActivation` truth table.
 
@@ -189,7 +189,7 @@ Per the repo's flaky TestBed reality (Analog/vitest-4), **all assertions target 
 
 | Risk | Mitigation |
 |---|---|
-| Host `[class]` string binding stomps a consumer's static `class` | Re-confirm Angular's additive behaviour with a directive smoke check; fall back to per-token `[class.x]` bindings if needed. Pure contract unchanged. |
+| Host `[class]` string binding stomps a consumer's static `class` | **Resolved (verified):** Ivy `ɵɵclassMap` merges with static classes; `<button db-button class="x">` keeps `x`. Pre-Ivy misconception. No change needed. |
 | `color: transparent` while loading hides a projected `<db-icon>` too | Intended — spinner replaces all content; spinner colour comes from `--db-btn-fg`, not `currentColor`. |
 | Consumer forgets to import `components/button.css` | Showcase imports it; document the import in the page's docs tab + the export's TSDoc. |
 | Reduced-motion static ring reads as a plain ring, not "busy" | Acceptable — `aria-busy` carries the semantic; motion is decorative per WCAG. |
