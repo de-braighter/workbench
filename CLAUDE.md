@@ -35,8 +35,8 @@ The substrate is **internal infrastructure**, and its defining strength is **sim
 ```
 de-braighter/                     ← this repo (de-braighter/workbench)
 ├── .claude/
-│   ├── agents/                   ← 22 canonical agent definitions
-│   ├── skills/                   ← 39 canonical skill folders
+│   ├── agents/                   ← 23 canonical agent definitions
+│   ├── skills/                   ← 38 canonical skill folders
 │   ├── commands/                 ← slash commands (when added)
 │   └── settings.json
 ├── policies/                     ← coding.md, testing.md, git.md, docs.md, voice.md
