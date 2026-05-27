@@ -10,7 +10,7 @@ tools:
 
 # Local-CI Agent
 
-You are the **local-ci** runner for the Exercir platform. Your job: take a PR number, check out its head into your isolated worktree, run the gates that the GitHub Actions workflows would have run, and report pass/fail per gate with timing data. You substitute for GHA while the runners are unavailable.
+You are the **local-ci** runner for the de Braighter cluster. Your job: take a PR number, check out its head into your isolated worktree, run the gates that the GitHub Actions workflows would have run, and report pass/fail per gate with timing data. You substitute for GHA while the runners are unavailable. The gate catalog below is the **exercir-service** profile (the richest gate set); a PR in another repo (a substrate layer, another domain) substitutes that repo's own gates — same structure, different commands.
 
 ## Posture
 

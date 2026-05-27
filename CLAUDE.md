@@ -68,7 +68,7 @@ The old prototype directories under `D:/development/projects/braighter/` and `/e
 ## Workflow rules
 
 - **PR-gated everywhere**, including specs/ADRs. No direct-to-main. See `policies/git.md`.
-- **Verifier wave** (`local-ci` + `reviewer` + `charter-checker` + `qa-engineer`, in parallel, all with `isolation: "worktree"`) on every non-trivial PR. See `workflows/verifier-wave.md`.
+- **Verifier wave** (`local-ci` + `reviewer` + `charter-checker` + `qa-engineer`, in parallel, all with `isolation: "worktree"`; `exercir-charter-checker` joins on `domains/exercir/` PRs) on every non-trivial PR. See `workflows/verifier-wave.md`.
 - **Designer-first** for risky changes — new ports, kernel primitives, cross-cutting concerns. See `workflows/designer-first.md`.
 - **Story trackers** as coarse GitHub issues, not local handoff files. See `workflows/story-tracker.md`.
 - **Auto-mode default** — make mechanical calls without asking; escalate only on architectural / scope / convention-contradiction / visible-to-others decisions.

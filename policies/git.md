@@ -11,14 +11,15 @@ last_updated: 2026-05-24
 
 ## Verifier wave
 
-Every non-trivial PR (new endpoint, schema migration, multi-component UI feature, cross-pack contract change) gets the four-agent verifier wave **in parallel** before merging:
+Every non-trivial PR (new endpoint, schema migration, multi-component UI feature, cross-pack contract change) gets the verifier wave **in parallel** before merging (four agents always; `exercir-charter-checker` joins on `domains/exercir/` PRs):
 
 - `local-ci` — build + test + lint + PHI scan
-- `reviewer` — adversarial code review
-- `charter-checker` — charter compliance
-- `qa-engineer` — cross-cutting (coverage, a11y, perf, observability, contract drift, doc completeness)
+- `reviewer` — adversarial code review + architecture-drift detection
+- `charter-checker` — substrate constitution (ring boundaries, the four kernel concerns, the ADR-176 inclusion test, "store generators, derive graphs")
+- `qa-engineer` — cross-cutting (coverage, a11y, perf, observability, ring-ownership + scalability, contract drift, doc completeness)
+- `exercir-charter-checker` — Exercir product prototype-charter (demo-mode, sandbox deps, no-real-PHI); exercir-domain PRs only
 
-All four dispatched in one message with multiple tool calls. All four use `isolation: "worktree"`. Disagreement escalates to the founder. See `workflows/verifier-wave.md` for details.
+All applicable agents dispatched in one message with multiple tool calls, all using `isolation: "worktree"`. Disagreement escalates to the founder. See `workflows/verifier-wave.md` for details.
 
 ## Hard rules
 

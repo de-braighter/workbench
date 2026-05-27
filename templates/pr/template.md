@@ -16,8 +16,9 @@ Link to the story tracker (e.g. `Closes #N` or `Refs #N`) and explain the motiva
 
 - [ ] local-ci passed
 - [ ] reviewer passed (or BLOCK findings addressed)
-- [ ] charter-checker passed
+- [ ] charter-checker passed (substrate constitution)
 - [ ] qa-engineer passed
+- [ ] exercir-charter-checker passed (exercir-domain PRs only)
 
 ## Related
 
