@@ -53,8 +53,7 @@ de-braighter/                     ← this repo (de-braighter/workbench)
 ├── domains/                      ← cluster: sibling domain repos (gitignored here)
 │   ├── exercir/
 │   ├── conservation/
-│   ├── vector/
-│   └── org-twin/
+│   └── vector/
 └── attic/                        ← preservation repo (gitignored here)
 ```
 
@@ -80,7 +79,7 @@ The old prototype directories under `D:/development/projects/braighter/` and `/e
 - GitHub org: `de-braighter` (renamed from `braighter-io` 2026-05-25; old URLs auto-redirect).
 - Local cluster + npm scope: `de-braighter` / `@de-braighter`.
 - Substrate packages: `@de-braighter/substrate-contracts`, `@de-braighter/substrate-runtime`.
-- Domain names: freely chosen per domain. `exercir` (team sports). Working names for prototypes: `conservation`, `vector`, `org-twin`.
+- Domain names: freely chosen per domain. `exercir` (team sports). Working names for prototypes: `conservation`, `vector`.
 
 ## Design references
 
