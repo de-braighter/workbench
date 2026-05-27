@@ -76,7 +76,7 @@ For API or kernel changes:
 - Every new public API endpoint has an entry in the relevant pack's API README or the apps/api docs.
 - Every new ADR has its `relates-to:` frontmatter populated.
 - Every new technical design doc has its `concept:` and `realizes-stories:` frontmatter populated.
-- Every new pack manifest entry (RouteContribution, indicator, etc.) is reflected in `services/exercir-service/CLAUDE.md` if the convention changed.
+- Every new pack manifest entry (RouteContribution, indicator, etc.) is reflected in `domains/exercir/CLAUDE.md` if the convention changed.
 - Storybook stories use realistic data from each pack's `*-demo-data.ts`, not invented inline fixtures.
 
 ### 7. SDLC cascade integrity (per ADR-086)

@@ -13,7 +13,7 @@ tools:
 
 # Test Pro Agent
 
-You operate across the test-infrastructure surface: `services/exercir-service/vitest.workspace.ts`, the per-project `vitest.config.ts` files, `tools/coverage-delta.ts`, `services/exercir-service/scripts/qa-*`, `services/exercir-service/scripts/local-ci.sh`, and the e2e Docker Compose stack at `services/exercir-service/docker/qa/`.
+You operate across the test-infrastructure surface: `domains/exercir/vitest.workspace.ts`, the per-project `vitest.config.ts` files, `tools/coverage-delta.ts`, `domains/exercir/scripts/qa-*`, `domains/exercir/scripts/local-ci.sh`, and the e2e Docker Compose stack at `domains/exercir/docker/qa/`.
 
 ## Prefer scripts over ad-hoc inspection
 
@@ -21,15 +21,15 @@ Pro agents lean on local scripts (per `concepts/substrate/pro-agents-roadmap.md`
 
 **Use these existing tools first:**
 - `npx tsx tools/coverage-delta.ts <ref>` — coverage on changed files vs base ref. Cut from 21min → 2m04s per memory `ci_runtime_budget_landed`. Honor the 3-dot vs 2-dot semantics: `<ref>` should usually be `origin/main` for PR work, NOT a 3-dot range.
-- `bash services/exercir-service/scripts/local-ci.sh` — local equivalent of GHA gates. Use this to gate "is this PR-ready?" instead of cooking your own check sequence.
-- `bash services/exercir-service/scripts/qa-rebuild.sh` — rebuild the qa Docker stack when something drifts. Has selective `--filter "reference=exercir-qa-*"` prune per memory `docker_vhdx_selective_prune`.
-- `bash services/exercir-service/scripts/qa-entrypoint.sh` — entry for the qa container; use to debug what runs when CI runs.
+- `bash domains/exercir/scripts/local-ci.sh` — local equivalent of GHA gates. Use this to gate "is this PR-ready?" instead of cooking your own check sequence.
+- `bash domains/exercir/scripts/qa-rebuild.sh` — rebuild the qa Docker stack when something drifts. Has selective `--filter "reference=exercir-qa-*"` prune per memory `docker_vhdx_selective_prune`.
+- `bash domains/exercir/scripts/qa-entrypoint.sh` — entry for the qa container; use to debug what runs when CI runs.
 - `npx nx affected:test --base=<ref>` — Nx's affected-projects logic. Faster than re-running the whole suite.
 
 **Propose adding these when you find yourself doing the same multi-step inspection:**
-- `services/exercir-service/scripts/test-tier.sh <file>` — given a test file path, show which vitest project it belongs to, why (the tier rule that matched), and what config controls it.
-- `services/exercir-service/scripts/test-runtime-budget.sh` — surface tests > N seconds in the last `vitest --reporter=json` run; flag candidates for tier promotion.
-- `services/exercir-service/scripts/test-find-affected.sh <ref>` — wrap `nx affected:test --base=<ref>` with the right git semantics (memory `brief_implementers_with_git_math` documents the 3-dot vs 2-dot trap) and structured output.
+- `domains/exercir/scripts/test-tier.sh <file>` — given a test file path, show which vitest project it belongs to, why (the tier rule that matched), and what config controls it.
+- `domains/exercir/scripts/test-runtime-budget.sh` — surface tests > N seconds in the last `vitest --reporter=json` run; flag candidates for tier promotion.
+- `domains/exercir/scripts/test-find-affected.sh <ref>` — wrap `nx affected:test --base=<ref>` with the right git semantics (memory `brief_implementers_with_git_math` documents the 3-dot vs 2-dot trap) and structured output.
 
 When you author a script, ship it with a `.spec.ts` next to it — same pattern as `list-worktrees.cjs` + `list-worktrees.spec.ts`.
 
@@ -75,7 +75,7 @@ A PR is taking too long to get green. You diagnose.
 ### Mode: `infra` (when the test infra itself drifts)
 The qa Docker stack stops working, or `npx nx test` starts behaving weirdly.
 
-- Run `bash services/exercir-service/scripts/qa-rebuild.sh` first; resolves most drift.
+- Run `bash domains/exercir/scripts/qa-rebuild.sh` first; resolves most drift.
 - If that doesn't fix it, read the relevant config (vitest.workspace.ts, project vitest.config.ts, docker/qa/ stack) — don't guess.
 - For Docker WSL2 disk pressure, follow the selective-prune pattern (memory).
 

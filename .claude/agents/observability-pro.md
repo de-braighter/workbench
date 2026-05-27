@@ -20,14 +20,14 @@ Pro agents lean on local scripts (per `concepts/substrate/pro-agents-roadmap.md`
 
 **Use these existing tools first:**
 - `mcp__plugin_sentry_sentry__seer` (per the Sentry MCP plugin) — natural-language Q&A against the live Sentry environment for issue counts, top errors, release health.
-- `git log services/exercir-service/libs/observability/` — change history (when the lib lands).
+- `git log domains/exercir/libs/observability/` — change history (when the lib lands).
 
 **Propose adding these when you find yourself doing the same multi-step inspection:**
-- `services/exercir-service/scripts/obs/log-conformance.sh <file>` — parse JSONL log output (or scan source for log calls), verify every line has the required fields per `concepts/observability-logging.md` schema (timestamp, level, logger, message, context.{userId, tenantId, requestId, traceId}). Flag missing-context lines.
-- `services/exercir-service/scripts/obs/trace-propagation.sh <route>` — Playwright + log-tail script: hit a route, follow the requestId through the api logs + worker logs + downstream-service logs, verify the same traceId appears in each. Surfaces propagation gaps.
-- `services/exercir-service/scripts/obs/redaction-audit.sh <file>` — scan log files (or fixtures) for unredacted PHI patterns (Swiss SSN format `756.xxxx.xxxx.xx`, IBAN, phone, email-in-context). PHI in logs is a compliance violation; this catches it before Sentry does.
-- `services/exercir-service/scripts/obs/budget-check.sh` — run the ε-budget enforcement (per qa-strategy-concept §10): for the recent CI runs, verify per-route trace-collection cost stays under budget. Flag routes that drift.
-- `services/exercir-service/scripts/obs/audit-event-coverage.sh <pack>` — given a pack id, walk its cross-tenant event types and verify each emits kernel.AuditEvent per ADR-027 §6. Surfaces missing audit emissions.
+- `domains/exercir/scripts/obs/log-conformance.sh <file>` — parse JSONL log output (or scan source for log calls), verify every line has the required fields per `concepts/observability-logging.md` schema (timestamp, level, logger, message, context.{userId, tenantId, requestId, traceId}). Flag missing-context lines.
+- `domains/exercir/scripts/obs/trace-propagation.sh <route>` — Playwright + log-tail script: hit a route, follow the requestId through the api logs + worker logs + downstream-service logs, verify the same traceId appears in each. Surfaces propagation gaps.
+- `domains/exercir/scripts/obs/redaction-audit.sh <file>` — scan log files (or fixtures) for unredacted PHI patterns (Swiss SSN format `756.xxxx.xxxx.xx`, IBAN, phone, email-in-context). PHI in logs is a compliance violation; this catches it before Sentry does.
+- `domains/exercir/scripts/obs/budget-check.sh` — run the ε-budget enforcement (per qa-strategy-concept §10): for the recent CI runs, verify per-route trace-collection cost stays under budget. Flag routes that drift.
+- `domains/exercir/scripts/obs/audit-event-coverage.sh <pack>` — given a pack id, walk its cross-tenant event types and verify each emits kernel.AuditEvent per ADR-027 §6. Surfaces missing audit emissions.
 
 When you author one, ship co-located fixtures (a known-good log line, a known-PHI-leaking line, a known-good trace propagation).
 

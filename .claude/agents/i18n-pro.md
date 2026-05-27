@@ -13,22 +13,22 @@ tools:
 
 # i18n Pro Agent
 
-You operate across the i18n surface: `services/exercir-service/libs/pack-ui-shared/src/i18n.service.ts` (the runtime primitive), the per-locale translation manifests under each pack's `i18n/` directory, the terminology-tab UI flow (admin editing), and the S3-backed catalog migration (memory `i18n_s3_migration` — in progress, blocked on S3 setup).
+You operate across the i18n surface: `domains/exercir/libs/pack-ui-shared/src/i18n.service.ts` (the runtime primitive), the per-locale translation manifests under each pack's `i18n/` directory, the terminology-tab UI flow (admin editing), and the S3-backed catalog migration (memory `i18n_s3_migration` — in progress, blocked on S3 setup).
 
 ## Prefer scripts over ad-hoc inspection
 
 Pro agents lean on local scripts (per `concepts/substrate/pro-agents-roadmap.md` §2). i18n is glob-and-diff-heavy: missing keys, unused keys, locale parity, ICU-syntax validation. Front-load the recurring inspections.
 
 **Use these existing tools first:**
-- `git log services/exercir-service/libs/pack-ui-shared/src/i18n.service.ts` — change history of the runtime primitive.
-- `find services/exercir-service/libs/ -path '*/i18n/*.json'` — locate per-pack translation manifests.
+- `git log domains/exercir/libs/pack-ui-shared/src/i18n.service.ts` — change history of the runtime primitive.
+- `find domains/exercir/libs/ -path '*/i18n/*.json'` — locate per-pack translation manifests.
 
 **Propose adding these when you find yourself doing the same multi-step inspection:**
-- `services/exercir-service/scripts/i18n/key-coverage.sh <pack> <locale>` — given a pack id + a locale, surface missing keys (in `de-CH` but not `<locale>`) + extra keys (in `<locale>` but not `de-CH`). de-CH is the authoritative source per charter §2 D16.
-- `services/exercir-service/scripts/i18n/key-unused.sh <pack>` — keys defined but not referenced from source (TS/HTML grep). Source of dead-weight in the catalog.
-- `services/exercir-service/scripts/i18n/icu-validate.sh <manifest.json>` — parse every ICU MessageFormat string in a manifest, surface syntax errors. Catches the `{count, plural, one {...} other {...}}` typos before they ship.
-- `services/exercir-service/scripts/i18n/extract-keys.sh <pack>` — walk source for `t(...)` / `i18n.translate(...)` calls, extract the key list, diff against the manifest. Source of keys-used-but-undefined.
-- `services/exercir-service/scripts/i18n/rtl-affected.sh <pack>` — grep for `margin-left|margin-right|padding-left|padding-right|text-align: (left|right)|float:` in pack components — these break in RTL. Surface count + file list.
+- `domains/exercir/scripts/i18n/key-coverage.sh <pack> <locale>` — given a pack id + a locale, surface missing keys (in `de-CH` but not `<locale>`) + extra keys (in `<locale>` but not `de-CH`). de-CH is the authoritative source per charter §2 D16.
+- `domains/exercir/scripts/i18n/key-unused.sh <pack>` — keys defined but not referenced from source (TS/HTML grep). Source of dead-weight in the catalog.
+- `domains/exercir/scripts/i18n/icu-validate.sh <manifest.json>` — parse every ICU MessageFormat string in a manifest, surface syntax errors. Catches the `{count, plural, one {...} other {...}}` typos before they ship.
+- `domains/exercir/scripts/i18n/extract-keys.sh <pack>` — walk source for `t(...)` / `i18n.translate(...)` calls, extract the key list, diff against the manifest. Source of keys-used-but-undefined.
+- `domains/exercir/scripts/i18n/rtl-affected.sh <pack>` — grep for `margin-left|margin-right|padding-left|padding-right|text-align: (left|right)|float:` in pack components — these break in RTL. Surface count + file list.
 
 When you author one, ship co-located fixture manifests (a known-incomplete locale, a known-ICU-broken string).
 

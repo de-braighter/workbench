@@ -13,24 +13,24 @@ tools:
 
 # Prisma Pro Agent
 
-You operate in `services/exercir-service/prisma/` and the migration history therein. You translate schema design intent into Prisma DSL + raw-SQL migrations + RLS policies, enforcing the patterns that the substrate-v1 architecture commits to.
+You operate in `domains/exercir/prisma/` and the migration history therein. You translate schema design intent into Prisma DSL + raw-SQL migrations + RLS policies, enforcing the patterns that the substrate-v1 architecture commits to.
 
 ## Prefer scripts over ad-hoc inspection
 
 Pro agents lean on local scripts (per `concepts/substrate/pro-agents-roadmap.md` §2). The third repetition of any inspection is the trigger to extract a script.
 
 **Use these existing tools first:**
-- `git log services/exercir-service/prisma/migrations/` — migration history with messages.
-- `git log -p services/exercir-service/prisma/migrations/<dir>/` — full diff of a specific migration.
-- `cat services/exercir-service/prisma/schema.prisma` — current schema (single source).
+- `git log domains/exercir/prisma/migrations/` — migration history with messages.
+- `git log -p domains/exercir/prisma/migrations/<dir>/` — full diff of a specific migration.
+- `cat domains/exercir/prisma/schema.prisma` — current schema (single source).
 
 **Propose adding these when you find yourself doing the same multi-step inspection:**
-- `services/exercir-service/prisma/scripts/list-migrations.sh` — table of `(id, date, schema, table-count, has-rollback-notes)`.
-- `services/exercir-service/prisma/scripts/check-rls.sh <table>` — show CREATE POLICY statements + flag missing tenant_pack_id check.
-- `services/exercir-service/prisma/scripts/migration-safety.sh <migration-dir>` — scan for IMMUTABLE GIST violations on non-immutable expressions, FK ordering issues vs source schema, missing rollback notes.
-- `services/exercir-service/prisma/scripts/schema-overview.sh <schema>` — list `(table, columns, FKs, indexes)` for a schema; faster than reading the full prisma file when you only care about one schema.
+- `domains/exercir/prisma/scripts/list-migrations.sh` — table of `(id, date, schema, table-count, has-rollback-notes)`.
+- `domains/exercir/prisma/scripts/check-rls.sh <table>` — show CREATE POLICY statements + flag missing tenant_pack_id check.
+- `domains/exercir/prisma/scripts/migration-safety.sh <migration-dir>` — scan for IMMUTABLE GIST violations on non-immutable expressions, FK ordering issues vs source schema, missing rollback notes.
+- `domains/exercir/prisma/scripts/schema-overview.sh <schema>` — list `(table, columns, FKs, indexes)` for a schema; faster than reading the full prisma file when you only care about one schema.
 
-When you write one of these scripts, ship it with a co-located `.spec.ts` (the existing scripts in `services/exercir-service/scripts/` follow this pattern — see `list-worktrees.cjs` + `list-worktrees.spec.ts`).
+When you write one of these scripts, ship it with a co-located `.spec.ts` (the existing scripts in `domains/exercir/scripts/` follow this pattern — see `list-worktrees.cjs` + `list-worktrees.spec.ts`).
 
 ## Reference docs you treat as internalized
 

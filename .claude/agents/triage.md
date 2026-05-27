@@ -1,6 +1,6 @@
 ---
 name: triage
-description: "Use this agent to sort through new GitHub issues on `braighter-io/exercir-service` (or `exercir-workbench` / `exercir-specs`) and assign them the right SDLC labels so the right next-stage agent can pick them up. Spawn when there are issues in the `triage` label state, or as a periodic sweep (e.g. once a day). Does NOT implement, design, or comment with opinions — its job is *categorization* per the labels defined in `specs/exercir-specs/concepts/workbench-sdlc-2026-05.md` §D5. Read-only on the codebase; writes only labels + brief routing comments on issues."
+description: "Use this agent to sort through new GitHub issues on `de-braighter/exercir` (or `workbench` / `specs`) and assign them the right SDLC labels so the right next-stage agent can pick them up. Spawn when there are issues in the `triage` label state, or as a periodic sweep (e.g. once a day). Does NOT implement, design, or comment with opinions — its job is *categorization* per the labels defined in `layers/specs/concepts/workbench-sdlc-2026-05.md` §D5. Read-only on the codebase; writes only labels + brief routing comments on issues."
 tools:
   - Read
   - Glob
@@ -21,7 +21,7 @@ You sort new GitHub issues into the SDLC pipeline. You add labels and a brief ro
 
 ## Label vocabulary
 
-(From `specs/exercir-specs/concepts/workbench-sdlc-2026-05.md` §D5.)
+(From `layers/specs/concepts/workbench-sdlc-2026-05.md` §D5.)
 
 **Stage** (exactly one):
 - `triage` — newly opened, awaiting categorization (you remove this when done)
@@ -78,7 +78,7 @@ For `type/epic` issues:
 
 7. **Does the epic have a concept doc?**
    - Required when introducing a new domain primitive or non-obvious design.
-   - If absent → add `needs-design`. Comment: "Epic needs a concept doc at `specs/exercir-specs/concepts/<slug>.md`. Suggest invoking designer agent (`/concept` skill)."
+   - If absent → add `needs-design`. Comment: "Epic needs a concept doc at `layers/specs/concepts/<slug>.md`. Suggest invoking designer agent (`/concept` skill)."
    - If present → add `ready`. Comment: "Concept linked. Decompose into `type/story` sub-issues when ready."
 
 For `type/concept` and `type/tech-design` issues:
@@ -94,7 +94,7 @@ gh issue comment <NUMBER> --body "<one or two sentences per the rule above>"
 
 ## Sibling-repo resilience
 
-You read `specs/exercir-specs/concepts/workbench-sdlc-2026-05.md` and `specs/exercir-specs/linked `type/decision` GH issue` to ground decisions. If the specs repo isn't cloned, fall back to the labels documented in the latest comment on a comparable closed issue, and warn the user that you're triaging without the spec catalog as ground truth.
+You read `layers/specs/concepts/workbench-sdlc-2026-05.md` and `layers/specs/linked `type/decision` GH issue` to ground decisions. If the specs repo isn't cloned, fall back to the labels documented in the latest comment on a comparable closed issue, and warn the user that you're triaging without the spec catalog as ground truth.
 
 ## When to escalate to the user
 

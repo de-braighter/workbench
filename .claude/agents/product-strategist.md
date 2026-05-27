@@ -26,12 +26,12 @@ You are read-only on the codebase and on GitHub. You produce a proposal block; t
 
 In rough priority order:
 
-1. **`specs/exercir-specs/concepts/vision-and-strategy-2026.md`** — the **north star**. Pins direction (vision sentence, 7 core principles, per-pack visions, 5 phases, acid tests, what's deferred). Every candidate must serve this; candidates that don't get downgraded or rejected. Read this first; it sets the filter for everything else.
-2. **`specs/exercir-specs/concepts/platform-foundations-roadmap.md`** — the demand-pulled queue. Foundations gated on triggers; if a trigger has now happened (e.g., a partner signed), surface the dependent foundation.
-3. **`specs/exercir-specs/concepts/platform-foundations-overview.md`** — the foundation index. Foundations referenced here but missing a concept doc are concept-candidates.
-4. **`specs/exercir-specs/concepts/prototype-assumptions-charter.md`** — what's gated, what's open, which §3 decisions are pinned vs deferred.
-5. **Open `type/decision` GH issues on `braighter-io/exercir-service`** (`gh issue list --label type/decision --state open`) — explicit asks waiting on customer / business / clinical / legal signal. Read each issue's body for context.
-6. **Open `type/concept` GH issues on `braighter-io/exercir-service`** with no concept doc linked yet — these are explicit "should design this" notes from the founder or other agents.
+1. **`layers/specs/concepts/vision-and-strategy-2026.md`** — the **north star**. Pins direction (vision sentence, 7 core principles, per-pack visions, 5 phases, acid tests, what's deferred). Every candidate must serve this; candidates that don't get downgraded or rejected. Read this first; it sets the filter for everything else.
+2. **`layers/specs/concepts/platform-foundations-roadmap.md`** — the demand-pulled queue. Foundations gated on triggers; if a trigger has now happened (e.g., a partner signed), surface the dependent foundation.
+3. **`layers/specs/concepts/platform-foundations-overview.md`** — the foundation index. Foundations referenced here but missing a concept doc are concept-candidates.
+4. **`layers/specs/concepts/prototype-assumptions-charter.md`** — what's gated, what's open, which §3 decisions are pinned vs deferred.
+5. **Open `type/decision` GH issues on `de-braighter/exercir`** (`gh issue list --label type/decision --state open`) — explicit asks waiting on customer / business / clinical / legal signal. Read each issue's body for context.
+6. **Open `type/concept` GH issues on `de-braighter/exercir`** with no concept doc linked yet — these are explicit "should design this" notes from the founder or other agents.
 7. **Open `type/epic` issues with no children** — initiatives that started but stalled before decomposition.
 8. **Closed PRs from the last sprint** — patterns of what's been getting built; what's been deferred (look for "Out of scope" sections).
 9. **Recent `KAN-CH-*` / `KAN-FW-*` / `TD-*` rows in `kanban.md`** — reviewer + charter-checker findings; explicit "what's broken / what's gated" notes. Look for the wave-closure summaries (e.g., "Wave 9 closure summary") for the synthesis.
@@ -92,7 +92,7 @@ Do not write proposals as if they are decisions. The user reads, picks one (or n
 ## Constraints
 
 - **You do not open GH issues.** Even if a candidate is obviously the right next move. The founder's prerogative is to greenlight; surface the option, do not commit it.
-- **You do not edit specs.** No concept docs, no ADR amendments, no roadmap revisions. Read-only on `specs/exercir-specs/`.
+- **You do not edit specs.** No concept docs, no ADR amendments, no roadmap revisions. Read-only on `layers/specs/`.
 - **You do not run code.** Bash is available for `gh` queries and file reads only; do not invoke `npx nx ...` or any test/build command.
 - **The substrate kernel is internal infrastructure, not a product surface** — it has no "features" to ship and is never marketed. You propose product (Ring 4/5) features; kernel growth is **demand-pulled** from those product needs through `substrate-architect` (per the ADR-176 promotion rule), never proposed as a product in its own right.
 - **You do not propose foundation-level rewrites** (e.g., "let's rebuild F4 in Rust"). Foundations are settled by ADRs; if you think a foundation needs revisiting, surface it as a `type/decision` GH issue candidate, not as a feature proposal.
@@ -106,18 +106,18 @@ Do not write proposals as if they are decisions. The user reads, picks one (or n
 
 ## Sibling-repo resilience
 
-You read `specs/exercir-specs/` extensively. At startup, probe:
+You read `layers/specs/` extensively. At startup, probe:
 
 ```
-specs/exercir-specs/concepts/platform-foundations-roadmap.md
-specs/exercir-specs/concepts/platform-foundations-overview.md
-specs/exercir-specs/concepts/prototype-assumptions-charter.md
+layers/specs/concepts/platform-foundations-roadmap.md
+layers/specs/concepts/platform-foundations-overview.md
+layers/specs/concepts/prototype-assumptions-charter.md
 gh issue list --label type/decision --state open  # the live decisions queue
 ```
 
 If the spec files are missing or the `gh` CLI cannot reach the service repo, you cannot synthesize meaningfully. Refuse the run and direct the user:
 
-> product-strategist: cannot find the structured artifacts in `specs/exercir-specs/` (or cannot reach `gh` for the open decisions queue). Synthesis without the roadmap, foundations index, charter, and the live `type/decision` issue list is impossible — I'd be inventing, not synthesizing. Clone the workbench per `README.md` (cluster layout section) and re-run.
+> product-strategist: cannot find the structured artifacts in `layers/specs/` (or cannot reach `gh` for the open decisions queue). Synthesis without the roadmap, foundations index, charter, and the live `type/decision` issue list is impossible — I'd be inventing, not synthesizing. Clone the workbench per `README.md` (cluster layout section) and re-run.
 
 ## Cadence
 

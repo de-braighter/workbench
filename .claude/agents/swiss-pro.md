@@ -35,15 +35,15 @@ When work straddles both — e.g., "build the EPD-bound FHIR ingest with HIN aut
 Pro agents lean on local scripts (per `concepts/substrate/pro-agents-roadmap.md` §2). Swiss-stack work is integration-heavy — every external API has a quirk, every webhook a signature scheme. Front-load the recurring inspections.
 
 **Use these existing tools first:**
-- `git log services/exercir-service/libs/payments/` and `libs/accounting/` and `libs/auth/` — change history per Swiss-integration lib (when those libs land).
+- `git log domains/exercir/libs/payments/` and `libs/accounting/` and `libs/auth/` — change history per Swiss-integration lib (when those libs land).
 - `WebFetch` against `https://swisspaymentstandards.ch/` for QR-Bill spec lookups, `https://docs.payrexx.com/api/` for Payrexx API, `https://docs.bexio.com/` for bexio API, `https://help.agov.ch/` for AGOV transition reference. Cache the answer; these specs change infrequently.
 
 **Propose adding these when you find yourself doing the same multi-step inspection:**
-- `services/exercir-service/scripts/swiss/qr-bill-validate.sh <bill.json>` — validate a generated QR-Bill against the SPS schema (Swiss QR-Reference, IBAN check digits, BIC presence rules, fixed-format `Strk` line for amount + currency). Catches the field-truncation traps (Reference is exactly 27 chars; Additional Information is bounded).
-- `services/exercir-service/scripts/swiss/payrexx-webhook-replay.sh <event.json>` — verify HMAC signature against the PAYREXX_SECRET, replay against a local handler, surface idempotency-key collisions.
-- `services/exercir-service/scripts/swiss/bexio-coa-walk.sh` — pull the bexio chart-of-accounts via API (cached locally) and surface drift since last sync. bexio's COA is mutable per-tenant; assumptions about account IDs break silently.
-- `services/exercir-service/scripts/swiss/auth-provider-status.sh` — current state of AGOV / SwissID / HIN: which are live, which are deprecated, which are a tenant's primary. Avoids hard-coding the wrong one.
-- `services/exercir-service/scripts/swiss/dpa-data-flow.sh <pack>` — given a pack id, walk the data flows leaving Swiss soil + cross-border processors involved + consent paths used. Surfaces nDSG Art. 16 (cross-border) violations early.
+- `domains/exercir/scripts/swiss/qr-bill-validate.sh <bill.json>` — validate a generated QR-Bill against the SPS schema (Swiss QR-Reference, IBAN check digits, BIC presence rules, fixed-format `Strk` line for amount + currency). Catches the field-truncation traps (Reference is exactly 27 chars; Additional Information is bounded).
+- `domains/exercir/scripts/swiss/payrexx-webhook-replay.sh <event.json>` — verify HMAC signature against the PAYREXX_SECRET, replay against a local handler, surface idempotency-key collisions.
+- `domains/exercir/scripts/swiss/bexio-coa-walk.sh` — pull the bexio chart-of-accounts via API (cached locally) and surface drift since last sync. bexio's COA is mutable per-tenant; assumptions about account IDs break silently.
+- `domains/exercir/scripts/swiss/auth-provider-status.sh` — current state of AGOV / SwissID / HIN: which are live, which are deprecated, which are a tenant's primary. Avoids hard-coding the wrong one.
+- `domains/exercir/scripts/swiss/dpa-data-flow.sh <pack>` — given a pack id, walk the data flows leaving Swiss soil + cross-border processors involved + consent paths used. Surfaces nDSG Art. 16 (cross-border) violations early.
 
 When you author one, ship co-located fixtures (a known-valid QR-Bill, a known-valid Payrexx webhook payload, a sample bexio COA snapshot).
 

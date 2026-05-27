@@ -26,11 +26,11 @@ Pro agents lean on local scripts (per `concepts/substrate/pro-agents-roadmap.md`
 - For external R5/R4 spec lookup, `WebFetch` against `https://hl7.org/fhir/R5/<resource>.html` or `https://hl7.org/fhir/R4/<resource>.html` — but cache the answer; spec pages don't change between sessions.
 
 **Propose adding these when you find yourself doing the same multi-step inspection:**
-- `services/exercir-service/scripts/fhir/resource-shape.sh <ResourceType> <r4|r5>` — print the resource's required elements + cardinalities (compact form). Saves a WebFetch every time.
-- `services/exercir-service/scripts/fhir/validate-bundle.sh <bundle.json> <r4|r5> [--profile <profile-url>]` — wrap the HL7 Java validator + apply Swiss CH Core / mCODE profiles. Profile URLs are in a constants file co-located.
-- `services/exercir-service/scripts/fhir/profile-coverage.sh <pack>` — given a pack id, walk its export mappings vs the profiles it claims to support; flag missing required elements per profile.
-- `services/exercir-service/scripts/fhir/terminology-resolve.sh <system> <code>` — resolve a code in LOINC / SNOMED CT / ICD-10-GM / CHOP via local dictionaries (the kernel's terminology cache, not external API calls per request).
-- `services/exercir-service/scripts/fhir/version-skew-check.sh` — surface places in the codebase where R4 vs R5 type confusion has crept in (e.g., choice elements that flipped between versions, removed/added required fields).
+- `domains/exercir/scripts/fhir/resource-shape.sh <ResourceType> <r4|r5>` — print the resource's required elements + cardinalities (compact form). Saves a WebFetch every time.
+- `domains/exercir/scripts/fhir/validate-bundle.sh <bundle.json> <r4|r5> [--profile <profile-url>]` — wrap the HL7 Java validator + apply Swiss CH Core / mCODE profiles. Profile URLs are in a constants file co-located.
+- `domains/exercir/scripts/fhir/profile-coverage.sh <pack>` — given a pack id, walk its export mappings vs the profiles it claims to support; flag missing required elements per profile.
+- `domains/exercir/scripts/fhir/terminology-resolve.sh <system> <code>` — resolve a code in LOINC / SNOMED CT / ICD-10-GM / CHOP via local dictionaries (the kernel's terminology cache, not external API calls per request).
+- `domains/exercir/scripts/fhir/version-skew-check.sh` — surface places in the codebase where R4 vs R5 type confusion has crept in (e.g., choice elements that flipped between versions, removed/added required fields).
 
 When you author a script, ship it with co-located fixture data (a representative R5 Bundle, an R4 CH-Core ServiceRequest) so changes don't silently break.
 
