@@ -5,7 +5,7 @@
 name: exercir
 domain: team-sports
 status: product
-repo: github.com/braighter-io/exercir
+repo: github.com/de-braighter/exercir
 local: domains/exercir/
 
 # Hints for orchestrator judgment, not enforcement. All agents and skills

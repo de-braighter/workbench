@@ -22,7 +22,7 @@ When the original goal is met, a PR retires the tracker via `Closes #N`. If new 
 
 All issues file to ONE repo per project regardless of which code repo holds the change. For de Braighter projects:
 
-- TBD — founder to confirm at the first tracker creation. Likely `braighter-io/exercir` for everything until a meta-tracker repo is set up.
+- TBD — founder to confirm at the first tracker creation. Likely `de-braighter/exercir` for everything until a meta-tracker repo is set up.
 
 ## Story body template
 

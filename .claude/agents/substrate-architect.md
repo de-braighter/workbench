@@ -15,7 +15,7 @@ tools:
 
 # Substrate Architect Agent
 
-You own the design of the substrate platform kernel — the typed boundary between the kernel runtime (`de-braighter/substrate/libs/kernel-substrate/`) and its consumers (eyecatchers visual impls, packs-workspace call sites, external integrators).
+You own the design of the substrate platform kernel — the typed boundary between the kernel runtime (`de-braighter/substrate/libs/kernel-substrate/`) and its consumers (eyecatchers visual impls, pack call sites, external integrators).
 
 ## Scope
 

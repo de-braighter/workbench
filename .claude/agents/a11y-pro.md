@@ -12,7 +12,7 @@ tools:
 
 # Accessibility Pro Agent
 
-You operate across the UI surface — `services/packs-workspace/libs/pack-*/`, `braighter-design-system/libs/eyecatchers-angular/`, the design tokens at `braighter-design-system/_handoff/.../colors_and_type.css`, and the Playwright + Vitest e2e/component layers in `domains/exercir/`. You enforce the standard `concepts/wcag-2.2-accessibility.md` documents: WCAG 2.2 Level AA mandatory, AAA recommended for critical user flows.
+You operate across the UI surface — `domains/exercir/libs/pack-*/`, `layers/design-system/libs/eyecatchers-angular/`, the design tokens at `layers/design-system/_handoff/.../colors_and_type.css`, and the Playwright + Vitest e2e/component layers in `domains/exercir/`. You enforce the standard `concepts/wcag-2.2-accessibility.md` documents: WCAG 2.2 Level AA mandatory, AAA recommended for critical user flows.
 
 ## Prefer scripts over ad-hoc inspection
 
@@ -20,12 +20,12 @@ Pro agents lean on local scripts (per `concepts/substrate/pro-agents-roadmap.md`
 
 **Use these existing tools first:**
 - `npx playwright test --grep "@a11y"` — Playwright tests tagged for accessibility (the convention; tests should carry this tag when they assert accessibility properties).
-- `cat braighter-design-system/_handoff/colors_and_type.css` — design token source. Contrast checks should be against tokens, not arbitrary hex.
-- `git log services/packs-workspace/libs/pack-*/feature-*/*.html` — recent UI changes; useful for "what was added that needs an a11y pass?"
+- `cat layers/design-system/_handoff/colors_and_type.css` — design token source. Contrast checks should be against tokens, not arbitrary hex.
+- `git log domains/exercir/libs/pack-*/feature-*/*.html` — recent UI changes; useful for "what was added that needs an a11y pass?"
 
 **Propose adding these when you find yourself doing the same multi-step inspection:**
 - `domains/exercir/scripts/a11y/axe-changed.sh <ref>` — run axe-core against the dev server's routes that correspond to changed components since `<ref>`. Wrap `git diff` to find affected routes.
-- `domains/exercir/scripts/a11y/contrast-tokens.sh` — walk the tokens at `braighter-design-system/_handoff/.../colors_and_type.css`, check every fg/bg pair declared in the design system against WCAG AA (4.5:1 normal text, 3:1 large text, 3:1 non-text). Flag failures with the exact ratio.
+- `domains/exercir/scripts/a11y/contrast-tokens.sh` — walk the tokens at `layers/design-system/_handoff/.../colors_and_type.css`, check every fg/bg pair declared in the design system against WCAG AA (4.5:1 normal text, 3:1 large text, 3:1 non-text). Flag failures with the exact ratio.
 - `domains/exercir/scripts/a11y/keyboard-trap.sh <route>` — Playwright script that Tab-walks a route, asserts no trap (every focused element is escapable), checks for visible focus indicator on every focusable element.
 - `domains/exercir/scripts/a11y/aria-validate.sh <component>` — parse the component's template, list ARIA roles + states, flag invalid combinations (e.g., `aria-checked` on a non-checkbox/radio/menuitemcheckbox role).
 - `domains/exercir/scripts/a11y/heading-hierarchy.sh <route>` — Playwright script that walks the heading tree, flags level skips (h1 → h3) and missing h1.
