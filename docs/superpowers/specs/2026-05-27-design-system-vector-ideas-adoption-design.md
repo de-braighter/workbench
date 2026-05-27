@@ -2,11 +2,17 @@
 
 | | |
 | --- | --- |
-| Status | proposed |
-| Date | 2026-05-27 |
+| Status | in progress — PR1, PR2a, PR2c, PR2b shipped (2026-05-27/28); PR3, PR4 remain |
+| Date | 2026-05-27 (updated 2026-05-28) |
 | Author | Stibe Heller (with Claude Code) |
 | Scope | `layers/design-system` (all libs) |
 | Origin | Analysis of the isolated `domains/vector` repo ("substrate-continuum") |
+
+> **Mid-execution reinterpretations (recorded 2026-05-28):** two charter decisions changed once grounding revealed reality:
+> - **#2 / PR2c — no empty `internal/` dirs.** All 6 libs were found 100% public (zero internal-only code), so the "physical split" became a `src/lib` → `src/public` rename + a deep-import ESLint guard, with **`internal/` created only on demand** (not as empty scaffolding) — honoring "demand-driven, never speculative".
+> - **#5 / PR2b — conformance check, not a generator.** New libs are rare and dual-flavor (tsc + ng-packagr), so #5's *end* (every lib conforms; no divergent hand-created lib) is delivered by a continuous `check-lib-conformance` CI gate + an "adding a lib" doc, rather than an nx generator.
+>
+> PR2 was decomposed into three sub-PRs: **PR2a** (api-extractor drift gate), **PR2c** (rename + guard), **PR2b** (conformance gate). See the per-PR plans in `docs/superpowers/plans/`.
 
 ## Context
 
@@ -230,10 +236,12 @@ Strictly ordered; each PR is its own plan + verifier wave + green `ci:local` bef
 
 | PR | Lands | Depends on | Rationale |
 | --- | --- | --- | --- |
-| **PR1** | #4 tag-governance gaps + delete `design-system-react` | — | Tag governance already exists; PR1 only deletes the React lib + closes the `type:css` gap. Lowest risk. |
-| **PR2** | #2 public-API discipline + #5 generator | PR1 | Generator wires PR1 tags into `project.json`; emits the #2 shape. Retrofits 6 libs. |
-| **PR3** | #1 DTCG pipeline + #6 Writers & extensions | PR1, PR2 | New `design-system-tokens` lib born via the PR2 generator, tagged per PR1. Parity-gated. |
-| **PR4** | #3 reduced-motion centralization | PR1, PR2, PR3 | Shared CSS rule drives motion-duration tokens (exist after PR3); primitive lands in an already-disciplined `core`. |
+| **PR1** ✅ | #4 tag-governance gaps + delete `design-system-react` | — | Tag governance already existed; PR1 deleted the React lib + closed the `type:css` gap. (shipped #85) |
+| **PR2a** ✅ | #2 api-extractor public-API drift gate + css exports gate | PR1 | `.api.md` snapshots for the 5 TS libs + `api-check` in `ci:local`. (shipped #87) |
+| **PR2c** ✅ | #2 `src/lib`→`src/public` rename + deep-import ESLint guard | PR2a | Surface-neutral (gate-proven); no empty `internal/`. (shipped #89) |
+| **PR2b** ✅ | #5 lib-conformance CI gate + "adding a lib" doc | PR2a, PR2c | Continuous conformance check, not a generator. (shipped #91) |
+| **PR3** | #1 DTCG pipeline + #6 Writers & extensions | PR1, PR2a, PR2c, PR2b | New `design-system-tokens` lib must satisfy the conformance gate; parity-gated against today's `tokens.css`. |
+| **PR4** | #3 reduced-motion centralization | PR3 | Shared CSS rule drives motion-duration tokens (exist after PR3); primitive lands in an already-disciplined `core`. |
 
 ## Success criteria
 
