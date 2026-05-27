@@ -33,7 +33,11 @@ independently-reviewable PR with its own short plan and verifier wave.
 - Public API: barrel exports + TSDoc `@internal` discipline only — **no api-extractor, no enforcement**.
 - Motion: shared RAF frame-loop + `damp()` in `design-system-core`; `prefers-reduced-motion`
   checked ad-hoc in 15+ eyecatchers and scattered CSS media queries.
-- **No nx tag governance, no nx generator infrastructure, no visual-regression baselines.**
+- **nx tag governance already exists and is enforced** (corrected 2026-05-27 — see #4). Three
+  axes in `project.json` tags, all wired into `@nx/enforce-module-boundaries` in `eslint.config.mjs`:
+  `scope:` (lib group — `design-system` / `eyecatchers` / `showcase`), `type:` (layer —
+  `core` / `ui` / `css` / `app`), `platform:` (framework — `agnostic` / `web-angular` / `web-react`).
+- **No nx generator infrastructure, no visual-regression baselines.**
 
 The absence of visual-regression baselines is the key risk driver: a token change that
 alters rendered output has **no automated tripwire** in design-system today (only `vector`
@@ -43,39 +47,46 @@ has a Playwright screenshot harness). Parity must therefore be *built in*, not a
 
 ### #4 — Two-axis tag governance (PR1, foundation)
 
-Vector's two-axis model (ADR-0002), collapsed to what design-system actually is — an
-Angular-first system, **not** a multi-renderer OS. The `react` lib is deleted (see below),
-so the scope axis is binary.
+> **Reconciliation (2026-05-27):** vector's two-axis model is **already implemented** in
+> design-system under different names, and already enforced by `@nx/enforce-module-boundaries`.
+> We keep the established vocabulary rather than rename to vector's `layer:`/`scope:` (which would
+> collide — `scope:` already means the lib group here, and `platform:` already does framework
+> isolation). The charter's conceptual axes map onto the existing tags:
+>
+> | Charter concept | Existing tag axis |
+> | --- | --- |
+> | "layer" (dependency direction) | **`type:`** — `core` / `ui` / `css` / `app` |
+> | "scope" (framework isolation) | **`platform:`** — `agnostic` / `web-angular` (`web-react` retired) |
+> | (lib grouping, no vector equivalent) | **`scope:`** — `design-system` / `eyecatchers` / `showcase` |
 
-**Vertical axis — `layer` (dependencies flow downward only):**
-
-```
-layer:app          showcase                                may depend on anything
-layer:components   design-system-angular, -forms,          depends on: foundation + tokens
-                   eyecatchers-angular
-layer:foundation   design-system-core, eyecatchers-core    depends on: tokens
-layer:tokens       design-system-tokens (new), design-system-css   depends on: nothing
-```
-
-**Horizontal axis — `scope` (framework isolation):**
+**The model that already exists and is enforced** (`eslint.config.mjs` `depConstraints`):
 
 ```
-scope:agnostic   core, eyecatchers-core, tokens, css     no framework dependency, ever
-scope:angular    design-system-angular, -forms, eyecatchers-angular
+type:core        → may depend on: type:core                         (agnostic foundation)
+type:ui          → may depend on: type:core, type:ui
+platform:agnostic   → may depend on: platform:agnostic              (no framework dep, ever)
+platform:web-angular → may depend on: platform:agnostic, web-angular
+scope:eyecatchers   → may depend on: scope:eyecatchers
+scope:showcase      → may depend on: scope:design-system, eyecatchers, showcase
 ```
 
-**Rules enforced by `@nx/enforce-module-boundaries`:**
+The `platform:agnostic → agnostic-only` rule is exactly the load-bearing wall the charter wanted —
+it keeps `design-system-core` / `eyecatchers-core` honestly framework-free and portable. It is
+**already in place**; #4 does not need to build it.
 
-1. A higher layer may not be imported by a lower one.
-2. `scope:agnostic` may not import any framework scope.
+**What #4 actually does in PR1 (the genuinely-new work):**
 
-This is the single most load-bearing idea — the wall that keeps `design-system-core`
-honestly framework-free and portable. Aligns with the `nx-tag-architecture-governance` skill.
+1. **Delete `design-system-react`.** Unused by the cluster (nothing in any `src/` imports it).
+   Removes: `libs/design-system-react/`, its `tsconfig.base.json` path alias, and its entries in
+   the `build:libs` + `publish:libs` scripts. Retires the now-memberless `platform:web-react` tag.
+   Git history preserves it for the "add React later" day. "Angular it is; React added later if
+   needed" — the explicit decision. Drops the #2 retrofit from 7 libs to 6.
+2. **Close two enforcement gaps** surfaced while reading the config:
+   - `type:css` currently has **no** `depConstraint` (the css lib could import a UI lib). Add
+     `type:css → may depend on: type:core` (css is foundation-tier, like core).
+   - `platform:web-react` had a tag but never a rule; deleting the React lib removes the loose end.
 
-**`design-system-react` is deleted in PR1.** It is unused by the cluster; git history
-preserves it for the "add React later" day. This drops the scope axis to `{agnostic, angular}`,
-removes the lib from `build:libs` + `publish:libs`, and reduces the #2 retrofit from 7 libs to 6.
-"Angular it is; React added later if needed" — the explicit decision.
+Aligns with the `nx-tag-architecture-governance` skill.
 
 ### #2 — Public-API discipline (PR2)
 
@@ -113,13 +124,15 @@ it exactly (empty `api-check` diff).
 
 ```
 nx g @de-braighter/ds-generators:lib <name> \
-  --layer=<tokens|foundation|components|app> \
-  --scope=<agnostic|angular> \
+  --group=<design-system|eyecatchers> \
+  --type=<core|ui|css> \
+  --platform=<agnostic|web-angular> \
   --purpose="<one sentence>"
 ```
 
-Scaffolds the entire conforming shape: `public/`, `internal/`, barrel, `api-extractor.json`,
-tags wired into `project.json`, tsconfig path alias, README stub. After PR2 the rule is vector's
+Flags map to the existing tag axes (#4): `--group` → `scope:`, `--type` → `type:`, `--platform`
+→ `platform:`. Scaffolds the entire conforming shape: `public/`, `internal/`, barrel,
+`api-extractor.json`, the three tags wired into `project.json`, tsconfig path alias, README stub. After PR2 the rule is vector's
 rule: **never hand-create a lib.** The generator cannot emit a non-conforming package, so the
 discipline is enforced by construction. The generator lives in the design-system repo (a layer
 repo — code is allowed there, unlike the workbench).
@@ -129,7 +142,7 @@ repo — code is allowed there, unlike the workbench).
 Two-package split (vector ADR-0004, adapted):
 
 ```
-libs/design-system-tokens/          layer:tokens, scope:agnostic   ← NEW lib (born via #5 generator)
+libs/design-system-tokens/          tags: scope:design-system, type:core, platform:agnostic   ← NEW lib (born via #5 generator)
    src/themes/*.json                DTCG source of truth (authored)
    src/resolver/                    JS alias resolver (runtime, platform-agnostic, no DOM/Node dep)
    generated/                       COMMITTED compiled outputs
@@ -217,7 +230,7 @@ Strictly ordered; each PR is its own plan + verifier wave + green `ci:local` bef
 
 | PR | Lands | Depends on | Rationale |
 | --- | --- | --- | --- |
-| **PR1** | #4 tag governance + delete `design-system-react` | — | Foundation; every later gate references the tags. Lowest risk. |
+| **PR1** | #4 tag-governance gaps + delete `design-system-react` | — | Tag governance already exists; PR1 only deletes the React lib + closes the `type:css` gap. Lowest risk. |
 | **PR2** | #2 public-API discipline + #5 generator | PR1 | Generator wires PR1 tags into `project.json`; emits the #2 shape. Retrofits 6 libs. |
 | **PR3** | #1 DTCG pipeline + #6 Writers & extensions | PR1, PR2 | New `design-system-tokens` lib born via the PR2 generator, tagged per PR1. Parity-gated. |
 | **PR4** | #3 reduced-motion centralization | PR1, PR2, PR3 | Shared CSS rule drives motion-duration tokens (exist after PR3); primitive lands in an already-disciplined `core`. |
@@ -226,8 +239,9 @@ Strictly ordered; each PR is its own plan + verifier wave + green `ci:local` bef
 
 Each becomes a binary gate added to `ci:local`.
 
-- **#4** — a deliberately-wrong cross-layer or `agnostic→angular` import *fails* `nx lint`;
-  `design-system-react` gone from repo, `build:libs`, and `publish:libs`.
+- **#4** — `design-system-react` gone from repo, `tsconfig.base.json`, `build:libs`, and
+  `publish:libs`; the `type:css → type:core` constraint is added and a deliberately-wrong
+  `type:css → type:ui` import *fails* `nx lint`; full `ci:local` stays green.
 - **#2** — `api-check` fails on any public-surface drift; 5 TS libs have committed `api/*.api.md`;
   `css` passes the exports-resolution gate.
 - **#5** — `nx g ds-generators:lib …` yields a lib passing `api-check` + boundary lint with **zero hand-edits**.
