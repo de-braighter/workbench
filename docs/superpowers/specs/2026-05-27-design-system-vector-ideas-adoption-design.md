@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | in progress — PR1, PR2a, PR2c, PR2b, PR3a, PR3b shipped (2026-05-27/28); PR4 remains |
+| Status | in progress — PR1, PR2a, PR2c, PR2b, PR3a, PR3b, PR4a shipped (2026-05-27/28); PR4b remains |
 | Date | 2026-05-27 (updated 2026-05-28) |
 | Author | Stibe Heller (with Claude Code) |
 | Scope | `layers/design-system` (all libs) |
@@ -12,8 +12,9 @@
 > - **#2 / PR2c — no empty `internal/` dirs.** All 6 libs were found 100% public (zero internal-only code), so the "physical split" became a `src/lib` → `src/public` rename + a deep-import ESLint guard, with **`internal/` created only on demand** (not as empty scaffolding) — honoring "demand-driven, never speculative".
 > - **#5 / PR2b — conformance check, not a generator.** New libs are rare and dual-flavor (tsc + ng-packagr), so #5's *end* (every lib conforms; no divergent hand-created lib) is delivered by a continuous `check-lib-conformance` CI gate + an "adding a lib" doc, rather than an nx generator.
 > - **#1 / #6 / PR3 — CSS parity now; tokens lib + JS resolver deferred; `substrate.*` dropped; `tokens.css` is mixed.** Grounding found `tokens.css` co-locates tokens **+ utility CSS**, so PR3a extracts the utility CSS to a hand-edited `tokens.shell.css` and the compiler assembles `tokens.css = generated token blocks + shell` (consumers `@import` unchanged). The standalone `design-system-tokens` lib + agnostic **JS resolver** are **deferred** (the only TS token set — the dark eyecatcher palette — is unconsumed; the nx scope wall also forbids a shared tokens lib `eyecatchers-core` could use). PR3b reconciles that dark palette by **generating** a const module into both core libs from one DTCG source (dedup-by-generation, not a shared module). The four **`substrate.*` aesthetic extensions are dropped** — they have **zero real tokens** (glow/glass/neon are component props, not tokens), so modelling them would be the speculative scaffolding the charter forbids; `shadow` stays a standard DTCG type.
+> - **#3 / PR4 — primitive in BOTH cores (scope wall); shared CSS rule deferred; decomposed.** The charter located the `prefersReducedMotion()` primitive in `design-system-core`, but the nx scope wall forbids `eyecatchers-angular` from importing it from there, so PR4a put the primitive + `createMotionLoop` in **both** cores (mirroring `raf.ts`'s existing duplication — same dedup-by-shared-source pattern PR3b used). The shared `@media (prefers-reduced-motion: reduce)` CSS rule is **deferred** — the tokens parity-gate's CSS parser doesn't handle nested `@media` braces, and current CSS-driven motion is one rule in `button.css`, so the parser-upgrade cost outweighs the immediate value. PR4 decomposed into PR4a (infra; pure additive) + PR4b (migrate the ~15 component `matchMedia` sites onto the central primitive) because there's no visual-regression net for the 15 animation components.
 >
-> PR2 was decomposed into three sub-PRs: **PR2a** (api-extractor drift gate), **PR2c** (rename + guard), **PR2b** (conformance gate). PR3 into two: **PR3a** (`tokens.css` DTCG parity), **PR3b** (dark-palette reconciliation). See the per-PR plans in `docs/superpowers/plans/`.
+> PR2 was decomposed into three sub-PRs: **PR2a** (api-extractor drift gate), **PR2c** (rename + guard), **PR2b** (conformance gate). PR3 into two: **PR3a** (`tokens.css` DTCG parity), **PR3b** (dark-palette reconciliation). PR4 into two: **PR4a** (RM primitive + `createMotionLoop` in both cores), **PR4b** (migrate the ~15 component call sites). See the per-PR plans in `docs/superpowers/plans/`.
 
 ## Context
 
@@ -243,7 +244,8 @@ Strictly ordered; each PR is its own plan + verifier wave + green `ci:local` bef
 | **PR2b** ✅ | #5 lib-conformance CI gate + "adding a lib" doc | PR2a, PR2c | Continuous conformance check, not a generator. (shipped #91) |
 | **PR3a** ✅ | #1 `tokens.css` DTCG source + compiler + parity gate (+ `tokens.shell.css` for the co-located utility CSS) | PR1, PR2a, PR2c, PR2b | Round-trip parity gate; `tokens.css` generated; consumers unchanged. `substrate.*` dropped. (shipped #93) |
 | **PR3b** ✅ | #1/#6 dark eyecatcher-palette reconciliation: one DTCG source + `TsWriter` generating a const module into both core libs | PR3a | Dedup-by-generation (scope wall forbids a shared lib); values preserved (api-check snapshots unchanged). No new lib / JS resolver (deferred — unconsumed). (shipped #95) |
-| **PR4** | #3 reduced-motion centralization | PR3a, PR3b | Shared CSS rule drives motion-duration tokens (exist after PR3a); primitive lands in an already-disciplined `core`. |
+| **PR4a** ✅ | #3 RM primitive + `createMotionLoop` in both cores (scope wall) + 5/5 tests | PR3a, PR3b | Pure additive infra; api-snapshots grew by 4 exports each core, 0 deletions; no component changes. CSS `@media` rule deferred. (shipped #97) |
+| **PR4b** | #3 migrate the ~15 `matchMedia` call sites onto the central primitive | PR4a | Consumer-internal refactor (api-snapshots unchanged); grep gate proves zero `matchMedia` remains in `eyecatchers-angular`. |
 
 ## Success criteria
 
