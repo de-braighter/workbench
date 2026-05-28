@@ -70,17 +70,28 @@ For every open `type/epic` GH issue on `de-braighter/exercir`:
 
 For every open `type/story` GH issue:
 - Either has `Parent: #N` resolving to an open `type/epic` issue, OR carries the `standalone` label. Not both, not neither.
-- If the story body claims a `Tech design:` link, that link resolves to a real file under `concepts/technical-designs/` (and the file's frontmatter `realizes-stories:` lists this issue number).
+- If the story body claims a `Tech design:` link, that link resolves to a real file under `concepts/technical-designs/` (and the file's frontmatter `implemented-by:` lists this issue number).
 
 For every PR open or merged in the last N days (configurable, default 30):
 - Body contains `Closes #<NN>` resolving to a real `type/story` issue.
 - If the PR touches `prisma/`, `libs/kernel*`, or any `*.controller.ts` adding/changing API contracts, a `Tech design:` link should be present (warn if missing — not block).
 
 For every file under `concepts/technical-designs/<slug>.md` (excluding `_template.md`):
-- Frontmatter `concept:` field exists and resolves to a real file under `concepts/`.
-- Frontmatter `realizes-stories:` lists ≥1 GH issue number that exists.
+- Frontmatter `relates-to:` includes the parent `concepts/` file it designs (resolves to a real file).
+- Frontmatter `implemented-by:` lists ≥1 GH issue number that exists.
 
 Findings go to a single `type/audit-finding` tracking issue (one per audit run); agent does not block PRs.
+
+### 9. Frontmatter schema conformance (ADR-181)
+
+The frontmatter **key vocabulary** is a canonical set owned by `layers/specs/handbook/frontmatter-schema.md` and enforced by a validator. Run it as part of every doc audit:
+
+```bash
+cd layers/specs && node tools/validators/frontmatter-schema.mjs           # whole corpus
+cd layers/specs && node tools/validators/frontmatter-schema.mjs <files…>  # only the PR's changed adr/concept files
+```
+
+It exits non-zero and prints, per file, any: **unknown key** (a key outside the ADR/concept schema — this is what keeps the ~40-key zoo from regrowing), **missing required key**, **invalid `status` enum**, or **non-kebab key**. Report every violation as **BLOCKING** (cite `file` + the rule). This is the automated gate for the canonical set per `handbook/frontmatter-schema.md` §10; the agent surfaces the validator's findings rather than re-deriving them by hand. If the validator binary is absent (older checkout), note it and fall back to a manual key-vocabulary spot-check.
 
 ## Output template
 
