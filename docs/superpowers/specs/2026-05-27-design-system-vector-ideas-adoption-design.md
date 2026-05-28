@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | in progress — PR1, PR2a, PR2c, PR2b shipped (2026-05-27/28); PR3, PR4 remain |
+| Status | in progress — PR1, PR2a, PR2c, PR2b, PR3a, PR3b shipped (2026-05-27/28); PR4 remains |
 | Date | 2026-05-27 (updated 2026-05-28) |
 | Author | Stibe Heller (with Claude Code) |
 | Scope | `layers/design-system` (all libs) |
@@ -11,8 +11,9 @@
 > **Mid-execution reinterpretations (recorded 2026-05-28):** two charter decisions changed once grounding revealed reality:
 > - **#2 / PR2c — no empty `internal/` dirs.** All 6 libs were found 100% public (zero internal-only code), so the "physical split" became a `src/lib` → `src/public` rename + a deep-import ESLint guard, with **`internal/` created only on demand** (not as empty scaffolding) — honoring "demand-driven, never speculative".
 > - **#5 / PR2b — conformance check, not a generator.** New libs are rare and dual-flavor (tsc + ng-packagr), so #5's *end* (every lib conforms; no divergent hand-created lib) is delivered by a continuous `check-lib-conformance` CI gate + an "adding a lib" doc, rather than an nx generator.
+> - **#1 / #6 / PR3 — CSS parity now; tokens lib + JS resolver deferred; `substrate.*` dropped; `tokens.css` is mixed.** Grounding found `tokens.css` co-locates tokens **+ utility CSS**, so PR3a extracts the utility CSS to a hand-edited `tokens.shell.css` and the compiler assembles `tokens.css = generated token blocks + shell` (consumers `@import` unchanged). The standalone `design-system-tokens` lib + agnostic **JS resolver** are **deferred** (the only TS token set — the dark eyecatcher palette — is unconsumed; the nx scope wall also forbids a shared tokens lib `eyecatchers-core` could use). PR3b reconciles that dark palette by **generating** a const module into both core libs from one DTCG source (dedup-by-generation, not a shared module). The four **`substrate.*` aesthetic extensions are dropped** — they have **zero real tokens** (glow/glass/neon are component props, not tokens), so modelling them would be the speculative scaffolding the charter forbids; `shadow` stays a standard DTCG type.
 >
-> PR2 was decomposed into three sub-PRs: **PR2a** (api-extractor drift gate), **PR2c** (rename + guard), **PR2b** (conformance gate). See the per-PR plans in `docs/superpowers/plans/`.
+> PR2 was decomposed into three sub-PRs: **PR2a** (api-extractor drift gate), **PR2c** (rename + guard), **PR2b** (conformance gate). PR3 into two: **PR3a** (`tokens.css` DTCG parity), **PR3b** (dark-palette reconciliation). See the per-PR plans in `docs/superpowers/plans/`.
 
 ## Context
 
@@ -240,8 +241,9 @@ Strictly ordered; each PR is its own plan + verifier wave + green `ci:local` bef
 | **PR2a** ✅ | #2 api-extractor public-API drift gate + css exports gate | PR1 | `.api.md` snapshots for the 5 TS libs + `api-check` in `ci:local`. (shipped #87) |
 | **PR2c** ✅ | #2 `src/lib`→`src/public` rename + deep-import ESLint guard | PR2a | Surface-neutral (gate-proven); no empty `internal/`. (shipped #89) |
 | **PR2b** ✅ | #5 lib-conformance CI gate + "adding a lib" doc | PR2a, PR2c | Continuous conformance check, not a generator. (shipped #91) |
-| **PR3** | #1 DTCG pipeline + #6 Writers & extensions | PR1, PR2a, PR2c, PR2b | New `design-system-tokens` lib must satisfy the conformance gate; parity-gated against today's `tokens.css`. |
-| **PR4** | #3 reduced-motion centralization | PR3 | Shared CSS rule drives motion-duration tokens (exist after PR3); primitive lands in an already-disciplined `core`. |
+| **PR3a** ✅ | #1 `tokens.css` DTCG source + compiler + parity gate (+ `tokens.shell.css` for the co-located utility CSS) | PR1, PR2a, PR2c, PR2b | Round-trip parity gate; `tokens.css` generated; consumers unchanged. `substrate.*` dropped. (shipped #93) |
+| **PR3b** ✅ | #1/#6 dark eyecatcher-palette reconciliation: one DTCG source + `TsWriter` generating a const module into both core libs | PR3a | Dedup-by-generation (scope wall forbids a shared lib); values preserved (api-check snapshots unchanged). No new lib / JS resolver (deferred — unconsumed). (shipped #95) |
+| **PR4** | #3 reduced-motion centralization | PR3a, PR3b | Shared CSS rule drives motion-duration tokens (exist after PR3a); primitive lands in an already-disciplined `core`. |
 
 ## Success criteria
 
