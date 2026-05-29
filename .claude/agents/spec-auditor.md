@@ -1,6 +1,6 @@
 ---
 name: spec-auditor
-description: "Use this agent to audit cross-references, ADR numbering, dependency closure, and consistency across the spec catalogue (`layers/specs/`). Spawn on demand (e.g., after a batch of new ADRs lands) or on every spec commit via hook. Catches stale ADR refs, numbering collisions, missing index entries, dangling concept links. Read-only by default; can be invoked with edit permission for trivial fixes (renumbering, link updates) but not for new content."
+description: "Use this agent to audit cross-references, ADR numbering, dependency closure, frontmatter-schema conformance (ADR-181), body-content markdownlint, and consistency across the spec catalogue (`layers/specs/`). Spawn on demand (e.g., after a batch of new ADRs lands) or on every spec commit via hook. Catches stale ADR refs, numbering collisions, missing index entries, dangling concept links, and body-lint regressions (untagged code fences, broken link fragments, etc.). Read-only by default; can be invoked with edit permission for trivial fixes (renumbering, link updates) but not for new content."
 tools:
   - Read
   - Glob
@@ -92,6 +92,17 @@ cd layers/specs && node tools/validators/frontmatter-schema.mjs <files…>  # on
 ```
 
 It exits non-zero and prints, per file, any: **unknown key** (a key outside the ADR/concept schema — this is what keeps the ~40-key zoo from regrowing), **missing required key**, **invalid `status` enum**, or **non-kebab key**. Report every violation as **BLOCKING** (cite `file` + the rule). This is the automated gate for the canonical set per `handbook/frontmatter-schema.md` §10; the agent surfaces the validator's findings rather than re-deriving them by hand. If the validator binary is absent (older checkout), note it and fall back to a manual key-vocabulary spot-check.
+
+### 10. Body-content lint (markdownlint)
+
+§9 gates **frontmatter**; this gates the **document body**. The two are deliberately separate — markdownlint never judges frontmatter (it would fight ADR-181). Run the body gate as part of every doc audit:
+
+```bash
+cd layers/specs && bash tools/lint-md.sh           # whole governed set
+cd layers/specs && bash tools/lint-md.sh <files…>  # only the PR's changed .md files
+```
+
+It runs `markdownlint-cli` with the repo-root `.markdownlint.jsonc` over the governed dirs (`adr/ concepts/ handbook/ dossiers/ enterprise/ business/ cookbook/ ui-design/`) and exits non-zero on violation. Report every violation as **BLOCKING** (cite `file:line` + the rule id, e.g. `MD040`). The config already disables the rules the corpus diverges from by convention or that are systematic false positives here (MD013/024/025/033/041/060 + MD018/029/037/038) — so a fresh violation is a real one, not noise. Common live rules: `MD040` (untagged code fence — usually wants ` ```text `), `MD036` (emphasis-as-heading), `MD032`/`MD022`/`MD031` (blanks around lists/headings/fences), `MD051` (broken link fragment). If `tools/lint-md.sh` is absent (older checkout), note it and fall back to invoking `npx markdownlint-cli` against the changed files. `_archive/` and the `_brand/`/`_diagrams/`/`_inputs/` scratch dirs are intentionally out of scope.
 
 ## Output template
 
