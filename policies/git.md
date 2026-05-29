@@ -21,6 +21,18 @@ Every non-trivial PR (new endpoint, schema migration, multi-component UI feature
 
 All applicable agents dispatched in one message with multiple tool calls, all using `isolation: "worktree"`. Disagreement escalates to the founder. See `workflows/verifier-wave.md` for details.
 
+## Sonar quality gate (code repos)
+
+Code repos with a Sonar gate run it **before merging** a non-trivial code PR — not just the fast `ci:local`. The gate pushes a **fresh analysis** to the local SonarQube (`localhost:9000`) and enforces the quality gate:
+
+- **exercir:** `npm run ci:sonar` — `ci:local` + fresh coverage + scan + the fatal `sonar:gate` check.
+- **devloop:** Sonar is already wired into `ci:local` (non-fatal push); its scan refreshes on every gate run.
+- Other code repos (design-system, substrate): run `npm run sonar:scan` (after coverage) where wired.
+
+Why per-merge, not occasional: SonarQube was billing-frozen CI's blind spot — analyses were manual and stale, so the quality gate never evaluated recent PRs and `pack-devloop`'s calibration loop had no fresh, attributable coverage to observe. A per-merge analysis keeps the gate live and gives the calibration loop tight bracketing windows. (True per-PR New Code measures still need CI + PR decoration — deferred while GHA is frozen.)
+
+A Sonar token must be available (`SONAR_TOKEN`, a repo `tools/sonar/.token`, or `SONAR_ADMIN_PW` from the gitignored `.env`); without one the scan skips non-fatally.
+
 ## Hard rules
 
 - **Never `--no-verify`.** Pre-push hooks (PHI scanner, secret scanner) are the only gates between work and the remote when GHA is frozen. Fix the underlying issue if a hook fails; do not bypass.
