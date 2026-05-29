@@ -33,7 +33,7 @@ Read `repos.yaml` at the cluster root. It groups the sibling repos:
 ```yaml
 repos:
   layers:  [substrate, design-system, specs, platform, foundation]
-  domains: [exercir, conservation, vector]
+  domains: [exercir, conservation, vector, devloop]
 ```
 
 `layers/*` clone into `layers/<name>`; `domains/*` clone into `domains/<name>`.

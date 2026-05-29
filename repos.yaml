@@ -17,3 +17,4 @@ repos:
     - exercir         # team sports (live pack-football work)
     - conservation
     - vector
+    - devloop         # SDLC-on-substrate — the dev twin (internal tooling)

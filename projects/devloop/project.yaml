@@ -1,0 +1,30 @@
+# devloop — SDLC-on-substrate domain (internal tooling)
+# Status: internal-tool — a digital twin of de Braighter's own software delivery.
+# Form: correct-minimal pack (substrate-contracts-typed; no NestJS/Postgres/RLS per ADR-176).
+# Sanctioned by ADR-192 (pack-on-platform, zero kernel change) + ADR-193 (effect-claims).
+# Design: docs/superpowers/specs/2026-05-29-devloop-pack-technical-design.md
+
+name: devloop
+domain: sdlc-on-substrate
+status: internal-tool
+repo: github.com/de-braighter/devloop
+local: domains/devloop/
+
+# Hints for orchestrator judgment, not enforcement. All agents and skills
+# remain available; these lists describe the typical curation. devloop is a
+# pure-TS substrate consumer (no Angular, no Prisma), so the curation skews
+# backend/substrate, not UI.
+enabled:
+  agents:
+    suggested:
+      - substrate-coder-pro
+      - implementer
+      - reviewer
+      - qa-engineer
+      - test-pro
+      - local-ci
+  skills:
+    suggested:
+      - architecture-concierge
+      - diff-refactor-engine
+      - md-quality-review
