@@ -35,6 +35,28 @@ All applicable agents dispatched in one message with multiple tool calls, all us
 - Body explains *why*, not *what* (the diff shows what).
 - Co-authored-by trailers for AI-assisted commits per the team convention.
 
+## PR body — Effect declarations (optional, non-gating)
+
+When a PR carries a *forward prediction* about a measurable delivery indicator, declare it in the body so `pack-devloop` can calibrate the predictor over time. This is an [ADR-193](../layers/specs/adr/adr-193-pack-devloop-effect-declarations-are-calibratable-claims.md) **calibratable claim — never a merge gate**: declarations are optional, observed-vs-declared is logged not enforced, a missing or wrong declaration never blocks a PR, and it scores the *predictor's* calibration (the producer), not compliance.
+
+One line per declared effect:
+
+```text
+Effect: <indicatorId> <predicted>±<sd> [basis]
+```
+
+- `<indicatorId>` — e.g. `cycle-time`. **Today only `cycle-time` is auto-observed** (review latency in hours, derived from the merge timestamps); other indicators are captured but won't score until a metric source is wired into `pack-devloop`.
+- `<predicted>±<sd>` — point estimate and 1σ uncertainty (separator `±`, `+/-`, or `+-`). The score is a proper rule: an over-tight wrong interval is penalised, but so is a vague wide one — sharpness *and* accuracy both count, so state an honest `sd`.
+- `[basis]` — optional provenance: `literature | expert | tenant | derived | sham` (defaults to `derived`).
+
+Example (a PR expected to merge quickly):
+
+```text
+Effect: cycle-time 6±2 expert
+```
+
+**Orchestrator:** include an `Effect:` line whenever you can make a defensible prediction about a self-observed indicator (today: `cycle-time`); omit it rather than guess wildly. An empty or reflexive declaration teaches readers to ignore the field.
+
 ## Branches
 
 - Feature branches off `main`. Squash-merge to `main` via PR.
