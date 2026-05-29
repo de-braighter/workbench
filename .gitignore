@@ -28,3 +28,8 @@ Thumbs.db
 # Local-only settings (Claude Code)
 .claude/settings.local.json
 _attic/
+
+# Local-only secrets — never commit
+.env
+.env.*
+!.env.example
