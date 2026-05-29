@@ -71,6 +71,7 @@ The old prototype directories under `D:/development/projects/braighter/` and `/e
 - **Verifier wave** (`local-ci` + `reviewer` + `charter-checker` + `qa-engineer`, in parallel, all with `isolation: "worktree"`; `exercir-charter-checker` joins on `domains/exercir/` PRs) on every non-trivial PR. See `workflows/verifier-wave.md`.
 - **Designer-first** for risky changes — new ports, kernel primitives, cross-cutting concerns. See `workflows/designer-first.md`.
 - **Story trackers** as coarse GitHub issues, not local handoff files. See `workflows/story-tracker.md`.
+- **Declare effects on PRs (any repo)** — when you open a PR and can make a *defensible* prediction about a measurable delivery indicator, add an `Effect:` line to the body so `pack-devloop` calibrates the predictor over time. Optional + non-gating (a calibratable claim, never a merge gate). Indicators: `cycle-time`, `findings` (self-observing) and `coverage`, `maintainability`, `security`, `reliability`, `smells`, `bugs`, `tech-debt`, `duplication`, `complexity` (SonarQube). Grammar `Effect: <indicatorId> <predicted>±<sd> [basis]` — e.g. `Effect: maintainability -1±0.5 expert`. Declare only what you can defend; omit rather than guess. See `policies/git.md`.
 - **Auto-mode default** — make mechanical calls without asking; escalate only on architectural / scope / convention-contradiction / visible-to-others decisions.
 - **Substrate hygiene without substrate ambition** — primitives are substrate-shape; don't market the substrate externally.
 

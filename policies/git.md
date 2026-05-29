@@ -45,7 +45,7 @@ One line per declared effect:
 Effect: <indicatorId> <predicted>±<sd> [basis]
 ```
 
-- `<indicatorId>` — what you're predicting. Auto-observed today: `cycle-time` (hours) and `findings` (clean-wave count) are **self-observing** from the log; `coverage`, `smells`, `bugs`, `tech-debt`, `duplication`, `complexity` come from **SonarQube** (delta across the merge, when a token is configured). Other indicators are captured but won't score until an observer is wired into `pack-devloop`.
+- `<indicatorId>` — what you're predicting (declare across dimensions, not just coverage). Auto-observed today: `cycle-time` (hours) and `findings` (clean-wave count) are **self-observing** from the log; the A–E quality ratings `maintainability`, `security`, `reliability` (and `security-hotspots`), plus `coverage`, `smells`, `bugs`, `vulnerabilities`, `tech-debt`, `duplication`, `complexity` come from **SonarQube** (delta across the merge, when a token is configured; for ratings −1 = improved one letter grade). Other indicators are captured but won't score until an observer is wired into `pack-devloop`.
 - `<predicted>±<sd>` — point estimate and 1σ uncertainty (separator `±`, `+/-`, or `+-`). The score is a proper rule: an over-tight wrong interval is penalised, but so is a vague wide one — sharpness *and* accuracy both count, so state an honest `sd`.
 - `[basis]` — optional provenance: `literature | expert | tenant | derived | sham` (defaults to `derived`).
 
