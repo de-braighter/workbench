@@ -69,6 +69,24 @@ Effect: cycle-time 6±2 expert
 
 **Orchestrator:** include an `Effect:` line whenever you can make a defensible prediction about an observed indicator (e.g. `cycle-time`, `findings`, `coverage`); omit it rather than guess wildly. An empty or reflexive declaration teaches readers to ignore the field.
 
+### Producer attribution
+
+Per-producer calibration ("which agents' claims are trustworthy", §5.3) needs to know *who* authored a PR — and `gh` can't tell it (the PR author is a human account; we carry no AI commit trailer). So the producing session declares it in the body, one line:
+
+```text
+Producer: <producer>/<model> [skill1, skill2]
+```
+
+e.g. `Producer: orchestrator/claude-opus-4-8 [brainstorming, writing-plans]`. `backfill` parses it into a producer event; without it, every calibration pair on that PR reads `producer='unknown'` and the §5.3 posterior is inert. **Include it on every agent-authored PR.**
+
+### Feeding the twin — the per-PR ritual
+
+The signals only accrue if the loop is fed. From `domains/devloop`:
+
+- **After a verifier wave:** `npm run dev -- drain <repo#pr>` — PR-scopes the captured verdicts so `findings` / `qa.score` score (un-scoped drains feed verifier-trust only).
+- **After merge:** `npm run dev -- backfill` then `… reconcile` — parses the `Producer:`/`Effect:` lines and observes the self-observing + Sonar indicators.
+- **Per the retro cadence (notable PRs only):** `npm run dev -- retro '{"repo":"…","pr":N,"kind":"friction|win|improvement","note":"…","by":"<retro-er ≠ author>"}'` — accumulates lessons + the open-improvement backlog (`… retros`).
+
 ## Branches
 
 - Feature branches off `main`. Squash-merge to `main` via PR.
