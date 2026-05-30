@@ -1,4 +1,4 @@
-# Design-System Adoption Charter — Six Ideas Salvaged from `vector`
+# Design-System Adoption Charter — Six Ideas Salvaged from a Retired Domain Prototype
 
 | | |
 | --- | --- |
@@ -6,7 +6,7 @@
 | Date | 2026-05-27 (updated 2026-05-28) |
 | Author | Stibe Heller (with Claude Code) |
 | Scope | `layers/design-system` (all libs) |
-| Origin | Analysis of the isolated `domains/vector` repo ("substrate-continuum") |
+| Origin | Analysis of a retired, isolated domain prototype |
 
 > **Mid-execution reinterpretations (recorded 2026-05-28):** two charter decisions changed once grounding revealed reality:
 > - **#2 / PR2c — no empty `internal/` dirs.** All 6 libs were found 100% public (zero internal-only code), so the "physical split" became a `src/lib` → `src/public` rename + a deep-import ESLint guard, with **`internal/` created only on demand** (not as empty scaffolding) — honoring "demand-driven, never speculative".
@@ -18,14 +18,14 @@
 
 ## Context
 
-`domains/vector` is an ambitious "SVG-as-spatial-medium" visual operating system
+A retired domain prototype was an ambitious "SVG-as-spatial-medium" visual operating system
 that reached Phase C (primitives, compound widgets, data grid, a task-tracker app)
 and is **consumed by nothing in the cluster** — no layer or domain imports any of its
-nine `@de-braighter/vector-*` packages. The grand vision (a retained-mode scene graph
+its packages. The grand vision (a retained-mode scene graph
 with pluggable SVG/Canvas/WebGL/React-Native/Flutter renderers) stays an idea; it is
 not what design-system needs.
 
-What *is* worth salvaging are the engineering disciplines vector was forced to invent
+What *is* worth salvaging are the engineering disciplines the retired prototype was forced to invent
 to stay coherent at scale. Six of them are genuinely better than what `design-system`
 has today and cheap to adopt. This charter fixes **what we adopt, in what order, and
 the success criterion for each**. Each numbered item below is implemented in a focused,
@@ -48,16 +48,16 @@ independently-reviewable PR with its own short plan and verifier wave.
 - **No nx generator infrastructure, no visual-regression baselines.**
 
 The absence of visual-regression baselines is the key risk driver: a token change that
-alters rendered output has **no automated tripwire** in design-system today (only `vector`
-has a Playwright screenshot harness). Parity must therefore be *built in*, not assumed.
+alters rendered output has **no automated tripwire** in design-system today (only the retired prototype
+had a Playwright screenshot harness). Parity must therefore be *built in*, not assumed.
 
 ## The six adoptions
 
 ### #4 — Two-axis tag governance (PR1, foundation)
 
-> **Reconciliation (2026-05-27):** vector's two-axis model is **already implemented** in
+> **Reconciliation (2026-05-27):** the prototype's two-axis model is **already implemented** in
 > design-system under different names, and already enforced by `@nx/enforce-module-boundaries`.
-> We keep the established vocabulary rather than rename to vector's `layer:`/`scope:` (which would
+> We keep the established vocabulary rather than rename to the prototype's `layer:`/`scope:` (which would
 > collide — `scope:` already means the lib group here, and `platform:` already does framework
 > isolation). The charter's conceptual axes map onto the existing tags:
 >
@@ -65,7 +65,7 @@ has a Playwright screenshot harness). Parity must therefore be *built in*, not a
 > | --- | --- |
 > | "layer" (dependency direction) | **`type:`** — `core` / `ui` / `css` / `app` |
 > | "scope" (framework isolation) | **`platform:`** — `agnostic` / `web-angular` (`web-react` retired) |
-> | (lib grouping, no vector equivalent) | **`scope:`** — `design-system` / `eyecatchers` / `showcase` |
+> | (lib grouping, no prototype equivalent) | **`scope:`** — `design-system` / `eyecatchers` / `showcase` |
 
 **The model that already exists and is enforced** (`eslint.config.mjs` `depConstraints`):
 
@@ -98,7 +98,7 @@ Aligns with the `nx-tag-architecture-governance` skill.
 
 ### #2 — Public-API discipline (PR2)
 
-Vector's ADR-0003 shape, applied to all 6 remaining libs:
+The prototype's ADR-0003 shape, applied to all 6 remaining libs:
 
 ```
 libs/<name>/src/
@@ -140,14 +140,14 @@ nx g @de-braighter/ds-generators:lib <name> \
 
 Flags map to the existing tag axes (#4): `--group` → `scope:`, `--type` → `type:`, `--platform`
 → `platform:`. Scaffolds the entire conforming shape: `public/`, `internal/`, barrel,
-`api-extractor.json`, the three tags wired into `project.json`, tsconfig path alias, README stub. After PR2 the rule is vector's
+`api-extractor.json`, the three tags wired into `project.json`, tsconfig path alias, README stub. After PR2 the rule is the prototype's
 rule: **never hand-create a lib.** The generator cannot emit a non-conforming package, so the
 discipline is enforced by construction. The generator lives in the design-system repo (a layer
 repo — code is allowed there, unlike the workbench).
 
 ### #1 — DTCG token pipeline (PR3)
 
-Two-package split (vector ADR-0004, adapted):
+Two-package split (the prototype's ADR-0004, adapted):
 
 ```
 libs/design-system-tokens/          tags: scope:design-system, type:core, platform:agnostic   ← NEW lib (born via #5 generator)
@@ -214,21 +214,21 @@ read the files.
 
 ### #3 — Reduced-motion at the framework layer (PR4)
 
-Honest adaptation: vector centralizes on one chokepoint (`MotionSystem.bind()`), but design-system
+Honest adaptation: the retired prototype centralized on one chokepoint (`MotionSystem.bind()`), but design-system
 has **two** motion mechanisms — the JS RAF frame-loop and raw CSS transitions — so there are two
 centralization points, replacing 15+ ad-hoc checks.
 
 1. **One source of truth in `design-system-core`:** a `prefersReducedMotion()` primitive
    (cached `matchMedia` read, guarded by `typeof window !== 'undefined'` for SSR/vitest, with an
-   explicit override arg for testing — vector ADR-0015 detection model). Replaces all scattered calls.
+   explicit override arg for testing — the prototype's ADR-0015 detection model). Replaces all scattered calls.
 2. **The shared RAF frame-loop honors it at the loop boundary:** when reduced, an animation primes
-   and settles straight to its terminal value (vector's instant-settle), writes once, and stops.
+   and settles straight to its terminal value (the prototype's instant-settle), writes once, and stops.
    Every component on the shared loop is covered for free, including future ones.
 3. **CSS-driven motion gets one shared rule:** a single `@media (prefers-reduced-motion: reduce)`
    block in `design-system-css` driving motion-duration tokens → 0, inherited through the token cascade.
 4. **Migrate** the 15+ components off bespoke `matchMedia` onto the primitive / shared loop.
 
-**Explicitly NOT ported:** vector's channel runtime, spring solver, and `tween/sequence` API.
+**Explicitly NOT ported:** the retired prototype's channel runtime, spring solver, and `tween/sequence` API.
 design-system's `damp()` + frame-loop is simpler and sufficient. #3 is purely about *where the
 preference is honored*.
 
@@ -267,7 +267,7 @@ Each becomes a binary gate added to `ci:local`.
 ## Risks and mitigations
 
 1. **Token parity without a visual net.** Mitigated by the `tokens:check` byte-diff gate + a manual
-   showcase spot-check in PR3. Deferred option remains: port vector's Playwright visual-regression
+   showcase spot-check in PR3. Deferred option remains: port the retired prototype's Playwright visual-regression
    harness later as a backstop.
 2. **⚠️ api-extractor on Angular ng-packagr output (the one genuine integration unknown).**
    api-extractor consumes `.d.ts` rollups; Angular partial-Ivy `.d.ts` emit can be awkward, and this
@@ -285,7 +285,7 @@ Each PR reverts independently. This charter records the order, so re-entry after
 ## What we are explicitly NOT doing
 
 - The retained-mode scene graph / multi-renderer "visual OS" core.
-- Vector's spring-physics channel runtime, solver, and `tween/sequence/delay` API.
+- The retired prototype's spring-physics channel runtime, solver, and `tween/sequence/delay` API.
 - Canvas / WebGL / React-Native / Flutter renderers.
 - Speculative *values* for empty `substrate.*` token categories.
 - Token value changes during the #1 migration (deferred to separate PRs).

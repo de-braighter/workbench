@@ -238,11 +238,11 @@ git push -u origin chore/ds-pr2b-lib-conformance
 
 - [ ] **Step 3: Story issue + PR**
 ```bash
-gh issue create --title "PR2b: lib-conformance CI gate + adding-a-lib doc" --body "Story for PR2b of the vector-ideas adoption charter (#5). Reinterprets #5's means: instead of an nx generator, a continuous check-lib-conformance gate (wired into ci:local) that validates EVERY lib matches the conforming shape (tags, src/public + barrel, api-extractor.json + etc/*.api.md, api-check target, tsconfig path alias; css lib checked for its check-css-exports gate), plus a docs/adding-a-lib.md template. New libs are rare + dual-flavor, so a continuous check is higher-value/lower-maintenance than a generator and catches drift across all libs. This repo has no type/story label taxonomy, so filed unlabeled."
+gh issue create --title "PR2b: lib-conformance CI gate + adding-a-lib doc" --body "Story for PR2b of the design-system adoption charter (#5). Reinterprets #5's means: instead of an nx generator, a continuous check-lib-conformance gate (wired into ci:local) that validates EVERY lib matches the conforming shape (tags, src/public + barrel, api-extractor.json + etc/*.api.md, api-check target, tsconfig path alias; css lib checked for its check-css-exports gate), plus a docs/adding-a-lib.md template. New libs are rare + dual-flavor, so a continuous check is higher-value/lower-maintenance than a generator and catches drift across all libs. This repo has no type/story label taxonomy, so filed unlabeled."
 ```
 Record the issue number `NN`, then:
 ```bash
-gh pr create --base main --title "chore: lib-conformance CI gate + adding-a-lib doc (charter PR2b)" --body "PR2b of the vector-ideas adoption charter (#5) — the conformance-check interpretation.
+gh pr create --base main --title "chore: lib-conformance CI gate + adding-a-lib doc (charter PR2b)" --body "PR2b of the design-system adoption charter (#5) — the conformance-check interpretation.
 
 Closes #NN
 

@@ -52,8 +52,7 @@ de-braighter/                     ← this repo (de-braighter/workbench)
 │   └── foundation/
 ├── domains/                      ← cluster: sibling domain repos (gitignored here)
 │   ├── exercir/
-│   ├── conservation/
-│   └── vector/
+│   └── conservation/
 └── attic/                        ← preservation repo (gitignored here)
 ```
 
@@ -61,7 +60,7 @@ de-braighter/                     ← this repo (de-braighter/workbench)
 
 All layers and domains are migrated into the cluster, re-scoped `@de-braighter/*`, building green on `main`:
 - **Layers:** `substrate` (kernel — `@de-braighter/substrate-{contracts,runtime}`), `design-system`, `specs`, `platform`, `foundation` (shared packages — `@de-braighter/{std,lint-kit,test-kit}`).
-- **Domains:** `exercir` (team sports — the live pack-football work), `conservation`, `vector`.
+- **Domains:** `exercir` (team sports — the live pack-football work), `conservation`.
 
 The old prototype directories under `D:/development/projects/braighter/` and `/exercir/` are deleted (content lives in the cluster + git history). **Gate:** remote GitHub Actions is billing-blocked until ~June, so the working gate is **local** — `npm/pnpm run ci:local` per repo + shared SonarQube (`localhost:9000`). Never bypass pre-push hooks.
 
@@ -80,7 +79,7 @@ The old prototype directories under `D:/development/projects/braighter/` and `/e
 - GitHub org: `de-braighter` (renamed from `braighter-io` 2026-05-25; old URLs auto-redirect).
 - Local cluster + npm scope: `de-braighter` / `@de-braighter`.
 - Substrate packages: `@de-braighter/substrate-contracts`, `@de-braighter/substrate-runtime`.
-- Domain names: freely chosen per domain. `exercir` (team sports). Working names for prototypes: `conservation`, `vector`.
+- Domain names: freely chosen per domain. `exercir` (team sports). Working names for prototypes: `conservation`.
 
 ## Design references
 

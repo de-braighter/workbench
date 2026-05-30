@@ -30,7 +30,7 @@ This design defines a clean target structure that:
 | Migration posture | Fold existing prototypes into the new structure; nothing thrown away |
 | Workbench scope | Discipline-content tier (agents + skills + slash commands + hooks + templates + policies + workflows + project descriptors). **No** UI, API, SPA, transformer. |
 | Workbench operation model | **Cwd model** — `.claude/` only at the cluster root; Claude Code is always launched from there; no sync into sibling repos |
-| Surviving tracks beyond Exercir | Substrate kernel (as a layer), conservation genetics, vector visual OS, AI-Native Org Twin (deferred) |
+| Surviving tracks beyond Exercir | Substrate kernel (as a layer), conservation genetics, AI-Native Org Twin (deferred) |
 | Trinity (Exercir / Strategir / Operir) | **Dropped.** Exercir is the only confirmed product, narrowed to team sports. |
 | Naming convention | Free per item. **No `-ir` suffix requirement.** Each thing named for what it is. |
 | Product / track unification | One concept: **`domain`**. Status field (`prototype` / `product` / `archived`) is metadata, not structure. |
@@ -60,10 +60,9 @@ This design defines a clean target structure that:
 |---|---|---|---|---|
 | exercir | `braighter-io/exercir` | `de-braighter/domains/exercir/` | Team sports (football today; potential other team sports) | **product** |
 | conservation | `braighter-io/conservation` | `de-braighter/domains/conservation/` | Conservation genetics, biodiversity resilience | prototype |
-| vector | `braighter-io/vector` | `de-braighter/domains/vector/` | Cross-platform visual operating system | prototype |
 | org-twin | `braighter-io/org-twin` | `de-braighter/domains/org-twin/` | AI-native organizational twin for software teams (dossier wedge) | prototype (deferred — not scaffolded until activated) |
 
-Working domain names are placeholders for `conservation`, `vector`, `org-twin`. Each may be renamed at scaffolding time. `exercir` is established and kept.
+Working domain names are placeholders for `conservation`, `org-twin`. Each may be renamed at scaffolding time. `exercir` is established and kept.
 
 ### Preservation
 
@@ -98,7 +97,6 @@ de-braighter/                            ← cluster root + workbench repo (clon
 ├── domains/                             ← cluster dir, .gitignored at workbench level
 │   ├── exercir/                         ← own git, clone of braighter-io/exercir
 │   ├── conservation/                    ← own git (scaffold when active)
-│   ├── vector/                          ← own git (scaffold when active)
 │   └── org-twin/                        ← own git (scaffold when wedge fires)
 │
 └── attic/                               ← own git, clone of braighter-io/attic
@@ -146,11 +144,11 @@ The `enabled.agents.suggested` and `enabled.skills.suggested` lists are *hints* 
 |---|---:|---:|---:|
 | Layer repos | 5 (workbench, substrate, design-system, specs, platform) | 5 | 5–6 (+ inference if split) |
 | Preservation | 1 (attic) | 1 | 1 |
-| Domain repos | 1 (exercir) | 3 (exercir + conservation + vector) | unbounded |
+| Domain repos | 1 (exercir) | 2 (exercir + conservation) | unbounded |
 | Deferred (not scaffolded) | 1 (org-twin) | 1 | n/a |
-| **Total day-1** | **7** | **9** | unbounded |
+| **Total day-1** | **7** | **8** | unbounded |
 
-Recommendation: scaffold the 5 layers + attic + exercir at day-1 (7 repos). Migrate conservation and vector when active work next happens on them. Skip org-twin entirely until the dossier wedge fires.
+Recommendation: scaffold the 5 layers + attic + exercir at day-1 (7 repos). Migrate conservation when active work next happens on it. Skip org-twin entirely until the dossier wedge fires.
 
 ## 6 — Naming strategy
 
@@ -168,7 +166,7 @@ Recommendation: scaffold the 5 layers + attic + exercir at day-1 (7 repos). Migr
 
 - **`fabricir`** retires. Its identity carried the SPA/API connotation that's being explicitly removed. The new workbench is just `workbench`.
 - **`exercir-workbench`** retires. The cluster pattern it pioneered survives; the name does not. Replaced by `de-braighter/` (the new cluster root).
-- **`substrate-continuum`** retires (in both its top-level conservation-genetics form AND its `substrate_wb/` vector-OS form). Resolves the name collision. Conservation gets `conservation`; vector OS gets `vector`.
+- **`substrate-continuum`** retires (in its top-level conservation-genetics form). Conservation gets `conservation`.
 - **`the-braighter-`** prefix retires. `the-braighter-specs` → `specs`; `the-braighter-business-concept` folds into `specs`.
 
 ## 7 — Migration map — every existing artifact's destination
@@ -181,7 +179,6 @@ Recommendation: scaffold the 5 layers + attic + exercir at day-1 (7 repos). Migr
 | `packs-workspace/` (substrate-v1 shape; pack-football) | merge into `domains/exercir/` | The substrate-shape *pattern* (how packs consume the kernel) moves to `layers/substrate/` as scaffold + docs. The concrete pack-football code moves into exercir as `domains/exercir/libs/pack-football/`. |
 | `substrate-continuum/` (conservation genetics, top-level) | `domains/conservation/` (`braighter-io/conservation`) | Rename. The substrate innovations it pioneered (lineage DAG primitive, NumPyro sidecar interface) move into `layers/substrate/`; conservation consumes them. |
 | `substrate_wb/substrate/` (substrate workbench libs + prisma + inference port) | `layers/substrate/` (`braighter-io/substrate`) | This is closest to what `substrate/` should be — absorb its libs and inference-port scaffolding. |
-| `substrate_wb/substrate-continuum/` (vector visual OS — different project from #3) | `domains/vector/` (`braighter-io/vector`) | Resolves the name collision. |
 | `substrate_wb/` (parent, now empty) | delete | Once contents move, the parent dir is empty. |
 | `the-braighter-specs/` | `layers/specs/` (`braighter-io/specs`) | Merge with exercir-specs and business-concept. |
 | `the-braighter-business-concept/` | `layers/specs/business/` | Fold into specs as a subtree. |
@@ -270,7 +267,7 @@ When the Phase 2 trigger fires (first external pack publisher, per north-star do
 
 These are decisions for the writing-plans phase, not blocking design approval:
 
-1. **Day-1 scaffolding order.** Recommend: workbench → specs (so docs land somewhere) → substrate → design-system → platform → exercir → attic. Then conservation/vector when next active.
+1. **Day-1 scaffolding order.** Recommend: workbench → specs (so docs land somewhere) → substrate → design-system → platform → exercir → attic. Then conservation when next active.
 2. **In-place rename vs new-repo creation.** Some existing GitHub repos can be renamed (`braighter-io/the-braighter-specs` → `braighter-io/specs`); others need new repos (workbench is new; the current exercir-workbench is a different shape). The plan decides per-repo.
 3. **Content carry-over diffs.** Per-repo: what content moves verbatim, what gets restructured, what gets dropped. Mostly mechanical but per-repo specific.
 4. **CLAUDE.md rewrite at the new cluster root.** Replaces the current `D:/development/projects/braighter/CLAUDE.md`. Will reflect the cwd model + the new structure.

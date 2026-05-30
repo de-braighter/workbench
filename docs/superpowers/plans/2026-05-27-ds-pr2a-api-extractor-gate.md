@@ -460,11 +460,11 @@ git push -u origin chore/ds-pr2a-api-extractor-gate
 - [ ] **Step 3: Create the story issue + PR**
 
 ```bash
-gh issue create --title "PR2a: api-extractor public-API drift gate + css exports gate" --body "Story for PR2a of the vector-ideas adoption charter (#2). Installs api-extractor, commits .api.md snapshots for the 5 TS libs, adds a CI api-check drift gate, and an exports-resolution gate for design-system-css. No file moves (the physical public/internal split is PR2c). This repo has no type/story label taxonomy, so filed unlabeled."
+gh issue create --title "PR2a: api-extractor public-API drift gate + css exports gate" --body "Story for PR2a of the design-system adoption charter (#2). Installs api-extractor, commits .api.md snapshots for the 5 TS libs, adds a CI api-check drift gate, and an exports-resolution gate for design-system-css. No file moves (the physical public/internal split is PR2c). This repo has no type/story label taxonomy, so filed unlabeled."
 ```
 Record the issue number (call it `NN`), then:
 ```bash
-gh pr create --base main --title "chore: api-extractor public-API drift gate (charter PR2a)" --body "PR2a of the vector-ideas adoption charter (#2).
+gh pr create --base main --title "chore: api-extractor public-API drift gate (charter PR2a)" --body "PR2a of the design-system adoption charter (#2).
 
 Closes #NN
 

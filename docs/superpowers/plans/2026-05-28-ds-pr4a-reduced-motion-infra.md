@@ -237,7 +237,7 @@ Expected: EXIT 0 — `lib:conformance` + `tokens:check` (CSS+TS parity) + build 
 - [ ] **Step 2: Push + issue + PR**
 ```bash
 git push -u origin chore/ds-pr4a-reduced-motion-infra
-gh issue create --title "PR4a: central reduced-motion primitive + RM-aware frame loop (infra)" --body "Story for PR4a of the vector-ideas adoption charter (#3, decomposed). Adds prefersReducedMotion(), onReducedMotionChange(), createMotionLoop() to both eyecatchers-core and design-system-core (scope-wall duplication, mirroring raf.ts). No component changes — PR4b migrates the 15 matchMedia call sites. CSS @media rule deferred (parser limitation; revisit when CSS motion grows). Filed unlabeled."
+gh issue create --title "PR4a: central reduced-motion primitive + RM-aware frame loop (infra)" --body "Story for PR4a of the design-system adoption charter (#3, decomposed). Adds prefersReducedMotion(), onReducedMotionChange(), createMotionLoop() to both eyecatchers-core and design-system-core (scope-wall duplication, mirroring raf.ts). No component changes — PR4b migrates the 15 matchMedia call sites. CSS @media rule deferred (parser limitation; revisit when CSS motion grows). Filed unlabeled."
 ```
 Record issue `NN`; `gh pr create --base main` with title `feat: central prefersReducedMotion + RM-aware frame loop (charter PR4a)`, body covering What / scope-wall rationale (primitive in both cores) / deferrals (CSS rule, component migration → PR4b) / verification (`ci:local` exit 0, 5/5 unit tests, api-snapshots deliberately updated for new exports), `Closes #NN`, 🤖 footer.
 

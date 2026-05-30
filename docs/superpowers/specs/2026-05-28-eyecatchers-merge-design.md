@@ -6,7 +6,7 @@
 | Date | 2026-05-28 |
 | Author | Stibe Heller (with Claude Code) |
 | Scope | `layers/design-system` (the two lib-pairs to merge) |
-| Origin | Post-vector-ideas-adoption follow-up; the scope-wall gymnastics in PR3b / PR4a (dedup-by-generation across both cores) become unnecessary once the libs merge |
+| Origin | Post-design-system-adoption follow-up; the scope-wall gymnastics in PR3b / PR4a (dedup-by-generation across both cores) become unnecessary once the libs merge |
 
 > **Mid-execution corrections (recorded 2026-05-28 after merge completion):**
 > - **End-state is 4 libs, not 3** as the original architecture section stated. The charter forgot `design-system-angular-forms` (a separate lib that always existed alongside `design-system-angular`). Actual post-merge lib count: `design-system-css`, `design-system-core`, `design-system-angular`, `design-system-angular-forms`. The merge eliminated the 2 eyecatchers libs as planned; `design-system-angular-forms` was unaffected.
@@ -122,4 +122,4 @@ A moved component's runtime behavior could subtly break (e.g., a relative import
 
 ## Charter doc shape
 
-This spec at `docs/superpowers/specs/2026-05-28-eyecatchers-merge-design.md`. Per-phase implementation plans at `docs/superpowers/plans/<date>-em-phase-<n>.md`. Mirrors the vector-ideas adoption charter pattern: one design doc, multiple sequenced implementation PRs, charter updated mid-flight if reality forces reinterpretations.
+This spec at `docs/superpowers/specs/2026-05-28-eyecatchers-merge-design.md`. Per-phase implementation plans at `docs/superpowers/plans/<date>-em-phase-<n>.md`. Mirrors the design-system adoption charter pattern: one design doc, multiple sequenced implementation PRs, charter updated mid-flight if reality forces reinterpretations.

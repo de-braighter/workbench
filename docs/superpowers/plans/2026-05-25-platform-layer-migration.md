@@ -159,5 +159,5 @@ Expected: PR URL.
 ## What's next
 
 - exercir domain (the `@braighter-io/substrate-*` → `@de-braighter/*` scope switch happens here, lockstep with packs-workspace)
-- attic, form-controls, kanban-migration, conservation, vector
+- attic, form-controls, kanban-migration, conservation
 - cleanup (incl. `enterprise/docs/docker.md` → platform, `copilot-instructions.md` removal, fabricir teardown)

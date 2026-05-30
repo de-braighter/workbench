@@ -1071,7 +1071,6 @@ de-braighter/                     ← this repo (braighter-io/workbench)
 ├── domains/                      ← cluster: sibling domain repos (gitignored here)
 │   ├── exercir/
 │   ├── conservation/
-│   ├── vector/
 │   └── org-twin/
 └── attic/                        ← preservation repo (gitignored here)
 \`\`\`
@@ -1097,7 +1096,7 @@ The current Exercir / substrate / design-system / specs / platform code still li
 - GitHub org: `braighter-io` (kept for now; future migration TBD).
 - Local cluster + npm scope: `de-braighter` / `@de-braighter`.
 - Substrate packages: `@de-braighter/substrate-contracts`, `@de-braighter/substrate-runtime`.
-- Domain names: freely chosen per domain. `exercir` (team sports). Working names for prototypes: `conservation`, `vector`, `org-twin`.
+- Domain names: freely chosen per domain. `exercir` (team sports). Working names for prototypes: `conservation`, `org-twin`.
 
 ## Design references
 
@@ -1215,7 +1214,7 @@ Follow-up plans, each producing a working end-state on its own:
 4. **`braighter-io/platform`** — IaC layer. Carry forward `exercir-platform`.
 5. **`braighter-io/exercir`** — team-sports domain. Migrate `pack-football` from legacy exercir-service; team-sports narrowing applied.
 6. **`braighter-io/attic`** — preservation repo. Move the 4 non-football packs (oncology, physio, mental-health, care/Pflege) with their tests intact.
-7. **`braighter-io/conservation`** + **`braighter-io/vector`** — domain prototypes. Scaffold only when next active.
+7. **`braighter-io/conservation`** — domain prototype. Scaffold only when next active.
 8. **Cleanup plan** — remove redundant local checkouts at `D:/development/projects/braighter/` and `D:/development/projects/exercir/exercir-workbench/` and `D:/development/projects/exercir/workbench-next/`. Sweep MEMORY.md.
 
 Each is its own plan written when the work becomes active.

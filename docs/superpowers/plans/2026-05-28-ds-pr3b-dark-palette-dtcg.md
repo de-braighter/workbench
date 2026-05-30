@@ -137,7 +137,7 @@ Expected: EXIT 0 — `tokens:check` (CSS + TS parity) + conformance + build + li
 - [ ] **Step 2: Push + issue + PR**
 ```bash
 git push -u origin chore/ds-pr3b-dark-palette-dtcg
-gh issue create --title "PR3b: reconcile dark eyecatcher palette into DTCG (TsWriter)" --body "Story for PR3b of the vector-ideas adoption charter (#1/#6). Single-sources the duplicated, unconsumed dark palette (PALETTE/MOTION/EASING) in DTCG; TsWriter generates a const-only module into both design-system-core and eyecatchers-core (dedup-by-generation — the nx scope wall forbids a shared module); the .ts files become thin wrappers keeping types + toCssBezier. Values preserved (api-check snapshots unchanged). No new lib / JS resolver (deferred, unconsumed); substrate.* still deferred. Filed unlabeled."
+gh issue create --title "PR3b: reconcile dark eyecatcher palette into DTCG (TsWriter)" --body "Story for PR3b of the design-system adoption charter (#1/#6). Single-sources the duplicated, unconsumed dark palette (PALETTE/MOTION/EASING) in DTCG; TsWriter generates a const-only module into both design-system-core and eyecatchers-core (dedup-by-generation — the nx scope wall forbids a shared module); the .ts files become thin wrappers keeping types + toCssBezier. Values preserved (api-check snapshots unchanged). No new lib / JS resolver (deferred, unconsumed); substrate.* still deferred. Filed unlabeled."
 ```
 Record issue `NN`; `gh pr create --base main` with title `feat: reconcile dark eyecatcher palette into DTCG via TsWriter (charter PR3b)`, body covering What / dedup-by-generation (scope-wall rationale) / values-preserved (api-check snapshots unchanged) / no-new-lib-or-resolver deferral / verification (`ci:local` exit 0, TS red-green), `Closes #NN`, 🤖 footer.
 

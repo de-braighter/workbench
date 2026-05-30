@@ -197,4 +197,4 @@ Expected: repo `substrate`, default `main`, CLAUDE.md on main.
 - design-system layer (also pulls `ui-design/` out of specs)
 - platform layer (also pulls `enterprise/docs/docker.md` out of specs)
 - exercir domain (here is where `@braighter-io/substrate-*` → `@de-braighter/*` happens, in lockstep with packs-workspace)
-- attic, conservation, vector, cleanup
+- attic, conservation, cleanup

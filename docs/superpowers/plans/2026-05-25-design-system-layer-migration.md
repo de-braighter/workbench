@@ -202,4 +202,4 @@ Expected: repo `design-system`, default `main`, CLAUDE.md on main, 6 libs.
 - **form-controls extraction** (own follow-up): extract from `workbench-next/packages/form-controls`, wire into this Nx workspace, fix `@fabricir/*` → `@de-braighter/*` refs.
 - platform layer (also pulls `enterprise/docs/docker.md` out of specs)
 - exercir domain (`@braighter-io/substrate-*` → `@de-braighter/*` scope switch happens here, lockstep with packs-workspace)
-- attic, conservation, vector, kanban-migration, cleanup
+- attic, conservation, kanban-migration, cleanup

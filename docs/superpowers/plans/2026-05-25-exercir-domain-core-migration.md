@@ -183,5 +183,5 @@ Expected: PR URL.
 1. **attic + exercir-service teardown** — create `braighter-io/attic`, move exercir-service's medical packs there, archive the exercir-service monolith.
 2. **cherry-pick forward** — confirm exercir-service's unique recent team-sports work (e.g. #1332 drill-board) is in this repo's `pack-football-visual-editor`; port if missing.
 3. **scope switch** — coordinated `@braighter-io/*` → `@de-braighter/*` across substrate + design-system + exercir.
-4. **conservation, vector** domains; **form-controls** extraction; **kanban** → GitHub Issues.
+4. **conservation** domain; **form-controls** extraction; **kanban** → GitHub Issues.
 5. **cleanup** — fabricir teardown, stale local checkouts (both packs-workspace clones, exercir-workbench, workbench-next), `enterprise/docs/docker.md` → platform, MEMORY.md sweep.

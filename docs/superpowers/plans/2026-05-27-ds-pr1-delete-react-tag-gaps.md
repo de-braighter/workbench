@@ -4,7 +4,7 @@
 
 **Goal:** Remove the unused `design-system-react` library from the design-system layer and add the one missing `@nx/enforce-module-boundaries` constraint (`type:css → type:core`), leaving the build, lint, and boundary enforcement green.
 
-**Architecture:** PR1 of the four-PR "vector ideas adoption" charter (`docs/superpowers/specs/2026-05-27-design-system-vector-ideas-adoption-design.md`). The charter's #4 ("two-axis tag governance") is *already implemented and enforced* in this repo under the tags `scope:` (lib group) / `type:` (layer) / `platform:` (framework). So PR1 does only the genuinely-new work: delete the React lib (Angular-only decision; React added later if needed, recoverable from git history) and close the one open enforcement gap. No tag renames.
+**Architecture:** PR1 of the four-PR "design-system adoption" charter (`docs/superpowers/specs/2026-05-27-design-system-vector-ideas-adoption-design.md`). The charter's #4 ("two-axis tag governance") is *already implemented and enforced* in this repo under the tags `scope:` (lib group) / `type:` (layer) / `platform:` (framework). So PR1 does only the genuinely-new work: delete the React lib (Angular-only decision; React added later if needed, recoverable from git history) and close the one open enforcement gap. No tag renames.
 
 **Tech Stack:** Nx (npm, not pnpm), `@nx/eslint-plugin` flat config (`eslint.config.mjs`), ng-packagr Angular libs, hand-wired `node_modules/@de-braighter/*` symlinks via `scripts/setup-dev.sh`.
 
@@ -181,7 +181,7 @@ Expected: PASS.
 git add -A
 git commit -m "chore: delete unused design-system-react lib
 
-Nothing in the cluster imports it; Angular-only per the vector-ideas
+Nothing in the cluster imports it; Angular-only per the design-system
 adoption charter (#4). Recoverable from git history if React is needed
 later. Removes the lib, its tsconfig path alias, and its build:libs /
 publish:libs script entries. Retires the now-memberless platform:web-react tag.
@@ -316,7 +316,7 @@ Run:
 ```bash
 gh pr create --fill --base main \
   --title "chore: delete unused design-system-react + close type:css tag gap (charter PR1)" \
-  --body "PR1 of the vector-ideas adoption charter (docs/superpowers/specs/2026-05-27-design-system-vector-ideas-adoption-design.md).
+  --body "PR1 of the design-system adoption charter (docs/superpowers/specs/2026-05-27-design-system-vector-ideas-adoption-design.md).
 
 - Delete the unused \`design-system-react\` lib (Angular-only; recoverable from history).
 - Add the \`type:css -> type:core\` enforce-module-boundaries constraint (the one open tag gap).

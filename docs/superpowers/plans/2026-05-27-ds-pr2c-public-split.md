@@ -196,11 +196,11 @@ git push -u origin chore/ds-pr2c-public-split
 
 - [ ] **Step 3: Story issue + PR**
 ```bash
-gh issue create --title "PR2c: rename src/lib -> src/public + deep-import guard" --body "Story for PR2c of the vector-ideas adoption charter (#2). Mechanical src/lib -> src/public rename across the 5 TS libs (all 100% public; no internal/ created) + a no-restricted-imports deep-import guard. Public surface unchanged — proven by the PR2a api-check gate staying green (etc/*.api.md byte-identical). This repo has no type/story label taxonomy, so filed unlabeled."
+gh issue create --title "PR2c: rename src/lib -> src/public + deep-import guard" --body "Story for PR2c of the design-system adoption charter (#2). Mechanical src/lib -> src/public rename across the 5 TS libs (all 100% public; no internal/ created) + a no-restricted-imports deep-import guard. Public surface unchanged — proven by the PR2a api-check gate staying green (etc/*.api.md byte-identical). This repo has no type/story label taxonomy, so filed unlabeled."
 ```
 Record the issue number `NN`, then:
 ```bash
-gh pr create --base main --title "refactor: rename src/lib -> src/public + deep-import guard (charter PR2c)" --body "PR2c of the vector-ideas adoption charter (#2).
+gh pr create --base main --title "refactor: rename src/lib -> src/public + deep-import guard (charter PR2c)" --body "PR2c of the design-system adoption charter (#2).
 
 Closes #NN
 
