@@ -769,57 +769,49 @@ git commit -m "feat(kg): mergeActivityOverlay + serve-path wiring (local activit
 - Modify: `src/knowledge-graph/retrieval/rank.ts`
 - Test: `test/knowledge-graph/activity-rank.test.ts`
 
-This task tests through the public `contextFor(task, graph, budget)` (whose output string preserves rank order) so it does **not** depend on `rankNodes`' internal return shape.
+`rankNodes(graph, seeds, reached): RankedNode[]` returns `{ id, score, hops, viaPath }[]` sorted by score desc (confirmed signature). We test it directly.
 
-- [ ] **Step 1: Read the current `rank.ts`**
-
-Run: `cat src/knowledge-graph/retrieval/rank.ts`
-Note the exported `rankNodes(graph, seeds, reached)` and where the per-node composite score is computed (seed strength + edge proximity + `STATUS_WEIGHT[node.status]` + recency). That product/sum is the integration point in Step 3.
-
-- [ ] **Step 2: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 Create `test/knowledge-graph/activity-rank.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { contextFor } from '../../src/knowledge-graph/index.js';
+import { rankNodes } from '../../src/knowledge-graph/retrieval/rank.js';
 import type { KgGraph } from '../../src/knowledge-graph/graph-model.js';
+import type { SeedHit } from '../../src/knowledge-graph/retrieval/seed.js';
+import type { Reached } from '../../src/knowledge-graph/retrieval/traverse.js';
 
-// A pr and a lesson with the SAME distinctive query term; equal seed strength.
-// The lesson (knowledge) must outrank the pr (provenance) in the emitted pack.
+// A pr and a lesson with identical seed strength, hops, and date — the ONLY
+// differentiator is kind. The lesson (knowledge) must outrank the pr (provenance).
 function graph(): KgGraph {
   return {
     nodes: {
-      'r#1': { id: 'r#1', kind: 'pr', title: 'widgetization rollout', status: 'merged', summary: 'widgetization rollout', path: 'gh:r#1', tags: ['activity', 'pr'], date: '2026-05-30T00:00:00Z' },
-      'lesson:r#1#0': { id: 'lesson:r#1#0', kind: 'lesson', title: 'widgetization needs a cache warm', status: 'unknown', summary: 'friction: widgetization needs a cache warm', path: 'gh:r#1', tags: ['activity', 'lesson', 'friction'], date: '2026-05-30T00:00:00Z' },
+      'r#1': { id: 'r#1', kind: 'pr', title: 'x', status: 'merged', summary: 'x', path: 'gh:r#1', tags: ['activity', 'pr'], date: '2026-05-30T00:00:00Z' },
+      'lesson:r#1#0': { id: 'lesson:r#1#0', kind: 'lesson', title: 'x', status: 'unknown', summary: 'x', path: 'gh:r#1', tags: ['activity', 'lesson'], date: '2026-05-30T00:00:00Z' },
     },
-    edges: [{ from: 'lesson:r#1#0', to: 'r#1', type: 'evidenced-by' }],
+    edges: [],
     warnings: [],
   };
 }
 
 describe('activity ranking', () => {
-  it('ranks a lesson above the pr it came from', () => {
-    const pack = contextFor('widgetization', graph(), 4000);
-    const lessonAt = pack.indexOf('lesson:r#1#0');
-    const prAt = pack.indexOf('r#1#0') >= 0 ? pack.indexOf('lesson:r#1#0') : pack.indexOf('r#1');
-    expect(lessonAt).toBeGreaterThanOrEqual(0);
-    // lesson id appears before the bare pr id reference in the pack text
-    const bareprAt = pack.replace('lesson:r#1#0', '').indexOf('r#1');
-    expect(lessonAt).toBeLessThan(bareprAt === -1 ? Number.MAX_SAFE_INTEGER : bareprAt + 'lesson:r#1#0'.length);
-    void prAt;
+  it('ranks a lesson above the pr it came from (kind weight)', () => {
+    const seeds: SeedHit[] = [{ id: 'r#1', score: 1 }, { id: 'lesson:r#1#0', score: 1 }];
+    const reached: Reached[] = [{ id: 'r#1', hops: 0, viaPath: [] }, { id: 'lesson:r#1#0', hops: 0, viaPath: [] }];
+    const ranked = rankNodes(graph(), seeds, reached);
+    expect(ranked[0]!.id).toBe('lesson:r#1#0');
+    expect(ranked[1]!.id).toBe('r#1');
   });
 });
 ```
 
-> If asserting on string offsets proves brittle against the pack format you see in Step 1, instead assert the simpler invariant the format supports — e.g. that the lesson's line precedes the pr's line. Keep the *intent*: lesson before pr. Adjust the assertion to the real pack layout, not the behaviour.
-
-- [ ] **Step 3: Run it to confirm it fails**
+- [ ] **Step 2: Run it to confirm it fails**
 
 Run: `npx vitest run test/knowledge-graph/activity-rank.test.ts`
-Expected: FAIL — with equal inputs the pr is not ranked below the lesson (no kind weight yet).
+Expected: FAIL — with identical inputs the pr and lesson tie (or pr wins on insertion order); no kind weight yet.
 
-- [ ] **Step 4: Add a kind weight in `rank.ts`**
+- [ ] **Step 3: Add a kind weight in `rank.ts`**
 
 Near the top of `rank.ts`, add:
 
@@ -840,20 +832,28 @@ const KIND_WEIGHT: Record<NodeKind, number> = {
 };
 ```
 
-In the composite-score computation located in Step 1, multiply the final per-node score by `KIND_WEIGHT[node.kind]`. Example (adapt to the actual variable names in the file):
+The current composite (line 29) is:
 
 ```ts
-const score = (/* existing composite */) * KIND_WEIGHT[node.kind];
+const score = (seedScore.get(r.id) ?? 0) * 2 + proximity + status + recencyWeight(node.date);
 ```
 
-- [ ] **Step 5: Run the rank test + full suite**
+Replace it with the kind-weighted form (multiply the whole composite):
+
+```ts
+const score =
+  ((seedScore.get(r.id) ?? 0) * 2 + proximity + status + recencyWeight(node.date)) *
+  KIND_WEIGHT[node.kind];
+```
+
+- [ ] **Step 4: Run the rank test + full suite**
 
 Run: `npx vitest run test/knowledge-graph/activity-rank.test.ts`
 Expected: PASS.
 Run: `npx vitest run test/`
-Expected: PASS — re-run the **golden retrieval** cases especially; the kind weight must not demote any corpus golden expectation. If a golden case regresses, tune the corpus weights (keep all corpus kinds at `1`; only `pr` is dampened and `lesson` boosted) rather than weakening the golden assertion.
+Expected: PASS — re-run the **golden retrieval** cases especially (`test/knowledge-graph/golden-queries.test.ts`); the kind weight must not demote any corpus golden expectation. If a golden case regresses, tune the corpus weights (keep all corpus kinds at `1`; only `pr` is dampened and `lesson` boosted) rather than weakening the golden assertion.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add src/knowledge-graph/retrieval/rank.ts test/knowledge-graph/activity-rank.test.ts
@@ -873,6 +873,8 @@ git commit -m "feat(kg): rank lessons above provenance PRs via a per-kind weight
 
 Create `test/knowledge-graph/activity-pack.test.ts`:
 
+Signature: `renderActivitySections(graph, rankedIds: string[], now?)` — `rankedIds` is the rank-ordered id list (highest first) the caller already has. Lessons are selected from it (preserving rank order, capped); FRESH requires *both* the corpus node and a recent mentioning PR to be relevant.
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { renderActivitySections } from '../../src/knowledge-graph/retrieval/activity-pack.js';
@@ -889,38 +891,40 @@ function graph(): KgGraph {
       'lesson:specs#1#0': { id: 'lesson:specs#1#0', kind: 'lesson', title: 'add distractor fixtures', status: 'open', summary: 'improvement: add distractor fixtures', path: 'gh', tags: ['activity', 'lesson', 'improvement', 'open'], date: recent },
       'lesson:specs#2#0': { id: 'lesson:specs#2#0', kind: 'lesson', title: 'fixtures != real corpus', status: 'unknown', summary: 'friction: fixtures != real corpus', path: 'gh', tags: ['activity', 'lesson', 'friction'], date: recent },
     },
-    edges: [{ from: 'de-braighter/specs#248', to: 'adr-203', type: 'mentions' }],
+    edges: [
+      { from: 'de-braighter/specs#248', to: 'adr-203', type: 'mentions' },
+      { from: 'lesson:specs#2#0', to: 'de-braighter/specs#248', type: 'evidenced-by' },
+    ],
     warnings: [],
   };
 }
 
-describe('renderActivitySections', () => {
-  const ids = new Set(['adr-203', 'de-braighter/specs#248', 'lesson:specs#1#0', 'lesson:specs#2#0']);
+const RANKED = ['lesson:specs#1#0', 'lesson:specs#2#0', 'adr-203', 'de-braighter/specs#248'];
 
-  it('renders LEARNED with lessons', () => {
-    const out = renderActivitySections(graph(), ids, NOW);
+describe('renderActivitySections', () => {
+  it('renders LEARNED with non-open lessons, citing PR provenance', () => {
+    const out = renderActivitySections(graph(), RANKED, NOW);
     expect(out).toContain('LEARNED');
     expect(out).toContain('fixtures != real corpus');
+    expect(out).toContain('de-braighter/specs#248'); // evidenced-by provenance citation
   });
 
   it('renders OPEN LOOPS with open-status lessons only', () => {
-    const out = renderActivitySections(graph(), ids, NOW);
-    expect(out).toContain('OPEN LOOPS');
-    expect(out).toContain('add distractor fixtures');
-    // a non-open lesson is in LEARNED, not OPEN LOOPS
+    const out = renderActivitySections(graph(), RANKED, NOW);
     const openBlock = out.slice(out.indexOf('OPEN LOOPS'));
-    expect(openBlock).not.toContain('fixtures != real corpus');
+    expect(out).toContain('OPEN LOOPS');
+    expect(openBlock).toContain('add distractor fixtures');
+    expect(openBlock).not.toContain('fixtures != real corpus'); // non-open lives in LEARNED
   });
 
-  it('renders FRESH for a corpus node with a recent mentioning pr', () => {
-    const out = renderActivitySections(graph(), ids, NOW);
+  it('renders FRESH for a relevant corpus node touched by a relevant recent pr', () => {
+    const out = renderActivitySections(graph(), RANKED, NOW);
     expect(out).toContain('FRESH');
     expect(out).toContain('adr-203');
   });
 
-  it('returns empty string when no activity nodes are relevant', () => {
-    const out = renderActivitySections(graph(), new Set(['adr-203']), NOW);
-    expect(out).toBe('');
+  it('returns empty string when no activity is relevant', () => {
+    expect(renderActivitySections(graph(), ['adr-203'], NOW)).toBe('');
   });
 });
 ```
@@ -937,45 +941,54 @@ import type { KgGraph, KgNode } from '../graph-model.js';
 
 const DAY_MS = 86_400_000;
 const FRESH_DAYS = 30;
+const LESSON_CAP = 5; // keep the pack lean — top-ranked lessons per section
 
 function ageDays(date: string | undefined, now: number): number {
   if (!date) return Number.POSITIVE_INFINITY;
   return (now - Date.parse(date)) / DAY_MS;
 }
 
-/** Append-only activity view over the already task-relevant node set. Returns '' when
- *  no activity is relevant, so the caller can concatenate unconditionally. */
-export function renderActivitySections(graph: KgGraph, relevantIds: Set<string>, now = Date.now()): string {
-  const relevant: KgNode[] = [...relevantIds].map((id) => graph.nodes[id]).filter((n): n is KgNode => Boolean(n));
-  const lessons = relevant.filter((n) => n.kind === 'lesson').sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
-  const openLoops = lessons.filter((n) => n.status === 'open');
-  const learned = lessons.filter((n) => n.status !== 'open');
+/** The PR a lesson was captured on (via its evidenced-by edge), for provenance. */
+function provenanceOf(graph: KgGraph, lessonId: string): string | undefined {
+  return graph.edges.find((e) => e.from === lessonId && e.type === 'evidenced-by')?.to;
+}
 
-  // FRESH: a relevant corpus node (adr/concept) that a recent pr mentions or shares an area with.
-  const recentPrIds = new Set(
-    relevant.filter((n) => n.kind === 'pr' && ageDays(n.date, now) <= FRESH_DAYS).map((n) => n.id),
-  );
+/** Activity view over the rank-ordered relevant ids. Returns '' when no activity is
+ *  relevant, so the caller can concatenate unconditionally. Order of `rankedIds` is
+ *  preserved (highest-ranked lessons first); each section is capped. */
+export function renderActivitySections(graph: KgGraph, rankedIds: string[], now = Date.now()): string {
+  const relevant = new Set(rankedIds);
+  const ordered: KgNode[] = rankedIds.map((id) => graph.nodes[id]).filter((n): n is KgNode => Boolean(n));
+
+  const lessons = ordered.filter((n) => n.kind === 'lesson');
+  const openLoops = lessons.filter((n) => n.status === 'open').slice(0, LESSON_CAP);
+  const learned = lessons.filter((n) => n.status !== 'open').slice(0, LESSON_CAP);
+
+  const lessonLine = (n: KgNode): string => {
+    const pr = provenanceOf(graph, n.id);
+    return `  • ${n.summary}${pr ? ` (from ${pr})` : ''}  [${n.id}]`;
+  };
+
+  // FRESH: a relevant corpus node (adr/concept) touched by a relevant PR dated within
+  // the window — both endpoints must be task-relevant so we never surface noise.
   const fresh: string[] = [];
-  if (recentPrIds.size) {
-    for (const n of relevant) {
-      if (n.kind !== 'adr' && n.kind !== 'concept') continue;
-      const live = graph.edges.some(
-        (e) => e.to === n.id && (e.type === 'mentions') && recentPrIds.has(e.from),
-      );
-      if (live) fresh.push(`${n.id} — live (touched by a PR in the last ${FRESH_DAYS}d)`);
-    }
+  for (const n of ordered) {
+    if (n.kind !== 'adr' && n.kind !== 'concept') continue;
+    const live = graph.edges.some(
+      (e) =>
+        e.to === n.id &&
+        e.type === 'mentions' &&
+        relevant.has(e.from) &&
+        graph.nodes[e.from]?.kind === 'pr' &&
+        ageDays(graph.nodes[e.from]?.date, now) <= FRESH_DAYS,
+    );
+    if (live) fresh.push(`  • ${n.id} — live (touched by a PR in the last ${FRESH_DAYS}d)`);
   }
 
   const blocks: string[] = [];
-  if (learned.length) {
-    blocks.push('LEARNED (recent activity):\n' + learned.map((n) => `  • ${n.summary}  [${n.id}]`).join('\n'));
-  }
-  if (openLoops.length) {
-    blocks.push('OPEN LOOPS:\n' + openLoops.map((n) => `  • ${n.summary}  [${n.id}]`).join('\n'));
-  }
-  if (fresh.length) {
-    blocks.push('FRESH:\n' + fresh.map((f) => `  • ${f}`).join('\n'));
-  }
+  if (learned.length) blocks.push('LEARNED (recent activity):\n' + learned.map(lessonLine).join('\n'));
+  if (openLoops.length) blocks.push('OPEN LOOPS:\n' + openLoops.map(lessonLine).join('\n'));
+  if (fresh.length) blocks.push('FRESH:\n' + fresh.join('\n'));
   return blocks.join('\n');
 }
 ```
@@ -985,31 +998,35 @@ export function renderActivitySections(graph: KgGraph, relevantIds: Set<string>,
 Run: `npx vitest run test/knowledge-graph/activity-pack.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Read `context-pack.ts` and find the relevant-node set + final assembly**
+- [ ] **Step 5: Integrate the activity sections into `buildContextPack` (exact edit)**
 
-Run: `cat src/knowledge-graph/retrieval/context-pack.ts`
-Note (a) how `buildContextPack(task, graph, ranked, budget)` iterates `ranked` (to collect the relevant node ids) and (b) where the final pack string is assembled/returned.
+`context-pack.ts` assembles `out: string[]` (TASK/RULES/DECIDED/LEARNED/WHY/FILES/MORE) and returns `out.join('\n')`. The existing loop runs `classifyNode` on every ranked node — now that `pr`/`lesson` are real nodes they would otherwise be mis-rendered as bare `id (title)` lines. So we (a) skip activity kinds in the corpus loop entirely (they consume no corpus budget and produce no corpus line), and (b) append the activity sections from the full ranked id list, budget-guarded.
 
-- [ ] **Step 6: Integrate the activity sections into `buildContextPack`**
-
-Add the import:
+Add the import at the top:
 
 ```ts
 import { renderActivitySections } from './activity-pack.js';
 ```
 
-Where `buildContextPack` iterates `ranked`, collect the node ids into a `Set<string>` (use the same id field the existing loop reads). Just before the function returns the assembled pack string, append the activity sections (budget-respecting — only if there is room and content):
+Inside the loop, immediately after `const n = graph.nodes[r.id]; if (!n) continue;`, skip activity kinds *before* any budget accounting (they are rendered by `renderActivitySections`, not as RULES/DECIDED/LEARNED/FILES):
 
 ```ts
-  const relevantIds = new Set<string>(/* ids gathered from `ranked` above */);
-  const activity = renderActivitySections(graph, relevantIds);
-  const withActivity = activity ? `${pack}\n${activity}` : pack;
-  return withActivity.length <= budget ? withActivity : pack;
+    const n = graph.nodes[r.id];
+    if (!n) continue;
+    if (n.kind === 'pr' || n.kind === 'lesson') continue; // rendered as activity sections
 ```
 
-> Adapt `pack` to the actual variable holding the assembled string in this file. The intent: append LEARNED/OPEN LOOPS/FRESH after the existing sections, and never exceed `budget` (fall back to the activity-free pack if it would overflow).
+Replace the final `return out.join('\n');` with a budget-guarded append that feeds the renderer the full rank-ordered id list:
 
-- [ ] **Step 7: End-to-end test via `contextFor` + full suite**
+```ts
+  const pack = out.join('\n');
+  const activity = renderActivitySections(graph, ranked.map((r) => r.id));
+  if (!activity) return pack;
+  const withActivity = `${pack}\n${activity}`;
+  return withActivity.length <= charCap ? withActivity : pack; // never overflow the budget
+```
+
+- [ ] **Step 6: End-to-end test via `contextFor` + full suite**
 
 Add to `test/knowledge-graph/activity-pack.test.ts` (or a new `activity-context.test.ts`) an end-to-end assertion through the public API:
 
@@ -1025,7 +1042,7 @@ it('contextFor surfaces lessons + open loops for a matching task', () => {
 Run: `npx vitest run test/`
 Expected: PASS (all suites; golden cases unaffected — activity sections are appended, not substituted).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add src/knowledge-graph/retrieval/activity-pack.ts src/knowledge-graph/retrieval/context-pack.ts test/knowledge-graph/activity-pack.test.ts
@@ -1129,6 +1146,6 @@ Run the verifier wave (`local-ci` + `reviewer` + `qa-engineer`, `isolation: "wor
 - §8 test tiers — parser (T2), reader (T3), overlay (T4), golden + pack (T6/T7). ✓
 - §9 constraints (no kernel change, base/image/CronJob untouched, ESM `.js`, `noUncheckedIndexedAccess`, English, Sonar) — Tasks 4/7. ✓
 
-**Placeholder scan:** Tasks 5 & 6 carry a deliberate "read the current file" step because `rank.ts` and `context-pack.ts` could not be re-read during planning (tool-output outage). Their *tests are fully specified* and run through the public `contextFor` API; the implementation code is given concretely with the single integration point marked. This is a read-first-then-integrate instruction, not a behavioural placeholder.
+**Placeholder scan:** None. `rank.ts` and `context-pack.ts` were read in full; Tasks 5 & 6 give the exact current line and the exact replacement (kind-weighted composite; skip-activity-in-loop + `renderActivitySections` append). `renderActivitySections` is fully specified and unit-tested; `rankNodes` is tested directly against its confirmed `RankedNode[]` return shape.
 
-**Type consistency:** `eventsToActivity(events, windowDays, now)` and `readActivity(logPath, windowDays, now)` consistent across Tasks 3–4; `mergeActivityOverlay(base, events, windowDays, now)` + `applyActivitySlice(base, RawSlice)`; `renderActivitySections(graph, relevantIds, now)` consistent across Tasks 6–7. Node ids: `pr` = `repo#pr`, `lesson` = `lesson:repo#pr#idx` — consistent everywhere. Edge `evidenced-by` direction lesson→pr throughout.
+**Type consistency:** `eventsToActivity(events, windowDays, now)` and `readActivity(logPath, windowDays, now)` consistent across Tasks 3–4; `mergeActivityOverlay(base, events, windowDays, now)` + `applyActivitySlice(base, RawSlice)`; `renderActivitySections(graph, rankedIds, now)` consistent across Tasks 6–7. Node ids: `pr` = `repo#pr`, `lesson` = `lesson:repo#pr#idx` — consistent everywhere. Edge `evidenced-by` direction lesson→pr throughout.
