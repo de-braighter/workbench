@@ -7,7 +7,13 @@
         "domains/devloop/src/knowledge-graph/mcp/server.ts"
       ],
       "env": {
-        "DEVLOOP_MEMORY_DIR": "${HOME}/.claude/projects/D--development-projects-de-braighter/memory"
+        "DEVLOOP_MEMORY_DIR": "${HOME}/.claude/projects/D--development-projects-de-braighter/memory",
+        "KG_S3_ENDPOINT": "https://s3.swiss-backup04.infomaniak.com",
+        "KG_S3_BUCKET": "de-braighter-kg-index-prod",
+        "KG_S3_KEY": "kg-index.json",
+        "KG_S3_REGION": "us-east-1",
+        "KG_S3_ACCESS_KEY_ID": "${KG_S3_ACCESS_KEY_ID}",
+        "KG_S3_SECRET_ACCESS_KEY": "${KG_S3_SECRET_ACCESS_KEY}"
       }
     }
   }
