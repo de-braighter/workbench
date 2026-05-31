@@ -34,7 +34,52 @@ Created under `domains/devloop/src/knowledge-graph/`:
 - `mcp/server.ts` — MCP server exposing the three tools (side-effectful entry).
 - `index.ts` — re-export the public functions for testing/CLI use.
 
-Tests under `domains/devloop/test/knowledge-graph/` and fixtures under `domains/devloop/test/knowledge-graph/fixtures/`.
+Tests under `domains/devloop/test/knowledge-graph/` and fixtures under `domains/devloop/test/knowledge-graph/fixtures/`. (devloop's existing tests sit flat in `test/`; we nest under `test/knowledge-graph/` deliberately for module cohesion — note this in the first commit so it doesn't read as accidental drift.)
+
+> **QA revision (2026-05-31).** This plan was revised after a verifier wave (reviewer BLOCKED, qa-engineer PASS-WITH-FIXES, charter-checker COHERENT). Key changes folded in: a new **Task 0 (corpus reconnaissance)** — the original fixtures did not match the real corpus (concepts carry **0** `tags`, only **14/201** ADRs carry `applies-to`, statuses include `draft`/others); Windows-correct MCP entry guard and `pathToFileURL`; `noUncheckedIndexedAccess`-clean code (every regex group + indexed read guarded); platform-agnostic config + test; `zod` floor raised to the SDK's requirement; hermetic `kg_rebuild` test; a real (not toy) golden-query net with a `DEVLOOP_KG_REAL`-gated corpus assertion; word-boundary `mentions`; deterministic budget cap.
+
+---
+
+## Task 0: Corpus reconnaissance (read-only — measure before you model)
+
+**Purpose:** the readers, the `NodeStatus` enum, `STATUS_WEIGHT`, and seed weighting must match the *real* corpus, not assumed shapes. This task produces the facts that the later tasks bake in. It writes no module code — it records findings in the task notes / PR description.
+
+**Files:** none created. Run read-only probes against `layers/specs/` and the memory dir.
+
+- [ ] **Step 1: Enumerate the real `status:` vocabulary**
+
+Run (from cluster root):
+```bash
+grep -rhoE '^status:\s*.*$' layers/specs/adr layers/specs/concepts | sed 's/status:[[:space:]]*//; s/["'\'' ]//g' | sort | uniq -c | sort -rn
+```
+Record every distinct value. Any value NOT in `{ratified, accepted, proposed, draft, superseded, deprecated}` must be added to `NodeStatus` (Task 1) and given a `STATUS_WEIGHT`, or deliberately mapped to `unknown` with a one-line justification.
+
+- [ ] **Step 2: Measure tag / applies-to / domain coverage**
+
+Run:
+```bash
+echo "ADRs with applies-to:"; grep -rlE '^applies-to:' layers/specs/adr | wc -l
+echo "ADRs total:"; ls layers/specs/adr/*.md | wc -l
+echo "concepts with tags:"; grep -rlE '^tags:' layers/specs/concepts | wc -l
+echo "concepts with domain:"; grep -rlE '^domain:' layers/specs/concepts | wc -l
+echo "concepts total:"; find layers/specs/concepts -name '*.md' | wc -l
+```
+Expectation (from the QA probe): `applies-to` is sparse on ADRs and `tags` is absent on concepts, while `domain:` is common on concepts. This is why Task 1 adds `domain` to the tag sources and Task 5 derives area edges from the **file path** as well as tags.
+
+- [ ] **Step 3: Confirm real id shapes + ref formats**
+
+Run:
+```bash
+ls layers/specs/adr | head -3          # adr-NNN-... .md  -> id 'adr-NNN'
+ls layers/specs/concepts | head -3     # long dated slugs -> id = filename slug
+grep -rhoE '^\s*-\s*(adr/)?adr-[0-9]+[^ ]*\.md' layers/specs/adr | head -3   # ref format
+ls "${DEVLOOP_MEMORY_DIR:-$HOME/.claude/projects/D--development-projects-de-braighter/memory}" | head -3
+```
+Confirm: concept ids are long slugs (e.g. `north-star-vision-capture-2026-05-17`), refs may be path-prefixed (`adr/adr-153-....md`) or bare. The golden-query fixtures (Task 9) MUST use realistic ids of these shapes, not invented short slugs.
+
+- [ ] **Step 4: Record findings**
+
+Write the three results into the PR description (a short "Corpus reconnaissance" block). These are the inputs Task 1 (enum + weights), Task 5 (area derivation), and Task 9 (golden fixtures) consume. No commit (no files changed); proceed to Task 1.
 
 ---
 
@@ -50,9 +95,13 @@ Tests under `domains/devloop/test/knowledge-graph/` and fixtures under `domains/
 
 Run (in `domains/devloop`):
 ```bash
-npm install yaml@^2.5.0 @modelcontextprotocol/sdk@^1.0.0
+npm install yaml@^2.5.0 @modelcontextprotocol/sdk@^1.0.0 zod@^3.25.0
 ```
-Expected: both added to `dependencies` in `package.json`, `npm install` exits 0.
+Expected: `yaml` + `@modelcontextprotocol/sdk` added to `dependencies`; `zod` bumped to `^3.25.0` (devloop pinned `^3.24.0`, but `@modelcontextprotocol/sdk` requires `zod` `^3.25 || ^4`; leaving the lower floor risks a clean reinstall resolving to 3.24.x and breaking the SDK's zod compat imports). `npm install` exits 0. Then confirm the installed SDK's API shape before Task 10 relies on it:
+```bash
+node -e "const s=require('@modelcontextprotocol/sdk/package.json'); console.log('sdk', s.version)"
+```
+Record the version; Task 10 Step 3 verifies `McpServer` (`server/mcp.js`) + `server.tool(name, desc, shape, handler)` against it.
 
 - [ ] **Step 2: Write the model types**
 
@@ -137,24 +186,32 @@ export function normalizeStatus(raw: string | undefined): NodeStatus {
 Create `test/knowledge-graph/config.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
+import { resolve, join } from 'node:path';
 import { resolveConfig } from '../../src/knowledge-graph/config.js';
+
+// IMPORTANT: a hardcoded POSIX string like '/cluster' is wrong on win32 — there
+// `path.resolve('/cluster/domains/devloop', '..', '..')` returns `C:\cluster`
+// (rebased onto the cwd drive). So derive expectations from the same path ops
+// and assert structural relationships, making the test platform-agnostic.
+const PACK = resolve('/cluster/domains/devloop'); // win32 -> C:\cluster\...; posix -> /cluster/...
 
 describe('resolveConfig', () => {
   it('derives cluster-relative roots from a given package root', () => {
-    const cfg = resolveConfig({ packRoot: '/cluster/domains/devloop', env: {} });
-    expect(cfg.clusterRoot).toBe('/cluster');
-    expect(cfg.specsRoot).toBe('/cluster/layers/specs');
-    expect(cfg.workbenchRoot).toBe('/cluster');
-    expect(cfg.indexPath).toBe('/cluster/domains/devloop/data/kg-index.json');
+    const cfg = resolveConfig({ packRoot: PACK, env: {} });
+    expect(cfg.clusterRoot).toBe(resolve(PACK, '..', '..'));
+    expect(cfg.specsRoot).toBe(join(cfg.clusterRoot, 'layers', 'specs'));
+    expect(cfg.workbenchRoot).toBe(cfg.clusterRoot);
+    expect(cfg.indexPath).toBe(join(PACK, 'data', 'kg-index.json'));
     expect(cfg.memoryDir).toBeUndefined(); // unset env → undefined (reader skips + warns)
   });
 
   it('honors DEVLOOP_MEMORY_DIR override', () => {
-    const cfg = resolveConfig({ packRoot: '/cluster/domains/devloop', env: { DEVLOOP_MEMORY_DIR: '/mem' } });
+    const cfg = resolveConfig({ packRoot: PACK, env: { DEVLOOP_MEMORY_DIR: '/mem' } });
     expect(cfg.memoryDir).toBe('/mem');
   });
 });
 ```
+Note: `resolveConfig` keeps native separators (its paths feed `fs`, which accepts them on every platform); only the *node `path` field* produced by readers is normalized to `/` for display. This is why the config paths are asserted via `path` ops, not literal strings.
 
 - [ ] **Step 4: Run the test to verify it fails**
 
@@ -275,7 +332,8 @@ const FM_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 export function parseFrontmatter(raw: string): Parsed {
   const m = FM_RE.exec(raw);
   if (!m) return { frontmatter: {}, body: raw };
-  const fm = (parseYaml(m[1]) ?? {}) as Record<string, unknown>;
+  // m[1]/m[2] are `string | undefined` under noUncheckedIndexedAccess — coalesce.
+  const fm = (parseYaml(m[1] ?? '') ?? {}) as Record<string, unknown>;
   return { frontmatter: fm, body: m[2] ?? '' };
 }
 ```
@@ -444,7 +502,7 @@ export function idFromFilename(filename: string, kind: NodeKind): string {
   const base = filename.replace(/\.md$/, '');
   if (kind === 'adr') {
     const m = /^(adr-\d+)/.exec(base);
-    if (m) return m[1];
+    if (m) return m[1]!; // capture group guaranteed present when m matched
   }
   return base;
 }
@@ -455,7 +513,7 @@ function resolveRef(ref: string, kind: NodeKind): string {
   if (/^[a-z-]+#\d+$/i.test(s)) return s; // external repo ref e.g. substrate#63
   const base = s.replace(/^.*\//, '').replace(/\.md$/, '');
   const m = /^(adr-\d+)/.exec(base);
-  return kind === 'adr' && m ? m[1] : base;
+  return kind === 'adr' && m ? m[1]! : base;
 }
 
 function asArray(v: unknown): string[] {
@@ -466,7 +524,7 @@ function asArray(v: unknown): string[] {
 
 function firstHeading(body: string): string {
   const m = /^#\s+(.+)$/m.exec(body);
-  return m ? m[1].trim() : '';
+  return m ? m[1]!.trim() : '';
 }
 
 /** List *.md under dir (recursively). */
@@ -490,13 +548,16 @@ export function readSpecDir(dir: string, kind: NodeKind, clusterRoot: string): R
     const { frontmatter: fm, body } = parseFrontmatter(raw);
     const filename = file.replace(/^.*[\\/]/, '');
     const id = idFromFilename(filename, kind);
-    const tags = [...asArray(fm['applies-to']), ...asArray(fm['tags'])].map((t) => t.toLowerCase());
+    // Corpus reality (Task 0): concepts carry `domain:` not `tags:`, and `applies-to`
+    // is sparse on ADRs — so pull from all three. `||` (not `??`) so an empty-string
+    // heading falls through to the id rather than yielding ''.
+    const tags = [...asArray(fm['applies-to']), ...asArray(fm['tags']), ...asArray(fm['domain'])].map((t) => t.toLowerCase());
     nodes.push({
       id,
       kind,
-      title: String(fm.title ?? firstHeading(body) ?? id),
+      title: String(fm.title || firstHeading(body) || id),
       status: normalizeStatus(fm.status as string | undefined),
-      summary: String(fm.description ?? firstHeading(body) ?? '').slice(0, 280),
+      summary: String(fm.description || firstHeading(body) || '').slice(0, 280),
       path: relative(clusterRoot, file).split('\\').join('/'),
       tags,
       date: fm.date ? String(fm.date) : undefined,
@@ -644,7 +705,7 @@ import { parseFrontmatter } from './frontmatter.js';
 
 function firstHeading(body: string): string {
   const m = /^#\s+(.+)$/m.exec(body);
-  return m ? m[1].trim() : '';
+  return m ? m[1]!.trim() : '';
 }
 
 function readDirAsKind(dir: string, prefix: string, kind: 'policy', clusterRoot: string): KgNode[] {
@@ -728,7 +789,8 @@ export function readMemory(memoryDir: string | undefined): RawSlice {
       tags: ['memory', String((fm.metadata as Record<string, unknown> | undefined)?.type ?? 'project')],
     });
     for (const m of body.matchAll(WIKILINK_RE)) {
-      edges.push({ from: id, to: m[1].trim(), type: 'links-to' });
+      const target = m[1]?.trim();
+      if (target) edges.push({ from: id, to: target, type: 'links-to' });
     }
   }
   return { nodes, edges, warnings: [] };
@@ -808,6 +870,20 @@ describe('buildGraph', () => {
     const g = buildGraph(slices);
     expect(g.edges).toContainEqual({ from: 'adr-200', to: 'area:substrate', type: 'applies-to-area' });
   });
+
+  it('does NOT mention a non-distinctive id (no digit) found as a substring', () => {
+    const g = buildGraph([
+      {
+        nodes: [
+          { id: 'pack-care', kind: 'concept', title: 'care', status: 'ratified', summary: '', path: 'p', tags: [] },
+          { id: 'mem-x', kind: 'memory', title: 'm', status: 'unknown', summary: 'notes on patient care plans', path: 'p', tags: [] },
+        ],
+        edges: [],
+        warnings: [],
+      },
+    ]);
+    expect(g.edges.some((e) => e.type === 'mentions' && e.to === 'pack-care')).toBe(false);
+  });
 });
 
 describe('index store round-trips', () => {
@@ -851,22 +927,28 @@ export function buildGraph(slices: RawSlice[]): KgGraph {
     edges.push(...slice.edges);
   }
 
-  // Derived: applies-to-area from tags.
+  // Derived: applies-to-area from tags AND file path. Concepts carry no `tags:`
+  // (Task 0), so also read the area from `.../concepts/<area>/...` path segments.
+  const AREAS = ['substrate', 'design-system', 'exercir', 'devloop', 'conservation', 'herdbook'];
   for (const n of Object.values(nodes)) {
-    for (const tag of n.tags) {
-      if (tag === 'substrate' || tag === 'design-system' || tag === 'exercir' || tag === 'devloop') {
-        edges.push({ from: n.id, to: `area:${tag}`, type: 'applies-to-area' });
-      }
-    }
+    const areas = new Set<string>();
+    for (const tag of n.tags) if (AREAS.includes(tag)) areas.add(tag);
+    const pm = /\/concepts\/([a-z-]+)\//.exec(n.path);
+    if (pm && AREAS.includes(pm[1]!)) areas.add(pm[1]!);
+    for (const a of areas) edges.push({ from: n.id, to: `area:${a}`, type: 'applies-to-area' });
   }
 
-  // Derived: mentions — a node summary references another node's id verbatim.
-  const ids = Object.keys(nodes);
+  // Derived: mentions — a node summary references another node's id as a WHOLE WORD.
+  // Restrict to DISTINCTIVE ids (length>=6 AND containing a digit, e.g. `adr-200`,
+  // dated concept/memory slugs) and use word boundaries, so common substrings
+  // ('care' in 'pack-care') don't generate spurious edges at ~400-node scale.
+  const distinctive = Object.keys(nodes).filter((id) => id.length >= 6 && /\d/.test(id));
   for (const n of Object.values(nodes)) {
     const hay = n.summary.toLowerCase();
-    for (const other of ids) {
+    for (const other of distinctive) {
       if (other === n.id) continue;
-      if (other.length >= 5 && hay.includes(other.toLowerCase())) {
+      const esc = other.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (new RegExp(`\\b${esc}\\b`).test(hay)) {
         edges.push({ from: n.id, to: other, type: 'mentions' });
       }
     }
@@ -1078,6 +1160,25 @@ describe('traverse', () => {
     const reached = traverse(g, ['a'], 1);
     expect(reached.some((r) => r.id === 'substrate#9')).toBe(false);
   });
+
+  it('terminates on a cycle, visiting each node once', () => {
+    const cyclic: KgGraph = {
+      nodes: graph.nodes,
+      edges: [
+        { from: 'a', to: 'b', type: 'relates-to' },
+        { from: 'b', to: 'c', type: 'relates-to' },
+        { from: 'c', to: 'a', type: 'relates-to' },
+      ],
+      warnings: [],
+    };
+    const reached = traverse(cyclic, ['a'], 5);
+    expect(reached.map((r) => r.id).sort()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('caps the reached-set at maxNodes', () => {
+    const reached = traverse(graph, ['a'], 5, 2);
+    expect(reached.length).toBeLessThanOrEqual(2);
+  });
 });
 ```
 
@@ -1111,14 +1212,22 @@ function buildAdjacency(graph: KgGraph): Map<string, Adjacency[]> {
     adj.get(from)!.push({ to, label });
   };
   for (const e of graph.edges) {
+    // Label always states the edge in its canonical (stored) direction — that is the
+    // truthful relationship for the WHY-THESE provenance line, regardless of which
+    // way BFS walked it (e.g. reaching adr-200 from seed adr-153 still reads
+    // "adr-153 -superseded-by-> adr-200", i.e. "use adr-200").
     push(e.from, e.to, `${e.from} -${e.type}-> ${e.to}`);
-    push(e.to, e.from, `${e.from} -${e.type}-> ${e.to}`); // undirected walk, same label
+    push(e.to, e.from, `${e.from} -${e.type}-> ${e.to}`); // undirected walk, same canonical label
   }
   return adj;
 }
 
-/** BFS up to `maxHops` from each seed; first time a node is reached wins (shortest path). */
-export function traverse(graph: KgGraph, seedIds: string[], maxHops = 2): Reached[] {
+/**
+ * BFS up to `maxHops` from each seed; first time a node is reached wins (shortest path).
+ * `maxNodes` caps the reached-set — the real graph is dense and cyclic, so an
+ * uncapped hops=2 walk from a high-degree seed could pull hundreds of nodes.
+ */
+export function traverse(graph: KgGraph, seedIds: string[], maxHops = 2, maxNodes = 200): Reached[] {
   const adj = buildAdjacency(graph);
   const seen = new Map<string, Reached>();
   const queue: Reached[] = [];
@@ -1130,10 +1239,12 @@ export function traverse(graph: KgGraph, seedIds: string[], maxHops = 2): Reache
     }
   }
   while (queue.length > 0) {
+    if (seen.size >= maxNodes) break;
     const cur = queue.shift()!;
     if (cur.hops >= maxHops) continue;
     for (const { to, label } of adj.get(cur.id) ?? []) {
       if (seen.has(to)) continue;
+      if (seen.size >= maxNodes) break;
       const r: Reached = { id: to, hops: cur.hops + 1, viaPath: [...cur.viaPath, label] };
       seen.set(to, r);
       queue.push(r);
@@ -1222,8 +1333,9 @@ describe('buildContextPack', () => {
     expect(pack).toMatch(/adr-153 .*superseded-by.* adr-200/);
   });
 
-  it('caps output to the budget and reports how many were dropped', () => {
+  it('caps output to the budget, keeps the highest-ranked, reports the dropped count', () => {
     const pack = buildContextPack('kernel persistence', graph, ranked, 120);
+    expect(pack).toContain('adr-200'); // top-ranked survives the cap
     expect(pack).toMatch(/MORE:\s*\d+ further/);
   });
 });
@@ -1307,19 +1419,23 @@ export function buildContextPack(task: string, graph: KgGraph, ranked: RankedNod
   let used = 0;
   let dropped = 0;
 
-  for (const r of ranked) {
+  // ranked is sorted by score desc, so we keep a PREFIX (the highest-ranked survive)
+  // and break on the first over-budget line — `dropped` is then the exact tail count.
+  for (let i = 0; i < ranked.length; i++) {
+    const r = ranked[i]!;
     const n = graph.nodes[r.id];
     if (!n) continue;
     const line = lineFor(graph, n);
     if (used + line.length > charCap) {
-      dropped++;
-      continue;
+      dropped = ranked.length - i;
+      break;
     }
     used += line.length;
     if (RULE_KINDS.has(n.kind)) rules.push(line);
     else if (DECISION_KINDS.has(n.kind)) decided.push(line);
     else learned.push(n.kind === 'memory' ? `[[${n.id}]] "${n.summary}"` : line);
-    if (r.viaPath.length) why.push(r.viaPath[r.viaPath.length - 1]);
+    const last = r.viaPath[r.viaPath.length - 1];
+    if (last) why.push(last);
     files.push(n.path);
   }
 
@@ -1365,7 +1481,7 @@ Create `test/knowledge-graph/golden-queries.test.ts`:
 import { describe, it, expect } from 'vitest';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildIndexFrom, contextFor, queryGraph } from '../../src/knowledge-graph/index.js';
+import { buildIndexFrom, contextFor, queryGraph, rebuildIndex } from '../../src/knowledge-graph/index.js';
 import type { KgGraph } from '../../src/knowledge-graph/graph-model.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -1386,11 +1502,16 @@ interface Golden {
   mustInclude: string[];
 }
 
+// Fixture-backed cases (hermetic). EXPAND the fixture corpus from Tasks 3–4 to
+// ~15–20 nodes — add ≥6 DISTRACTOR files (unrelated ADRs/concepts on other areas:
+// e.g. an `adr-168` design-system bricks, a `pack-football` concept, a governance
+// `policy-testing`) so seeding has to discriminate among competitors, not trivially
+// match a 5-node graph. Aim for ~12 golden cases total once distractors exist.
 const GOLDEN: Golden[] = [
   { task: 'kernel persistence effects', mustInclude: ['adr-200', 'substrate-kernel-state'] },
   { task: 'kernel minimality inclusion test', mustInclude: ['adr-176'] },
   { task: 'substrate vision north star', mustInclude: ['north-star'] },
-  // add cases as the real corpus grows; keep them fixture-backed for hermeticity
+  { task: 'git policy pull request branch', mustInclude: ['policy-git'] },
 ];
 
 describe('golden queries (retrieval quality net)', () => {
@@ -1402,16 +1523,31 @@ describe('golden queries (retrieval quality net)', () => {
     });
   }
 
-  it('never ranks a superseded node above its successor in the pack', () => {
+  it('ranks a superseded node below its successor and annotates it (non-vacuous)', () => {
     const pack = contextFor('plan tree phase A effects', graph, 4000);
-    if (pack.includes('adr-153') && pack.includes('adr-200')) {
-      expect(pack.indexOf('adr-200')).toBeLessThan(pack.indexOf('adr-153'));
-    }
+    expect(pack).toContain('adr-153'); // both MUST be present, or the test is meaningless
+    expect(pack).toContain('adr-200');
+    expect(pack.indexOf('adr-200')).toBeLessThan(pack.indexOf('adr-153'));
+    expect(pack).toMatch(/adr-153 .*superseded-by.* adr-200/);
   });
 
   it('kg_query walks a named edge from a node', () => {
     const res = queryGraph(graph, { from: 'adr-153', edge: 'superseded-by', hops: 1 });
     expect(res.map((r) => r.id)).toContain('adr-200');
+  });
+
+  // Real-corpus assertion — GATED so CI without the corpus stays green. Run with
+  // DEVLOOP_KG_REAL=1 + DEVLOOP_MEMORY_DIR set to validate against the live cluster
+  // (precedent: devloop gates its DB test on DATABASE_URL). This is the tripwire the
+  // hermetic fixtures cannot be: it exercises real ids, real status vocab, ~hundreds
+  // of competing nodes.
+  const REAL = process.env.DEVLOOP_KG_REAL === '1';
+  it.runIf(REAL)('surfaces adr-176 + adr-200 for "kernel persistence" on the REAL corpus', () => {
+    const real = rebuildIndex().graph;
+    expect(Object.keys(real.nodes).length).toBeGreaterThan(300);
+    const pack = contextFor('kernel persistence effects', real, 4000);
+    expect(pack).toContain('adr-200');
+    expect(pack).toContain('adr-176');
   });
 });
 ```
@@ -1425,7 +1561,7 @@ Expected: FAIL — `index.js` exports not found.
 
 Create `src/knowledge-graph/index.ts`:
 ```ts
-import type { KgGraph, EdgeType, NodeStatus } from './graph-model.js';
+import type { KgGraph } from './graph-model.js';
 import { resolveConfig } from './config.js';
 import { readAdrs } from './sources/adr-reader.js';
 import { readConcepts } from './sources/concept-reader.js';
@@ -1494,10 +1630,10 @@ export function contextFor(task: string, graph: KgGraph, budget = 4000): string 
 
 export interface QueryArgs {
   from?: string;
-  edge?: EdgeType;
+  edge?: string; // an EdgeType value; out-of-vocabulary strings simply match nothing
   hops?: number;
   text?: string;
-  status?: NodeStatus;
+  status?: string; // a NodeStatus value; out-of-vocabulary strings simply match nothing
 }
 
 /** Explicit-knob query: from a seed node and/or text, optionally filtered by edge/status. */
@@ -1525,7 +1661,7 @@ Expected: PASS (5 tests).
 - [ ] **Step 5: Run the full suite + typecheck**
 
 Run: `npm run typecheck && npx vitest run test/knowledge-graph`
-Expected: typecheck clean; all knowledge-graph tests PASS.
+Expected: typecheck clean; all knowledge-graph tests PASS. NOTE: `tsc` only checks `src/**` (tsconfig `include: ["src"]`), so test-file type errors won't surface here — but every `src/**` file MUST be `noUncheckedIndexedAccess`-clean (this is why readers guard regex groups with `!`/`?.` and the retrieval code guards indexed reads). A `possibly 'undefined'` error means a guard was missed.
 
 - [ ] **Step 6: Commit**
 
@@ -1566,7 +1702,9 @@ function tools() {
     memoryDir: join(FIX, 'memory'),
     clusterRoot: FIX,
   });
-  return makeTools(() => graph);
+  // Inject a stub rebuild so kg_rebuild stays hermetic — it must NOT read the real
+  // corpus or write a real data/kg-index.json as a unit-test side effect.
+  return makeTools(() => graph, () => ({ graph, indexPath: '(stub)' }));
 }
 
 describe('MCP tool handlers', () => {
@@ -1596,6 +1734,7 @@ Expected: FAIL — `makeTools` not found.
 
 Create `src/knowledge-graph/mcp/server.ts`:
 ```ts
+import { pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
@@ -1606,28 +1745,32 @@ interface ToolResult {
   content: { type: 'text'; text: string }[];
 }
 
-/** Pure tool handlers, parameterized by a graph accessor — directly unit-testable. */
-export function makeTools(getGraph: () => KgGraph) {
+/**
+ * Pure tool handlers, parameterized by a graph accessor + a rebuild fn — directly
+ * unit-testable and hermetic (the test injects a stub rebuild so kg_rebuild does
+ * NOT touch the real corpus or write a real index.json).
+ */
+export function makeTools(
+  getGraph: () => KgGraph,
+  rebuild: () => { graph: KgGraph; indexPath: string } = rebuildIndex,
+) {
   return {
     async kg_context(args: { task: string; budget?: number }): Promise<ToolResult> {
       const text = contextFor(args.task, getGraph(), args.budget ?? 4000);
       return { content: [{ type: 'text', text }] };
     },
-    async kg_query(args: {
-      from?: string;
-      edge?: string;
-      hops?: number;
-      text?: string;
-      status?: string;
-    }): Promise<ToolResult> {
-      const reached = queryGraph(getGraph(), args as never);
+    async kg_query(args: { from?: string; edge?: string; hops?: number; text?: string; status?: string }): Promise<ToolResult> {
+      const reached = queryGraph(getGraph(), args); // QueryArgs uses string edge/status — no cast needed
       const lines = reached
         .sort((a, b) => a.hops - b.hops)
-        .map((r) => `${r.id} (hops=${r.hops})${r.viaPath.length ? ' via ' + r.viaPath[r.viaPath.length - 1] : ''}`);
+        .map((r) => {
+          const last = r.viaPath[r.viaPath.length - 1];
+          return `${r.id} (hops=${r.hops})${last ? ' via ' + last : ''}`;
+        });
       return { content: [{ type: 'text', text: lines.join('\n') || '(no matches)' }] };
     },
     async kg_rebuild(_args: Record<string, never>): Promise<ToolResult> {
-      const { graph, indexPath } = rebuildIndex();
+      const { graph, indexPath } = rebuild();
       const text = `rebuilt: nodes=${Object.keys(graph.nodes).length} edges=${graph.edges.length} warnings=${graph.warnings.length} -> ${indexPath}`;
       return { content: [{ type: 'text', text }] };
     },
@@ -1661,8 +1804,11 @@ export async function main(): Promise<void> {
   await server.connect(new StdioServerTransport());
 }
 
-// Side-effectful entry: run when invoked directly.
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Side-effectful entry: run when invoked directly. Use pathToFileURL so the
+// comparison is correct on Windows (`file:///D:/...` with forward slashes) — the
+// naive `file://${process.argv[1]}` template never matches a win32 path and the
+// server would silently never start.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);
@@ -1697,23 +1843,22 @@ DEVLOOP_MEMORY_DIR="$HOME/.claude/projects/D--development-projects-de-braighter/
 ```
 Expected: prints `nodes=NNN edges=MMM` with NNN in the hundreds (≈200 ADRs + ~150 concepts + policies + memories). Eyeball that `data/kg-index.json` was written and contains `adr-176`, `adr-200`. If counts are ~0, the cluster-root resolution is wrong — re-check `resolveConfig` against the actual on-disk layout.
 
-- [ ] **Step 7: Register the MCP server**
+- [ ] **Step 7: Register the MCP server (verify first, then do)**
 
-Add to the project `.mcp.json` (or `settings.json` `mcpServers`) at the cluster root so every session gets the tools:
+FIRST confirm the canonical registration surface — do NOT assume. There is no `.mcp.json` at the cluster root and `.claude/settings.json` has no `mcpServers` section. Search the cluster for how an existing MCP server is wired (`mcpServers` / `.mcp.json`) and match that shape + launch convention. Then register with an explicit `cwd` so `tsx` resolves `domains/devloop/node_modules` (the SDK is installed there, not at cluster root):
 ```json
 {
   "mcpServers": {
     "devloop-knowledge-graph": {
       "command": "npx",
-      "args": ["tsx", "domains/devloop/src/knowledge-graph/mcp/server.ts"],
-      "env": {
-        "DEVLOOP_MEMORY_DIR": "${HOME}/.claude/projects/D--development-projects-de-braighter/memory"
-      }
+      "args": ["tsx", "src/knowledge-graph/mcp/server.ts"],
+      "cwd": "domains/devloop",
+      "env": { "DEVLOOP_MEMORY_DIR": "${DEVLOOP_MEMORY_DIR}" }
     }
   }
 }
 ```
-Verify the path/working-directory matches how the cluster launches MCP servers (confirm against an existing wired server entry). Restart the session to load the tools, then confirm `kg_context` / `kg_query` / `kg_rebuild` appear and return sane results for "touch kernel persistence".
+The memory dir is machine-specific (the `D--development-projects-de-braighter` segment encodes this exact checkout path), so pass it via the `DEVLOOP_MEMORY_DIR` env var rather than hardcoding — the memory reader fails soft (warns + skips) when unset, so a machine without it still serves specs+governance. Restart the session, then confirm `kg_context` / `kg_query` / `kg_rebuild` appear and return sane results for "touch kernel persistence".
 
 - [ ] **Step 8: Write the module README**
 
@@ -1746,8 +1891,8 @@ Write-side emit-loop, embeddings/semantic search, human viewer, activity spine.
 
 - [ ] **Step 9: Full local gate + commit**
 
-Run: `npm run typecheck && npm run test`
-Expected: typecheck clean; full suite green.
+Run: `npm run ci:local` (typecheck + coverage + Sonar — the real gate, not just `vitest run`).
+Expected: typecheck clean; full suite green. Coverage note: the new module enters devloop's coverage denominator (`vitest.config.ts` `include: ['src/**/*.ts']`); only `mcp/server.ts` is excluded (side-effectful entry). Readers/retrieval are well-covered by their tests, but `index.ts`'s `rebuildIndex`/`loadOrBuildIndex` disk paths bind to the real config — if the coverage gate dips, either add a temp-path round-trip test (extend `loadOrBuildIndex`/`readIndex` to accept an injected path) or justify the exclusion in `vitest.config.ts`.
 
 ```bash
 git add src/knowledge-graph/mcp/server.ts src/knowledge-graph/README.md vitest.config.ts package.json test/knowledge-graph/mcp-tools.test.ts
@@ -1785,3 +1930,28 @@ Then run the devloop verifier wave (reviewer + qa-engineer + local-ci) per `work
 **Placeholder scan:** every code step shows complete code; no TBD/TODO; the one SDK-version caveat (Task 10 Step 3) is a verification instruction with a concrete fallback, not a placeholder.
 
 **Type consistency:** `KgNode`/`KgEdge`/`KgGraph`/`RawSlice` (Task 1) used verbatim throughout; `SeedHit` (Task 6), `Reached` (Task 7), `RankedNode` (Task 8) flow into `index.ts` (Task 9) and the MCP factory (Task 10). `findSeeds`/`traverse`/`rankNodes`/`buildContextPack`/`contextFor`/`queryGraph`/`buildIndexFrom`/`rebuildIndex`/`makeTools` names are consistent across definition and use.
+
+## QA wave dispositions (2026-05-31)
+
+Verifier wave: charter-checker **COHERENT** (no kernel creep — accepted as-is); reviewer **BLOCKED**; qa-engineer **PASS-WITH-FIXES**. Each finding's disposition:
+
+| Finding (severity) | Source | Disposition |
+|---|---|---|
+| Windows MCP entry guard never fires (BLOCKING) | reviewer + qa | Fixed — `pathToFileURL(process.argv[1]).href` (Task 10 §3). |
+| `noUncheckedIndexedAccess` breaks typecheck (BLOCKING) | reviewer + qa | Fixed — every regex group + indexed read guarded (`!`/`?.`); typecheck-scope note added (Tasks 2–8, 9 §5). |
+| Config test asserts POSIX paths win32 can't produce (BLOCKING) | reviewer | Fixed — platform-agnostic test via `path` ops (Task 1 §3). |
+| Plan authored against idealized corpus (BLOCKING) | qa | Fixed — new **Task 0** reconnaissance; `domain` added to tag sources; area derived from path (Tasks 0, 3, 5). |
+| Golden net is a toy / vacuous assertion (BLOCKING) | qa | Fixed — non-vacuous superseded assertion, distractor-fixture instruction, `DEVLOOP_KG_REAL`-gated real-corpus test (Task 9). |
+| `zod` floor below SDK requirement (SHOULD-FIX) | reviewer | Fixed — bumped to `^3.25.0` (Task 1 §1). |
+| `kg_rebuild` test not hermetic (SHOULD-FIX) | reviewer | Fixed — injectable `rebuild` stub (Task 10 §1, §3). |
+| `as never` cast launders type mismatch (SHOULD-FIX) | reviewer | Fixed — `QueryArgs.edge/status` widened to `string`; cast removed (Tasks 9, 10). |
+| `firstHeading` `''` vs `id` dead fallback (SHOULD-FIX) | reviewer | Fixed — `||` fallback (Task 3). |
+| `mentions` substring false positives (SHOULD-FIX) | reviewer + qa | Fixed — word-boundary + digit-bearing distinctive ids + negative test (Task 5). |
+| traverse backward-label direction (SHOULD-FIX) | reviewer | Resolved — labels state the canonical (truthful) relationship by design; documented + the existing test covers the backward case (Task 7). |
+| no cycle / reached-set cap test (SHOULD-FIX) | qa | Fixed — `maxNodes` cap + cycle + cap tests (Task 7). |
+| budget cap order-dependent / `MORE` undercount (SHOULD-FIX) | qa | Fixed — keep highest-ranked prefix, break on overflow, exact drop count + test (Task 8). |
+| MCP registration under-specified / wrong cwd / non-portable memory path (SHOULD-FIX) | qa | Fixed — verify-first, explicit `cwd`, `DEVLOOP_MEMORY_DIR` env (Task 10 §7). |
+| typecheck doesn't cover tests / coverage delta (SHOULD-FIX) | qa | Documented — scope note (Task 9 §5) + coverage note + `ci:local` gate (Task 10 §9). |
+| test dir diverges from flat convention (SHOULD-FIX) | qa | Documented — intentional, noted in File Structure + first commit. |
+
+NITs (status-weight tie, `MORE` pluralization, `EXTERNAL_REF_RE` breadth) acknowledged; left as-is or folded into Task 0's enum reconciliation.
