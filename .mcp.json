@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "devloop-knowledge-graph": {
+      "command": "node",
+      "args": [
+        "domains/devloop/node_modules/tsx/dist/cli.mjs",
+        "domains/devloop/src/knowledge-graph/mcp/server.ts"
+      ],
+      "env": {
+        "DEVLOOP_MEMORY_DIR": "${HOME}/.claude/projects/D--development-projects-de-braighter/memory"
+      }
+    }
+  }
+}
