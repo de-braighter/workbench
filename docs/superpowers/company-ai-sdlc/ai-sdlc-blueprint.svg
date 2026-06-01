@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 990" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6b82"/>
+    </marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa7ba"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="990" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="640" y="44" text-anchor="middle" font-size="27" font-weight="700" fill="#15233b">AI-Driven SDLC &#8212; Build Blueprint</text>
+  <text x="640" y="72" text-anchor="middle" font-size="14.5" fill="#5b6b82">The agent fleet by SDLC phase &#183; the skills they invoke &#183; the policies that bind them &#183; the workflows that choreograph them</text>
+
+  <!-- POLICIES bar -->
+  <rect x="56" y="100" width="1164" height="48" rx="10" fill="#2f3e57"/>
+  <text x="638" y="123" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">POLICIES &#8212; bind every actor</text>
+  <text x="638" y="140" text-anchor="middle" font-size="12.5" fill="#c7d2e2">coding &#183; testing &#183; git &#183; docs &#183; voice</text>
+  <!-- constrains arrows -->
+  <line x1="230" y1="148" x2="230" y2="181" stroke="#9aa7ba" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrG)"/>
+  <line x1="638" y1="148" x2="638" y2="181" stroke="#9aa7ba" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrG)"/>
+  <line x1="1046" y1="148" x2="1046" y2="181" stroke="#9aa7ba" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrG)"/>
+  <text x="662" y="168" font-size="10.5" font-style="italic" fill="#9aa7ba">constrains all</text>
+
+  <!-- ===================== SWIMLANES ===================== -->
+  <!-- PLAN lane -->
+  <rect x="56" y="185" width="348" height="336" rx="12" fill="#f6f9fd" stroke="#b8cae6" stroke-width="1.5"/>
+  <path d="M56,227 L56,197 Q56,185 68,185 L392,185 Q404,185 404,197 L404,227 Z" fill="#2f5fa6"/>
+  <text x="230" y="212" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">PLAN</text>
+  <text x="230" y="247" text-anchor="middle" font-size="12" font-style="italic" fill="#5b6b82">design &amp; strategy</text>
+  <g>
+    <rect x="72" y="262" width="316" height="30" rx="8" fill="#ffffff" stroke="#b8cae6"/><text x="230" y="282" text-anchor="middle" font-size="13" fill="#15233b">Designer</text>
+    <rect x="72" y="304" width="316" height="30" rx="8" fill="#ffffff" stroke="#b8cae6"/><text x="230" y="324" text-anchor="middle" font-size="13" fill="#15233b">Architecture Guardian</text>
+    <rect x="72" y="346" width="316" height="30" rx="8" fill="#ffffff" stroke="#b8cae6"/><text x="230" y="366" text-anchor="middle" font-size="13" fill="#15233b">Product Strategist</text>
+  </g>
+  <text x="230" y="404" text-anchor="middle" font-size="11" font-style="italic" fill="#7c8aa0">specs &amp; ADRs &#8212; markdown only,</text>
+  <text x="230" y="420" text-anchor="middle" font-size="11" font-style="italic" fill="#7c8aa0">no code written here</text>
+
+  <!-- BUILD lane -->
+  <rect x="464" y="185" width="348" height="336" rx="12" fill="#f7f8fa" stroke="#c2cbd8" stroke-width="1.5"/>
+  <path d="M464,227 L464,197 Q464,185 476,185 L800,185 Q812,185 812,197 L812,227 Z" fill="#475569"/>
+  <text x="638" y="212" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">BUILD</text>
+  <text x="638" y="247" text-anchor="middle" font-size="12" font-style="italic" fill="#5b6b82">implementation</text>
+  <g>
+    <rect x="480" y="262" width="316" height="30" rx="8" fill="#ffffff" stroke="#c2cbd8"/><text x="638" y="282" text-anchor="middle" font-size="13" fill="#15233b">Implementer</text>
+    <rect x="480" y="304" width="316" height="30" rx="8" fill="#ffffff" stroke="#c2cbd8"/><text x="638" y="324" text-anchor="middle" font-size="13" fill="#15233b">UI Implementer</text>
+    <rect x="480" y="346" width="316" height="30" rx="8" fill="#ffffff" stroke="#c2cbd8"/><text x="638" y="366" text-anchor="middle" font-size="13" fill="#15233b">Schema / Data Specialist</text>
+    <rect x="480" y="388" width="316" height="30" rx="8" fill="#ffffff" stroke="#c2cbd8"/><text x="638" y="408" text-anchor="middle" font-size="13" fill="#15233b">Domain Specialists</text>
+  </g>
+  <text x="638" y="446" text-anchor="middle" font-size="11" font-style="italic" fill="#7c8aa0">one branch + PR per change</text>
+
+  <!-- VERIFY lane (the merge gate) -->
+  <rect x="872" y="185" width="348" height="336" rx="12" fill="#f6f6fd" stroke="#cdcbf5" stroke-width="1.5"/>
+  <path d="M872,227 L872,197 Q872,185 884,185 L1208,185 Q1220,185 1220,197 L1220,227 Z" fill="#4f46e5"/>
+  <text x="1046" y="212" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">VERIFY &#8212; merge gate</text>
+  <text x="1046" y="247" text-anchor="middle" font-size="12" font-style="italic" fill="#6b63d6">all fire in parallel on the PR</text>
+  <g>
+    <rect x="888" y="258" width="316" height="28" rx="8" fill="#ffffff" stroke="#cdcbf5"/><text x="1046" y="277" text-anchor="middle" font-size="12.5" fill="#15233b">Reviewer</text>
+    <rect x="888" y="300" width="316" height="28" rx="8" fill="#ffffff" stroke="#cdcbf5"/><text x="1046" y="319" text-anchor="middle" font-size="12.5" fill="#15233b">QA Engineer</text>
+    <rect x="888" y="342" width="316" height="28" rx="8" fill="#ffffff" stroke="#cdcbf5"/><text x="1046" y="361" text-anchor="middle" font-size="12.5" fill="#15233b">Test Engineer</text>
+    <rect x="888" y="384" width="316" height="28" rx="8" fill="#ffffff" stroke="#cdcbf5"/><text x="1046" y="403" text-anchor="middle" font-size="12.5" fill="#15233b">Accessibility</text>
+    <rect x="888" y="426" width="316" height="28" rx="8" fill="#ffffff" stroke="#cdcbf5"/><text x="1046" y="445" text-anchor="middle" font-size="12.5" fill="#15233b">Local-CI (build / test / lint)</text>
+    <rect x="888" y="468" width="316" height="28" rx="8" fill="#ffffff" stroke="#cdcbf5"/><text x="1046" y="487" text-anchor="middle" font-size="12.5" fill="#15233b">Governance Guardian *</text>
+  </g>
+  <text x="1046" y="513" text-anchor="middle" font-size="10" font-style="italic" fill="#9aa7ba">* architecture / constitution + product-charter checks</text>
+
+  <!-- lane arrows -->
+  <line x1="404" y1="362" x2="458" y2="362" stroke="#5b6b82" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="812" y1="362" x2="866" y2="362" stroke="#5b6b82" stroke-width="2" marker-end="url(#arr)"/>
+  <!-- design gate badge (sized to fit inside the inter-lane gap, no chip overlap) -->
+  <rect x="405" y="312" width="58" height="40" rx="10" fill="#eef0ff" stroke="#c2c6f5" stroke-width="1.5"/>
+  <text x="434" y="328" text-anchor="middle" font-size="11" font-weight="700" fill="#4f46e5">design</text>
+  <text x="434" y="344" text-anchor="middle" font-size="11" font-weight="700" fill="#4f46e5">gate</text>
+  <text x="434" y="382" text-anchor="middle" font-size="10" font-style="italic" fill="#7c8aa0">risky only</text>
+  <text x="434" y="394" text-anchor="middle" font-size="10" font-style="italic" fill="#7c8aa0">+ human OK</text>
+  <text x="839" y="350" text-anchor="middle" font-size="10.5" fill="#94a3b8">PR opened</text>
+
+  <!-- ===================== SKILLS BAND ===================== -->
+  <line x1="56" y1="552" x2="1220" y2="552" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="640" y="578" text-anchor="middle" font-size="16" font-weight="700" fill="#15233b">SKILLS &#8212; capability buckets any agent can invoke</text>
+
+  <g font-size="12.5" font-weight="600" fill="#15233b">
+    <rect x="56"   y="592" width="181" height="46" rx="9" fill="#eef4fb" stroke="#b8cae6"/><text x="146.5" y="620" text-anchor="middle">Scaffolding</text>
+    <rect x="253"  y="592" width="181" height="46" rx="9" fill="#eef4fb" stroke="#b8cae6"/><text x="343.5" y="620" text-anchor="middle">Refactor / Quality</text>
+    <rect x="450"  y="592" width="181" height="46" rx="9" fill="#eef4fb" stroke="#b8cae6"/><text x="540.5" y="620" text-anchor="middle">Governance</text>
+    <rect x="647"  y="592" width="181" height="46" rx="9" fill="#eef4fb" stroke="#b8cae6"/><text x="737.5" y="620" text-anchor="middle">Sprint / Story</text>
+    <rect x="844"  y="592" width="181" height="46" rx="9" fill="#eef4fb" stroke="#b8cae6"/><text x="934.5" y="620" text-anchor="middle">CI / Release</text>
+    <rect x="1041" y="592" width="181" height="46" rx="9" fill="#eef4fb" stroke="#b8cae6"/><text x="1131.5" y="620" text-anchor="middle">Docs</text>
+  </g>
+  <text x="640" y="662" text-anchor="middle" font-size="11.5" font-style="italic" fill="#7c8aa0">Stack-specific skills (Nx &#183; Angular &#183; ORM &#183; i18n &#8230;) plug in as interchangeable &#8220;stack adapters&#8221; &#8212; swap per company stack.</text>
+
+  <!-- ===================== WORKFLOWS BAND ===================== -->
+  <line x1="56" y1="686" x2="1220" y2="686" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="640" y="712" text-anchor="middle" font-size="16" font-weight="700" fill="#15233b">WORKFLOWS &#8212; how the pieces are choreographed</text>
+
+  <!-- WF card 1: verifier-wave -->
+  <rect x="56" y="726" width="348" height="232" rx="12" fill="#f6f6fd" stroke="#cdcbf5" stroke-width="1.5"/>
+  <path d="M56,766 L56,738 Q56,726 68,726 L392,726 Q404,726 404,738 L404,766 Z" fill="#4f46e5"/>
+  <text x="230" y="751" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">verifier-wave &#8212; the merge gate</text>
+  <text x="76" y="790" font-size="12" fill="#15233b">All VERIFY agents run in parallel on</text>
+  <text x="76" y="807" font-size="12" fill="#15233b">the PR diff, each in an isolated copy.</text>
+  <text x="76" y="836" font-size="12" font-weight="700" fill="#15803d">PASS (all)</text><text x="168" y="836" font-size="12" fill="#15233b">&#8594; squash-merge</text>
+  <text x="76" y="861" font-size="12" font-weight="700" fill="#b45309">BLOCK</text><text x="138" y="861" font-size="12" fill="#15233b">&#8594; fix in PR (3&#8211;5 calls)</text>
+  <text x="138" y="878" font-size="12" fill="#15233b">or file a follow-up tracker</text>
+  <text x="76" y="903" font-size="12" font-weight="700" fill="#be185d">disagreement</text><text x="190" y="903" font-size="12" fill="#15233b">&#8594; escalate</text>
+  <text x="190" y="920" font-size="12" fill="#15233b">to human</text>
+  <text x="230" y="944" text-anchor="middle" font-size="10.5" font-style="italic" fill="#7c8aa0">skipped for pure-doc / one-line / rename PRs</text>
+
+  <!-- WF card 2: designer-first -->
+  <rect x="464" y="726" width="348" height="232" rx="12" fill="#f6f9fd" stroke="#b8cae6" stroke-width="1.5"/>
+  <path d="M464,766 L464,738 Q464,726 476,726 L800,726 Q812,726 812,738 L812,766 Z" fill="#2f5fa6"/>
+  <text x="638" y="751" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">designer-first &#8212; the design gate</text>
+  <text x="484" y="792" font-size="12" fill="#15233b">Inserted only for risky / load-bearing</text>
+  <text x="484" y="809" font-size="12" fill="#15233b">work (new contracts, cross-cutting,</text>
+  <text x="484" y="826" font-size="12" fill="#15233b">migrations with non-obvious rollback).</text>
+  <text x="484" y="855" font-size="12" fill="#2f5fa6" font-weight="700">direction</text><text x="558" y="855" font-size="12" fill="#15233b">&#8594; Designer / Arch.</text>
+  <text x="498" y="872" font-size="12" fill="#15233b">Guardian writes spec/ADR</text>
+  <text x="484" y="897" font-size="12" fill="#2f5fa6" font-weight="700">human approves</text><text x="600" y="897" font-size="12" fill="#15233b">&#8594; Implementer</text>
+  <text x="638" y="932" text-anchor="middle" font-size="11" font-style="italic" fill="#7c8aa0">Default path goes straight to BUILD.</text>
+
+  <!-- WF card 3: work tracking -->
+  <rect x="872" y="726" width="348" height="232" rx="12" fill="#f7f8fa" stroke="#c2cbd8" stroke-width="1.5"/>
+  <path d="M872,766 L872,738 Q872,726 884,726 L1208,726 Q1220,726 1220,738 L1220,766 Z" fill="#475569"/>
+  <text x="1046" y="751" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">work tracking &amp; cadence</text>
+  <text x="892" y="792" font-size="12" font-weight="700" fill="#475569">story-tracker</text>
+  <text x="892" y="811" font-size="12" fill="#15233b">One issue per stream of work (not</text>
+  <text x="892" y="828" font-size="12" fill="#15233b">per PR). PRs link via &#8220;Refs #N&#8221;.</text>
+  <text x="892" y="861" font-size="12" font-weight="700" fill="#475569">sprint loop</text>
+  <text x="892" y="880" font-size="12" fill="#15233b">plan-sprint &#8594; sprint-runner</text>
+  <text x="892" y="897" font-size="12" fill="#15233b">&#8594; sprint-retro &#8594; repeat</text>
+  <text x="1046" y="932" text-anchor="middle" font-size="11" font-style="italic" fill="#7c8aa0">coarse GitHub issues, not local handoff files</text>
+
+  <!-- Footer -->
+  <text x="640" y="978" text-anchor="middle" font-size="12.5" fill="#5b6b82">Read top-down: policies constrain every agent &#8226; agents flow PLAN&#8594;BUILD&#8594;VERIFY &#8226; agents invoke skills &#8226; workflows wire it into two gates.</text>
+</svg>
