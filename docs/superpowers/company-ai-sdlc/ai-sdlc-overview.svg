@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6b82"/>
+    </marker>
+    <marker id="arrowUp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="800" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="600" y="48" text-anchor="middle" font-size="27" font-weight="700" fill="#15233b">AI-Driven SDLC &#8212; How It Works</text>
+  <text x="600" y="77" text-anchor="middle" font-size="14.5" fill="#5b6b82">Humans set direction &#183; a governed agent fleet runs delivery &#183; two gates protect quality</text>
+
+  <!-- Human intent band -->
+  <rect x="90" y="104" width="1020" height="56" rx="10" fill="#fdf3e3" stroke="#e7b876" stroke-width="1.5"/>
+  <text x="600" y="130" text-anchor="middle" font-size="15" font-weight="700" fill="#9a5b0a">HUMAN INTENT</text>
+  <text x="600" y="149" text-anchor="middle" font-size="13" fill="#a06a1f">Lead sets direction &#183; approves designs &#183; resolves escalations</text>
+
+  <!-- ===== Lifecycle pipeline ===== -->
+  <!-- cards -->
+  <g>
+    <rect x="96" y="205" width="176" height="92" rx="10" fill="#f4f7fb" stroke="#c8d3e2" stroke-width="1.5"/>
+    <text x="184" y="245" text-anchor="middle" font-size="16" font-weight="700" fill="#15233b">INTENT</text>
+    <text x="184" y="268" text-anchor="middle" font-size="12.5" fill="#5b6b82">what &amp; why</text>
+  </g>
+  <g>
+    <rect x="362" y="205" width="176" height="92" rx="10" fill="#f4f7fb" stroke="#c8d3e2" stroke-width="1.5"/>
+    <text x="450" y="245" text-anchor="middle" font-size="16" font-weight="700" fill="#15233b">PLAN</text>
+    <text x="450" y="268" text-anchor="middle" font-size="12.5" fill="#5b6b82">spec / ADR</text>
+  </g>
+  <g>
+    <rect x="628" y="205" width="176" height="92" rx="10" fill="#f4f7fb" stroke="#c8d3e2" stroke-width="1.5"/>
+    <text x="716" y="245" text-anchor="middle" font-size="16" font-weight="700" fill="#15233b">BUILD</text>
+    <text x="716" y="268" text-anchor="middle" font-size="12.5" fill="#5b6b82">code + tests</text>
+  </g>
+  <g>
+    <rect x="894" y="205" width="176" height="92" rx="10" fill="#eafaf0" stroke="#9fd9b5" stroke-width="1.5"/>
+    <text x="982" y="245" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">SHIPPED</text>
+    <text x="982" y="268" text-anchor="middle" font-size="12.5" fill="#3f8c5f">merged to main</text>
+  </g>
+
+  <!-- arrows between stages -->
+  <line x1="272" y1="251" x2="356" y2="251" stroke="#5b6b82" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="538" y1="251" x2="622" y2="251" stroke="#5b6b82" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="804" y1="251" x2="888" y2="251" stroke="#5b6b82" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- gate badges on arrows -->
+  <g>
+    <rect x="277" y="168" width="118" height="30" rx="15" fill="#eef0ff" stroke="#c2c6f5" stroke-width="1.5"/>
+    <text x="336" y="188" text-anchor="middle" font-size="12" font-weight="700" fill="#4f46e5">design gate</text>
+    <text x="336" y="226" text-anchor="middle" font-size="11" fill="#7a82c9">designer-first</text>
+  </g>
+  <g>
+    <rect x="787" y="168" width="118" height="30" rx="15" fill="#eef0ff" stroke="#c2c6f5" stroke-width="1.5"/>
+    <text x="846" y="188" text-anchor="middle" font-size="12" font-weight="700" fill="#4f46e5">merge gate</text>
+    <text x="846" y="226" text-anchor="middle" font-size="11" fill="#7a82c9">verifier-wave</text>
+  </g>
+  <text x="585" y="226" text-anchor="middle" font-size="11" fill="#94a3b8">implement</text>
+
+  <!-- learn / loop arrow -->
+  <path d="M982,299 C982,352 184,352 184,301" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#arrowUp)"/>
+  <rect x="520" y="336" width="126" height="17" fill="#ffffff"/>
+  <text x="583" y="349" text-anchor="middle" font-size="12" font-weight="600" fill="#7c8aa0">retro &#183; learn &#183; loop</text>
+
+  <!-- ===== Four pillars ===== -->
+  <text x="600" y="402" text-anchor="middle" font-size="17" font-weight="700" fill="#15233b">THE MACHINE &#8212; four portable pillars</text>
+
+  <!-- Pillar card helper geometry: x, w=238, y=420, h=300, header to y=464 -->
+  <!-- POLICIES -->
+  <g>
+    <rect x="96" y="420" width="238" height="300" rx="10" fill="#f4f7fb" stroke="#c8d3e2" stroke-width="1.5"/>
+    <path d="M96,464 L96,430 Q96,420 106,420 L324,420 Q334,420 334,430 L334,464 Z" fill="#2f3e57"/>
+    <text x="215" y="450" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">POLICIES</text>
+    <text x="215" y="492" text-anchor="middle" font-size="12.5" font-style="italic" fill="#5b6b82">the constitution</text>
+    <text x="118" y="528" font-size="13" fill="#15233b">&#8226; coding &#183; testing</text>
+    <text x="118" y="554" font-size="13" fill="#15233b">&#8226; git &#183; docs</text>
+    <text x="118" y="580" font-size="13" fill="#15233b">&#8226; voice / tone</text>
+    <line x1="116" y1="602" x2="314" y2="602" stroke="#dbe3ee" stroke-width="1"/>
+    <text x="215" y="630" text-anchor="middle" font-size="11.5" font-style="italic" fill="#7c8aa0">binds every agent</text>
+    <text x="215" y="648" text-anchor="middle" font-size="11.5" font-style="italic" fill="#7c8aa0">&amp; every gate</text>
+  </g>
+  <!-- AGENTS -->
+  <g>
+    <rect x="360" y="420" width="238" height="300" rx="10" fill="#f4f7fb" stroke="#c8d3e2" stroke-width="1.5"/>
+    <path d="M360,464 L360,430 Q360,420 370,420 L588,420 Q598,420 598,430 L598,464 Z" fill="#2f3e57"/>
+    <text x="479" y="450" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">AGENTS</text>
+    <text x="479" y="492" text-anchor="middle" font-size="12.5" font-style="italic" fill="#5b6b82">the AI workforce</text>
+    <text x="382" y="528" font-size="13" fill="#15233b">&#8226; Plan roles</text>
+    <text x="382" y="554" font-size="13" fill="#15233b">&#8226; Build roles</text>
+    <text x="382" y="580" font-size="13" fill="#15233b">&#8226; Verify roles</text>
+    <text x="382" y="606" font-size="13" fill="#15233b">&#8226; Ops roles</text>
+    <line x1="380" y1="624" x2="578" y2="624" stroke="#dbe3ee" stroke-width="1"/>
+    <text x="479" y="652" text-anchor="middle" font-size="11.5" font-style="italic" fill="#7c8aa0">single-purpose, specialized</text>
+  </g>
+  <!-- SKILLS -->
+  <g>
+    <rect x="624" y="420" width="238" height="300" rx="10" fill="#f4f7fb" stroke="#c8d3e2" stroke-width="1.5"/>
+    <path d="M624,464 L624,430 Q624,420 634,420 L852,420 Q862,420 862,430 L862,464 Z" fill="#2f3e57"/>
+    <text x="743" y="450" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">SKILLS</text>
+    <text x="743" y="492" text-anchor="middle" font-size="12.5" font-style="italic" fill="#5b6b82">reusable playbooks</text>
+    <text x="646" y="528" font-size="13" fill="#15233b">&#8226; scaffolding &#183; refactor</text>
+    <text x="646" y="554" font-size="13" fill="#15233b">&#8226; governance &#183; CI</text>
+    <text x="646" y="580" font-size="13" fill="#15233b">&#8226; docs &#183; release</text>
+    <line x1="644" y1="602" x2="842" y2="602" stroke="#dbe3ee" stroke-width="1"/>
+    <text x="743" y="630" text-anchor="middle" font-size="11.5" font-style="italic" fill="#7c8aa0">agents invoke them</text>
+    <text x="743" y="648" text-anchor="middle" font-size="11.5" font-style="italic" fill="#7c8aa0">on demand</text>
+  </g>
+  <!-- WORKFLOWS -->
+  <g>
+    <rect x="888" y="420" width="238" height="300" rx="10" fill="#f4f7fb" stroke="#c8d3e2" stroke-width="1.5"/>
+    <path d="M888,464 L888,430 Q888,420 898,420 L1116,420 Q1126,420 1126,430 L1126,464 Z" fill="#2f3e57"/>
+    <text x="1007" y="450" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">WORKFLOWS</text>
+    <text x="1007" y="492" text-anchor="middle" font-size="12.5" font-style="italic" fill="#5b6b82">the choreography</text>
+    <text x="910" y="528" font-size="13" fill="#15233b">&#8226; verifier-wave</text>
+    <text x="924" y="546" font-size="11" fill="#4f46e5">&#8627; merge gate</text>
+    <text x="910" y="574" font-size="13" fill="#15233b">&#8226; designer-first</text>
+    <text x="924" y="592" font-size="11" fill="#4f46e5">&#8627; design gate</text>
+    <text x="910" y="620" font-size="13" fill="#15233b">&#8226; story-tracker &#183; sprint loop</text>
+    <line x1="908" y1="638" x2="1106" y2="638" stroke="#dbe3ee" stroke-width="1"/>
+    <text x="1007" y="664" text-anchor="middle" font-size="11.5" font-style="italic" fill="#7c8aa0">orchestrates agents</text>
+  </g>
+
+  <!-- Footer caption -->
+  <text x="600" y="760" text-anchor="middle" font-size="13" fill="#5b6b82">Policies bind every agent &#8226; agents run skills &#8226; workflows orchestrate agents into the two gates.</text>
+</svg>
