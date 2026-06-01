@@ -16,6 +16,8 @@ dist/
 .angular/
 tmp/
 *.log
+# Generated test-coverage output (leaks into the root when a coverage run is invoked here)
+coverage/
 
 # IDE
 .idea/
