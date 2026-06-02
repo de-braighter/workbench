@@ -175,3 +175,14 @@ active one.
   "… wird geladen…" / the error. The visible node loses only its *live-region
   role*; the hidden persistent region becomes the sole announcer, avoiding
   double-announcement.
+
+## As-shipped note (2026-06-03)
+
+Shipped in exercir PR #184 (squash `c6c49f3`), closing #178. The component
+selector is **`lib-fc-status-live`** (the repo's `lib-` prefix lint rule), the
+F2 denominator uses `v.view.contexts.length` (a `$count` alias tripped a strict
+TS2339), and the component spec drives its input via `componentRef.setInput`
+(Angular zoneless). The new component carries its *own* scoped `.sr-only`; the
+"centralise the sr-only" framing above was an overstatement — each surface
+keeps its own for its other hidden spans. Verifier wave (a11y-pro / qa-engineer
+/ exercir-charter-checker) all green.

@@ -870,3 +870,15 @@ EOF
 **Type consistency:** `liveStatusMessage(kind, noun, reason?)` signature + `LoadKind` union are used identically in Tasks 1, 3–8; `FcStatusLiveComponent` selector `fc-status-live` + `message` input consistent across Task 2 and all adoptions; `data-testid="fc-status-live"` consistent in component + every surface test.
 
 **Correction vs spec:** the spec's "centralise the `.sr-only`" is *not* done — each surface keeps its own `.sr-only` for other hidden spans (delta words, Kapitän, stateWord); the component carries its own scoped copy only. Functionally equivalent; noted for the implementer.
+
+---
+
+## Outcome (shipped 2026-06-03 — exercir PR #184, squash `c6c49f3`, closed #178)
+
+Implemented via subagent-driven development. Two plan corrections surfaced during execution and were applied:
+
+1. **Selector is `lib-fc-status-live`**, not `fc-status-live` — the repo's `@angular-eslint/component-selector` rule mandates the `lib-` prefix. (`data-testid` stays `fc-status-live`.)
+2. **Component spec drives the input via `componentRef.setInput('message', …)`**, not a host-wrapper property write — Angular runs *zoneless* here, so a plain write leaves the view clean and `detectChanges()` throws `NG0100`.
+3. **F2 denominator uses `v.view.contexts.length`**, not `$count` — `let cnt = $count` tripped a TS2339 under Angular-21 strict template checking; `.length` over the same iterated array is the identical count.
+
+Verifier wave: a11y-pro **CONFORMANT** (4.1.3 + 1.3.1), qa-engineer **9/9 MERGE-READY**, exercir-charter-checker **SANCTIONED**. Full suite 1044 passed. The funnel's nested what-if sub-region was intentionally deferred (still in-`@case`; tracked in §6 non-goals).
