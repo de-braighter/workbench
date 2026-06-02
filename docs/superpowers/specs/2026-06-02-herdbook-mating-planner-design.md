@@ -78,8 +78,8 @@ the published `LineageRepository` port; this feature only *reads* them.
 |--------|------|-------|
 | `id` | TEXT PK | app-assigned uuid (pack convention) |
 | `tenant_pack_id` | TEXT | RLS-scoped |
-| `sire_animal_id` | TEXT → `herdbook.animal(id)` ON DELETE RESTRICT | validated male at create |
-| `dam_animal_id` | TEXT → `herdbook.animal(id)` ON DELETE RESTRICT | validated female at create |
+| `sire_kernel_individual_id` | TEXT — logical ref to `core.individual.id` (no enforced cross-schema FK, mirroring `animal.kernel_individual_id`) | the API/UI animal identifier; validated male at create |
+| `dam_kernel_individual_id` | TEXT — logical ref to `core.individual.id` | validated female at create |
 | `predicted_f` | `NUMERIC(8,6)` | snapshot of `kinship(sire, dam)` at plan time |
 | `predicted_verdict` | `MatingVerdict` enum | snapshot verdict at plan time |
 | `status` | `MatingStatus` enum | manual lifecycle |
@@ -123,9 +123,10 @@ seed-managed per tenant.
 
 `MatingEvaluatorService.evaluate(sireAnimalId, damAnimalId)`:
 
-1. Resolve both animals (pack `IndividualReadAdapter` / animal read) → their
-   `kernelIndividualId` + `sex`. Validate: sire is male, dam is female, and the
-   two are distinct animals (else a typed `invalid-pairing` error).
+1. Read each animal's `sex` via `lineage.getIndividual(kernelId)` — sex lives on
+   `core.individual` (kernel), not the pack `animal` table. The inputs are already
+   kernel individual ids (the API identifier). Validate: sire is male, dam is
+   female, and the two are distinct (else a typed `invalid-pairing` error).
 2. `lineage.kinship(sireKernelId, damKernelId)` → the predicted offspring F (the
    kinship coefficient between the parents *is* the offspring's inbreeding
    coefficient — no hypothetical record needed).
