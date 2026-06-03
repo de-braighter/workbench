@@ -1,0 +1,34 @@
+<!-- EXAMPLE card — replace with your domain's item view. -->
+<article class="asset-card" [attr.data-item]="asset().id">
+  <header class="card-header">
+    <span class="item-name">{{ name() }}</span>
+    <span class="item-code">{{ code() }}</span>
+  </header>
+
+  <div class="value-block">
+    <p class="value-mean" title="Primary metric estimate">
+      {{ formatValue(asset().meanValue) }}
+    </p>
+    <p class="value-ci">
+      80% CI: {{ formatValue(asset().p10Value) }} – {{ formatValue(asset().p90Value) }}
+    </p>
+  </div>
+
+  <footer class="card-footer">
+    <span class="health-badge" [ngClass]="healthClass(asset().health)">
+      {{ asset().health }}
+    </span>
+
+    <div class="confidence" title="Confidence (1 = source online, 0 = required source offline)">
+      <span class="confidence-label">confidence</span>
+      <div class="confidence-bar">
+        <div class="confidence-bar-fill" [style.width.%]="confidencePercent()"></div>
+      </div>
+      <span class="confidence-value">{{ confidencePercent() }}%</span>
+    </div>
+  </footer>
+
+  @if (asset().error) {
+    <p class="error-note">Error: {{ asset().error }}</p>
+  }
+</article>

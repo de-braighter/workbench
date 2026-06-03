@@ -1,0 +1,19 @@
+{
+  "name": "@de-braighter/{{DOMAIN}}-pack",
+  "version": "0.0.0",
+  "private": true,
+  "description": "{{DOMAIN_PASCAL}} pack — the domain pack (consumes the {{DOMAIN}}-spine).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "default": "./dist/index.js" } },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@de-braighter/{{DOMAIN}}-spine": "workspace:*"
+  }
+}

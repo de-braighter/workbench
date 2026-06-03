@@ -1,0 +1,13 @@
+{
+  "/api": {
+    "target": "http://localhost:{{HTTP_PORT}}",
+    "pathRewrite": { "^/api": "" },
+    "changeOrigin": true,
+    "secure": false,
+    "headers": {
+      "x-tenant-id": "10000000-0000-4000-8000-000000000001",
+      "x-pack-id": "{{DOMAIN}}",
+      "x-user-id": "00000000-0000-4000-8000-000000000001"
+    }
+  }
+}

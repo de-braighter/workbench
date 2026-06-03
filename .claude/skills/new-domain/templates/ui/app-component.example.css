@@ -1,0 +1,49 @@
+.shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.shell-header { display: flex; flex-direction: column; gap: 8px; }
+
+.shell-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--fg-1);
+  letter-spacing: -0.02em;
+}
+
+.shell-subtitle { margin: 0; font-size: 0.875rem; color: var(--fg-3); }
+
+.header-actions { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+
+.btn-ingest {
+  background: var(--glass-bg);
+  border: 1px solid var(--accent-btc);
+  color: var(--accent-btc);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-ingest:hover:not(:disabled) { background: var(--accent-btc-soft); }
+.btn-ingest:disabled { opacity: 0.5; cursor: default; }
+
+.last-update { font-size: 0.75rem; color: var(--fg-4); font-family: var(--font-mono); }
+
+.card-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+.card-grid > * { flex: 1; min-width: 240px; }
+
+.state-msg   { color: var(--fg-3); font-size: 0.875rem; }
+.state-error { color: var(--err); }
+
+.footer-note { font-size: 0.75rem; color: var(--fg-4); line-height: 1.5; }
