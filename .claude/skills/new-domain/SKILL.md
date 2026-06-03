@@ -156,3 +156,32 @@ Record the answers. Add one TodoWrite group per selected tier.
 - `@Inject(Token)` on constructor params injected by class type (vitest/esbuild emits no
   decorator metadata).
 - `PackManifest.key` (not `.packId`) in contracts 0.14.0.
+
+### Step 5 — Angular UI tier (if selected)
+1. Scaffold an Angular CLI standalone app at `apps/{{DOMAIN}}-ui` (use the latest Angular the
+   installed Node supports — check `node --version` against the CLI's engine requirement):
+   `ng new {{DOMAIN}}-ui --standalone --routing=false --style=css --skip-git --skip-install --no-interactive`
+   (declines analytics + SSR).
+2. Set the dev-server port + proxy in `angular.json` serve options: `"port": <ui-port>`,
+   `"proxyConfig": "proxy.conf.json"`. Copy `templates/ui/proxy.conf.json` (tokenized; the
+   tenant headers are required — see gotchas).
+3. Copy `tokens.css` (imported from `styles.css`) + the EXAMPLE component templates; wire
+   `provideHttpClient()` in `app.config.ts`. Splice `cors.snippet.md` into the api `main.ts`
+   (substitute the UI port).
+4. **Set the UI `package.json` test script to `ng test --watch=false --browsers=ChromeHeadless`
+   BEFORE running any workspace gate** (see gotchas).
+5. `pnpm install` at the root; `npx ng build`; live-verify the page in a browser.
+
+**GOTCHAS (UI):**
+- **The scaffolded `ng test` defaults to watch mode + a visible browser.** Once `apps/{{DOMAIN}}-ui`
+  joins the `apps/*` glob, `pnpm -r run test` (the workspace `ci:local`) HANGS FOREVER. Fix the
+  UI `test` script to `ng test --watch=false --browsers=ChromeHeadless` (exits clean) before
+  the first gate run.
+- Add the dev tenant headers to `proxy.conf.json` — the global `TenantPackContextGuard`
+  requires `x-tenant-id` (the TENANT_ID `10000000-0000-4000-8000-000000000001`, NOT the
+  tenant_pack_id `…-4001-…`), `x-pack-id`, `x-user-id` (must be a UUID). The proxy is dev-only.
+- Keep polling alive on transient errors: `catchError(() => of(null))` INSIDE `switchMap`
+  (a raw error terminates the RxJS stream permanently — polling would stop after one blip).
+- `[ngClass]` (not `[class]`) for additive classes — `[class]="str"` replaces the static class.
+- Angular version: the latest may require a newer Node than installed; drop to the latest
+  Angular your Node supports (markets used Angular 19 on Node 22.14).
