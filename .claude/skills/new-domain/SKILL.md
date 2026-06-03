@@ -124,3 +124,35 @@ Record the answers. Add one TodoWrite group per selected tier.
   `@de-braighter/substrate-contracts/events` (re-exported from substrate-runtime root).
 - `kernel.plan_node` (inference): column is `kind` (not `type`), root needs `tree_root_id = id`,
   and `title` + `created_by` are NOT NULL (no default) → use sentinels in seed.sql.
+
+### Step 4 — Inference backbone tier (if selected; requires DB)
+1. Copy `templates/inference/**`. Put `inference-catalog.example.ts` under
+   `apps/{{DOMAIN}}-api/src/config/` and `readout.service.example.ts` +
+   `readout.controller.ts` under `apps/{{DOMAIN}}-api/src/readout/`. Strip the `.example`
+   suffix once you've replaced the EXAMPLE indicator/subject/projection with your domain's.
+2. Ensure the DB tier is applied: `db:setup` must include the `kernel-plan-tree.sql` step and
+   `db:seed` must seed the plan root (the DB tier ships both; `config/tenants.ts` exports the
+   `_PLAN_ROOT_ID` the readout uses).
+3. Splice `app-module-inference.snippet.md` into AppModule (the 5-provider chain), add
+   `inferenceCatalog: build{{DOMAIN_PASCAL}}Catalog()` to `SubstrateModule.forRoot`, add
+   `ReadoutController` to controllers + `ReadoutService` to providers.
+4. Live-verify `GET /readout` after writing a few observation events.
+
+**GOTCHAS (inference):**
+- `asJsonPath()` returns `Result<JsonPath,…>`, not a string → wrap with `requireJsonPath()`
+  (throw on `!ok`). The inference `Result` shape is `{ok, value, error}` (NOT fp-ts
+  `{_tag,right,left}`).
+- The 5-provider chain (all explicit — backbone is NOT auto-bound): `INFERENCE_CATALOG` →
+  `EVIDENCE_REPOSITORY` (`new PrismaEvidenceLogRepository(runner, catalog)`) → `NUMPYRO_SIDECAR`
+  (`null`) → `MEMBER_RESOLUTION_PORT` (no-op that throws) → `INFERENCE_BACKBONE`
+  (`new InferenceBackboneRouter(catalog, evidence, sidecar, members)`).
+  `INFERENCE_BACKBONE`/`NUMPYRO_SIDECAR` from `…/inference`; `MEMBER_RESOLUTION_PORT` from
+  contracts root.
+- The Normal-Normal fast-path **rejects non-`person` subjects** → represent domain entities as
+  `{ kind: 'person', id: <UUID> }` (the backbone only uses `subject.id` for the `aggregate_id`
+  filter against `kernel.event_log`).
+- `build{{DOMAIN_PASCAL}}Catalog()` lives in `apps/{{DOMAIN}}-api/src/config/` — the **library
+  must not depend on substrate-runtime** (`InMemoryInferenceCatalog` is a runtime impl).
+- `@Inject(Token)` on constructor params injected by class type (vitest/esbuild emits no
+  decorator metadata).
+- `PackManifest.key` (not `.packId`) in contracts 0.14.0.
