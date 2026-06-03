@@ -32,3 +32,7 @@ git commit -m "chore(manifest): register {{DOMAIN}} domain"
 git push -u origin chore/register-{{DOMAIN}}-domain
 gh pr create --title "chore: register {{DOMAIN}} domain" --body "…"
 ```
+
+> Per the cluster PR policy (CLAUDE.md), include a `Producer:` line in every agent-authored PR
+> body, e.g. `Producer: orchestrator/<model> [new-domain]`, and an `Effect:` line where a
+> defensible delivery-indicator prediction exists. Run the devloop twin ritual after merge.

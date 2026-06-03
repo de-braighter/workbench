@@ -110,8 +110,10 @@ Record the answers. Add one TodoWrite group per selected tier.
 6. `docker compose up -d {{DOMAIN}}-db && pnpm run db:setup`, then live-verify writes.
 
 **GOTCHAS (DB):**
-- `db:setup` runs `app-roles` / `core-schema` / `kernel-event-log` (+ `kernel-plan-tree` if
-  inference) from `@de-braighter/substrate-runtime/sql` via `prisma db execute`.
+- `db:setup` runs all four SQL scripts — `app-roles` / `core-schema` / `kernel-event-log` /
+  `kernel-plan-tree` — from `@de-braighter/substrate-runtime/sql` via `prisma db execute`.
+  `kernel-plan-tree` is idempotent and harmless even without the inference tier (it's only
+  *used* by inference, but always provisioned).
 - `{{DOMAIN_PASCAL_UPPER}}_TENANTS` / `{{DOMAIN_PASCAL_UPPER}}_MANIFEST` must exist in
   `src/config/` **before** splicing the snippet — the snippet imports them; it does not create
   them. (Step 3 above — copy + rename `config/*.ts.tmpl` first.)
@@ -133,9 +135,10 @@ Record the answers. Add one TodoWrite group per selected tier.
 2. Ensure the DB tier is applied: `db:setup` must include the `kernel-plan-tree.sql` step and
    `db:seed` must seed the plan root (the DB tier ships both; `config/tenants.ts` exports the
    `_PLAN_ROOT_ID` the readout uses).
-3. Splice `app-module-inference.snippet.md` into AppModule (the 5-provider chain), add
-   `inferenceCatalog: build{{DOMAIN_PASCAL}}Catalog()` to `SubstrateModule.forRoot`, add
-   `ReadoutController` to controllers + `ReadoutService` to providers.
+3. Splice `app-module-inference.snippet.md` into AppModule (the 5-provider chain — it
+   registers `INFERENCE_CATALOG` as a provider; do NOT also pass `inferenceCatalog:` to
+   `SubstrateModule.forRoot`, which would double-bind the catalog). Add `ReadoutController` to
+   controllers + `ReadoutService` to providers.
 4. Live-verify `GET /readout` after writing a few observation events.
 
 **GOTCHAS (inference):**
