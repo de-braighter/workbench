@@ -70,3 +70,23 @@ Ask, in one prompt set:
    Foundation always runs.
 
 Record the answers. Add one TodoWrite group per selected tier.
+
+### Step 2 — Foundation tier (always)
+1. `mkdir domains/{{DOMAIN}}` then `cd` in and `git init -b main`.
+2. Copy `templates/foundation/**` into `domains/{{DOMAIN}}/`, rename `*.tmpl` (and
+   `npmrc`/`gitignore`/`README.md.tmpl` dotfiles → `.npmrc`/`.gitignore`/`README.md`),
+   substitute tokens (see Template mechanics).
+3. Rename the lib/app dirs: `libs/spine` → `libs/{{DOMAIN}}-spine`, `libs/pack` →
+   `libs/{{DOMAIN}}-pack`, `apps/api` → `apps/{{DOMAIN}}-api`.
+4. `pnpm install` (resolves root devDeps + the workspace libs).
+5. The shipped placeholder smoke tests are already green; run `pnpm run ci:local` — build +
+   typecheck + test must pass.
+6. Live-verify the api:
+   ```bash
+   cd apps/{{DOMAIN}}-api && pnpm run build && node dist/main.js &
+   sleep 4 && curl -s http://localhost:{{HTTP_PORT}}/health   # → {"status":"ok","pack":"{{DOMAIN}}"}
+   ```
+   **GOTCHA — use `node dist/main.js`, NOT `node --import tsx src/main.ts`.** tsx/esbuild does
+   not emit `reflect-metadata`, so NestJS DI silently fails (injected services become
+   `undefined`). The `start` script already points at the compiled output.
+7. Commit each package as you go (workspace root → spine → pack → api). Commit `pnpm-lock.yaml`.
