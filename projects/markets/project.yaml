@@ -1,0 +1,34 @@
+# markets — external-source integration demonstrator
+# Status: bootstrapping — Phase 1 (foundation) scaffolded; spine + ingestion + inference to follow.
+# Form: pack-on-platform (ADR-027), zero kernel change (ADR-176). Full runtime coupling:
+#       substrate-runtime host, persisted kernel.event_log, published INFERENCE_BACKBONE.
+# Design: docs/superpowers/specs/2026-06-03-markets-external-source-integration-design.md
+
+name: markets
+domain: external-source-integration
+status: bootstrapping
+repo: github.com/de-braighter/markets
+local: domains/markets/
+
+# Hints for orchestrator judgment, not enforcement. markets is a full-stack
+# substrate consumer (NestJS + Prisma + RLS, thin readout page), so the curation
+# skews backend + substrate + a little UI.
+enabled:
+  agents:
+    suggested:
+      - designer
+      - substrate-architect
+      - substrate-coder-pro
+      - implementer
+      - reviewer
+      - charter-checker
+      - qa-engineer
+      - local-ci
+      - prisma-pro
+      - test-pro
+  skills:
+    suggested:
+      - architecture-concierge
+      - diff-refactor-engine
+      - md-quality-review
+      - nx-tag-architecture-governance
