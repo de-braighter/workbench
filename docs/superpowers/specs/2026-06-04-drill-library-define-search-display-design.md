@@ -92,6 +92,7 @@ DISPLAY: selected entry → detail panel: name + description + requirements + di
 - **Edit/delete** of a created drill's metadata (this arc covers create + diagram-edit via the existing PUT; metadata-edit-after-create is a follow-up).
 - **Server-side search** (only needed if the catalog grows large).
 - **Drill effects authoring** (the `effects` EffectDeclaration array — vendor drills have them; created drills get none initially).
+- **`DrillCreated.v1` event emission** — §3/§4 above sketch a `DrillCreated.v1` emission, but the closest sibling write (`forkTemplate`) is non-emitting and no consumer exists yet, so `CreateDrillUseCase` ships **non-emitting** in this arc (YAGNI). Emit it when a consumer (audit feed / projection) actually needs it — at which point add `'football:DrillCreated.v1'` to `FOOTBALL_EVENT_TYPE_NAMES` and thread an `ActorContext`, mirroring `UpdateDrillDiagram`.
 - **Vendor-drill descriptions** — the `description` field exists for all tiers, but back-filling prose onto the 12 vendor drills is content work, not in this arc.
 
 ---
