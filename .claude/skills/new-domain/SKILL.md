@@ -98,17 +98,23 @@ Record the answers. Add one TodoWrite group per selected tier.
 2. Add the DB scripts to the root `package.json`: `db:start` (`docker compose up -d
    {{DOMAIN}}-db`), `db:setup` (`node tools/db/setup.mjs`), `db:seed` (`node tools/db/seed.mjs`),
    `ci:local:db` (`pnpm run db:start && pnpm run db:setup && [pnpm run db:seed &&] pnpm run ci:local`).
-3. Add deps to `apps/{{DOMAIN}}-api`: `@de-braighter/substrate-contracts@^0.14.0`,
+3. Copy `templates/db/config/tenants.ts.tmpl` + `templates/db/config/manifest.ts.tmpl` into
+   `apps/{{DOMAIN}}-api/src/config/`, rename (strip `.tmpl`), substitute tokens including
+   `{{DOMAIN_PASCAL_UPPER}}`.
+4. Add deps to `apps/{{DOMAIN}}-api`: `@de-braighter/substrate-contracts@^0.14.0`,
    `@de-braighter/substrate-runtime@^0.19.0`, `@prisma/client@^6`, `prisma@^6` (dev). Add a
    `prisma/schema.prisma` with the vendored `EventLog`+`Outbox` kernel models
    (`@@schema("kernel")`, multi-schema datasource) — lift from
    `domains/markets/apps/markets-api/prisma/schema.prisma`.
-4. Splice `templates/db/app-module-db.snippet.md` into `app.module.ts`.
-5. `docker compose up -d {{DOMAIN}}-db && pnpm run db:setup`, then live-verify writes.
+5. Splice `templates/db/app-module-db.snippet.md` into `app.module.ts`.
+6. `docker compose up -d {{DOMAIN}}-db && pnpm run db:setup`, then live-verify writes.
 
 **GOTCHAS (DB):**
 - `db:setup` runs `app-roles` / `core-schema` / `kernel-event-log` (+ `kernel-plan-tree` if
   inference) from `@de-braighter/substrate-runtime/sql` via `prisma db execute`.
+- `{{DOMAIN_PASCAL_UPPER}}_TENANTS` / `{{DOMAIN_PASCAL_UPPER}}_MANIFEST` must exist in
+  `src/config/` **before** splicing the snippet — the snippet imports them; it does not create
+  them. (Step 3 above — copy + rename `config/*.ts.tmpl` first.)
 - AppModule needs a fail-fast guard on `SUBSTRATE_APP_DATABASE_URL` (else PrismaClient falls
   back to the admin URL and bypasses RLS), and `SUBSTRATE_RLS_ENABLED=true` to activate the
   GUC in `GucPrismaRunner`.

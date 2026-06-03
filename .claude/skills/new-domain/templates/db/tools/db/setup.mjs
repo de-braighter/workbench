@@ -8,7 +8,7 @@
 //
 // SQL scripts are shipped in @de-braighter/substrate-runtime/sql/ — this script
 // resolves them by walking up from the package's main entry (same pattern as
-// D:/development/projects/de-braighter/domains/herdbook/tools/db/setup.mjs).
+// the markets/herdbook reference domains).
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';

@@ -1,0 +1,25 @@
+import type { TenantDescriptor } from '@de-braighter/substrate-runtime';
+import { PACK_ID } from '@de-braighter/{{DOMAIN}}-pack';
+
+/** Stable tenant identity for the de-braighter/{{DOMAIN}} demo. */
+export const {{DOMAIN_PASCAL_UPPER}}_TENANT_ID = '10000000-0000-4000-8000-000000000001' as const;
+
+/**
+ * The tenant_pack_id set as the RLS GUC by GucPrismaRunner.
+ * Also the value in every DomainEventEnvelope.tenantPackId written by this app.
+ * Must be a valid UUID string (the kernel.event_log RLS policy compares it
+ * against current_setting('app.tenant_pack_id', true)).
+ */
+export const {{DOMAIN_PASCAL_UPPER}}_TENANT_PACK_ID: string =
+  process.env['{{DOMAIN_PASCAL_UPPER}}_TENANT_PACK_ID'] ?? '10000000-0000-4001-8000-000000000001';
+
+/** Stable UUID for the degenerate plan tree root used by INFERENCE_BACKBONE.posterior(). */
+export const {{DOMAIN_PASCAL_UPPER}}_PLAN_ROOT_ID = '20000000-0000-4000-8000-000000000001' as const;
+
+export const {{DOMAIN_PASCAL_UPPER}}_TENANTS: readonly TenantDescriptor[] = Object.freeze([
+  Object.freeze({
+    tenantId: {{DOMAIN_PASCAL_UPPER}}_TENANT_ID,
+    displayName: '{{DOMAIN_PASCAL}} demo tenant',
+    registeredPacks: Object.freeze([PACK_ID]),
+  }),
+]);

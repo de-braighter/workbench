@@ -10,6 +10,8 @@ import {
   DOMAIN_EVENT_PUBLISHER,
 } from '@de-braighter/substrate-runtime';
 import { PrismaClient } from '@prisma/client';
+import { {{DOMAIN_PASCAL_UPPER}}_MANIFEST } from '../config/manifest.js';
+import { {{DOMAIN_PASCAL_UPPER}}_TENANTS } from '../config/tenants.js';
 
 const appRoleUrl = process.env['SUBSTRATE_APP_DATABASE_URL'];
 if (!appRoleUrl) {

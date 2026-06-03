@@ -1,4 +1,4 @@
--- Idempotent seed for the markets domain plan tree root.
+-- Idempotent seed for the {{DOMAIN}} domain plan tree root.
 -- Column is `kind` (not `type`). Root node requires tree_root_id = id.
 -- title and created_by are NOT NULL (no default); use sentinel values for this
 -- degenerate plan-tree root that exists only to anchor inference posteriors.
@@ -8,9 +8,9 @@ VALUES (
   '10000000-0000-4001-8000-000000000001'::uuid,
   '20000000-0000-4000-8000-000000000001'::uuid,
   NULL,
-  'markets.world',
+  '{{DOMAIN}}.world',
   0,
-  'Markets world root',
+  '{{DOMAIN_PASCAL}} world root',
   '00000000-0000-0000-0000-000000000000'::uuid,
   '[]'::jsonb
 )
