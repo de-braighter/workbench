@@ -18,3 +18,4 @@ repos:
     - conservation
     - devloop         # SDLC-on-substrate — the dev twin (internal tooling)
     - herdbook        # livestock registry (animal CRUD, pedigree, people/roles)
+    - markets         # external-source integration demonstrator (source spine + crypto consumer)
