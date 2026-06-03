@@ -2,6 +2,20 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> ## ⚠️ EXECUTION STATUS (updated 2026-06-03) — read before resuming
+>
+> **Phase 1 (design-system tokens) ✅ MERGED** — design-system PR #185; published `design-system-angular@1.8.2` + `core@1.1.5` + `css@1.3.1`.
+> **Root infra fix ✅ MERGED** — design-system PR #186 (Node-ESM packaging: `@nx/angular:package` FESM + `tools/fix-esm-extensions.mjs` import-extension codemod). Bumping exercir off frozen `1.5.1` surfaced a latent packaging bug that blocked ALL consumption past 1.5.1; fixed at root. See memory `design-system-node-esm-packaging`.
+> **Phase 2 (board migration) ✅ MERGED** — exercir PR #191. `TacticalBoardComponent` now renders on `<db-pitch frame="full">` (overlays projected as `svg:`-prefixed children in native 100×120 space). Authority is **ADR-177** (SVG canonical) — NO ADR-160 amendment needed (the design doc's "override the Konva amendment" framing was redundant; ADR-177 already reversed ADR-171 Konva).
+> **Phase 3a (treeRootId seam) ✅ MERGED** — exercir PR #192. `gestureToTreeEdit` now takes an explicit `treeRootId` param.
+>
+> **CORRECTIONS to the tasks below (the original Task 9–13 sketch was wrong):**
+> - **Task 9 (promote types to contracts) — DROPPED.** Contradicts the metadata-JSONB simplicity boundary (ADR-176). The server stores `plan_node.metadata.visualEditor` opaquely; no server-side type needed. The browser already has `PlanTreeEdit` from `@de-braighter/substrate-contracts/plan-tree`.
+> - **Task 11 (host page) — architecture was WRONG + correctness-unsafe. REDO per the corrected design below.** The Angular host CANNOT inject `APPLY_PLAN_TREE_EDIT_USE_CASE` (a NestJS token). The real path is: inject `SubstrateClient` (root-provided) + `ActivatedRoute`; on `boardChange` call `gestureToTreeEdit(matchNodeId, gesture, board, treeRootId)` → `substrateClient.applyEdit(treeRootId, edit)` (which POSTs to the existing `POST /pack-football/edits`). Mirror the live-surface pattern (`player-team-page.component.ts`: `LoadState` signal + `describeSubstrateClientFailure`). **CRITICAL — the host MUST load the real board first** via `substrateClient.getPlanTree(treeRootId)` → locate the match node → parse `metadata.visualEditor` into a `TacticalBoard` (or seed a default ONLY when absent). Seeding a default unconditionally would CLOBBER real lineup data on the first metadata-patch. Roster labels (the `roster` input) can be a follow-up.
+> - **Task 12 (LineupChangedV1) — DROPPED from the UI host.** It's backend territory (the SSE event log lives in the NestJS API). Emitting it belongs server-side when the API interprets a substitution edit — not in the Angular host. The plan's "inject SSE port into Angular" was architecturally confused.
+>
+> **REMAINING: Phase 3b (host page, corrected above) + Phase 4 (create-play, Tasks 14–17 — those are sound).**
+
 **Goal:** Ship the live match-day tactical board (ADR-160 Scene 5) as a 4-PR cross-repo arc: verify/extend `<db-pitch>` in design-system, migrate `TacticalBoardComponent` to use it, add the Scene 5 host page wired to `ApplyPlanTreeEdit`, then expose the create-play gesture vocabulary with full WCAG 2.5.7 + keyboard compliance.
 
 **Architecture:** `<db-pitch frame="full">` (design-system, SVG) is the shared pitch renderer consumed by both the authoring `TacticalBoardComponent` and the SSE-driven `CoachTacticalBoardComponent`. A new `MatchDayScene5PageComponent` in the visual-editor app mounts the authoring board and wires each `boardChange` emit to `gestureToTreeEdit → ApplyPlanTreeEditUseCase`. The create-play toolbar buttons wire the existing `addPlay` op with a two-click pointer path and a Space/Arrow/Space keyboard path.
