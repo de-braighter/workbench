@@ -1,0 +1,19 @@
+services:
+  {{DOMAIN}}-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: {{DOMAIN}}
+    ports:
+      - "{{PG_PORT}}:5432"
+    volumes:
+      - {{DOMAIN}}-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  {{DOMAIN}}-db-data:

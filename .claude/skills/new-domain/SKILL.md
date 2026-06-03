@@ -90,3 +90,31 @@ Record the answers. Add one TodoWrite group per selected tier.
    not emit `reflect-metadata`, so NestJS DI silently fails (injected services become
    `undefined`). The `start` script already points at the compiled output.
 7. Commit each package as you go (workspace root → spine → pack → api). Commit `pnpm-lock.yaml`.
+
+### Step 3 — DB persistence tier (if selected)
+1. Copy `templates/db/**` into the domain (`docker-compose.yml`, `.env.example`, `tools/db/*`).
+   Rename `*.tmpl`, substitute tokens, and replace `{{DOMAIN_PASCAL_UPPER}}` with the
+   upper-snake env prefix (e.g. `LOGISTICS`). `cp .env.example .env`.
+2. Add the DB scripts to the root `package.json`: `db:start` (`docker compose up -d
+   {{DOMAIN}}-db`), `db:setup` (`node tools/db/setup.mjs`), `db:seed` (`node tools/db/seed.mjs`),
+   `ci:local:db` (`pnpm run db:start && pnpm run db:setup && [pnpm run db:seed &&] pnpm run ci:local`).
+3. Add deps to `apps/{{DOMAIN}}-api`: `@de-braighter/substrate-contracts@^0.14.0`,
+   `@de-braighter/substrate-runtime@^0.19.0`, `@prisma/client@^6`, `prisma@^6` (dev). Add a
+   `prisma/schema.prisma` with the vendored `EventLog`+`Outbox` kernel models
+   (`@@schema("kernel")`, multi-schema datasource) — lift from
+   `domains/markets/apps/markets-api/prisma/schema.prisma`.
+4. Splice `templates/db/app-module-db.snippet.md` into `app.module.ts`.
+5. `docker compose up -d {{DOMAIN}}-db && pnpm run db:setup`, then live-verify writes.
+
+**GOTCHAS (DB):**
+- `db:setup` runs `app-roles` / `core-schema` / `kernel-event-log` (+ `kernel-plan-tree` if
+  inference) from `@de-braighter/substrate-runtime/sql` via `prisma db execute`.
+- AppModule needs a fail-fast guard on `SUBSTRATE_APP_DATABASE_URL` (else PrismaClient falls
+  back to the admin URL and bypasses RLS), and `SUBSTRATE_RLS_ENABLED=true` to activate the
+  GUC in `GucPrismaRunner`.
+- `SubstrateModule.forRoot({ prismaClient: appRoleClient, … })` does NOT auto-bind the
+  publisher — add an explicit `{ provide: DOMAIN_EVENT_PUBLISHER, useValue: new PrismaOutboxWriter() }`.
+- `DomainEventEnvelope` / `DOMAIN_EVENT_PUBLISHER` import from
+  `@de-braighter/substrate-contracts/events` (re-exported from substrate-runtime root).
+- `kernel.plan_node` (inference): column is `kind` (not `type`), root needs `tree_root_id = id`,
+  and `title` + `created_by` are NOT NULL (no default) → use sentinels in seed.sql.
