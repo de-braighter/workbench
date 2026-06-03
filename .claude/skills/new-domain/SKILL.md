@@ -185,3 +185,32 @@ Record the answers. Add one TodoWrite group per selected tier.
 - `[ngClass]` (not `[class]`) for additive classes — `[class]="str"` replaces the static class.
 - Angular version: the latest may require a newer Node than installed; drop to the latest
   Angular your Node supports (markets used Angular 19 on Node 22.14).
+
+### Step 6 — Workbench registration
+Follow `WORKBENCH-REGISTRATION.md`: branch the workbench, add `{{DOMAIN}}` to `repos.yaml`
+`domains:`, create `projects/{{DOMAIN}}/project.yaml`, commit (explicit paths only — never
+`git add -A` in the workbench), open a PR.
+
+### Step 7 — GitHub remote (confirm-with-user)
+**Outward-facing — confirm with the user first.** Then:
+```bash
+cd domains/{{DOMAIN}}
+gh repo create de-braighter/{{DOMAIN}} --private --source=. --remote=origin --push
+```
+Open the domain PR(s) for the scaffold and run the devloop twin ritual (drain → backfill →
+reconcile) after each merge.
+
+## Run recipe & gotcha index
+- **Start the api compiled:** `pnpm run build && node dist/main.js` (NOT `tsx/esm` — no
+  reflect-metadata → broken NestJS DI).
+- **DB:** `docker compose up -d {{DOMAIN}}-db` → `pnpm run db:setup` → (`pnpm run db:seed` if
+  inference). Needs `SUBSTRATE_APP_DATABASE_URL` + `SUBSTRATE_RLS_ENABLED=true`.
+- **Auth headers** (guard-protected routes / dev proxy): `x-tenant-id` = the TENANT_ID
+  (`10000000-0000-4000-8000-000000000001`), NOT the tenant_pack_id (`…-4001-…`); `x-pack-id:
+  {{DOMAIN}}`; `x-user-id` = a UUID.
+- **UI gate:** the UI `test` script MUST be `ng test --watch=false --browsers=ChromeHeadless`
+  or `pnpm -r run test` hangs.
+- **Inference:** `asJsonPath()` returns a `Result`; the 5-provider chain is explicit;
+  Normal-Normal rejects non-`person` subjects; the catalog builder lives in the api, not the lib.
+- Full catalog: see the **markets-domain-arc** memory and `domains/markets/` itself (the
+  reference run this skill was extracted from).
