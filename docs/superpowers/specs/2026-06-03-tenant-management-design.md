@@ -177,10 +177,20 @@ change yet. Independently shippable and live-verifiable.
   **published** as a runtime minor bump. Self-contained; no consumer migration.
 - **A2 (herdbook-adopt)** — its own plan/PR after A1 publishes: flip herdbook onto
   `PrismaTenantRegistry`, seed the herdbook `core.tenant`/`core.tenant_pack` rows, and
-  reconcile the string-vs-UUID `tenant_pack_id` (§3.3) across ~14 herdbook tables + ~140 test
-  usages. Live-verified end-to-end in herdbook.
+  reconcile the string-vs-UUID `tenant_pack_id` (§3.3). **SHIPPED 2026-06-04 (herdbook#30)** —
+  the guard now resolves `tenant_pack_id` from `core.tenant_pack` (not a constant), all data is
+  keyed on the derived UUID, live-proven (200-with-data / unknown-tenant-403 / test:db green).
+- **A3 (request-scoped pack data plane)** — *discovered during A2*: herdbook's pack data
+  providers (`PostgresLineageRepository` + the ~11 `*Providers`) are constructed at composition
+  time with the **constant** `tenant_pack_id`, never the per-request
+  `tenantPackContext.tenantPackId` — so two real tenants' *data* both land under tenant A's
+  scope (R4 single-tenant pinning). The **auth plane** is now per-tenant correct; A3 threads the
+  resolved tpid through the providers (request-scoped runner, ADR-202 `TenantRunner`) to deliver
+  real two-tenant **data** isolation. Prerequisite for slice C onboarding a 2nd real tenant.
+  Tracked: herdbook#31.
 
-The plan `2026-06-03-tenant-mgmt-sliceA1-substrate-foundation.md` covers A1 only.
+The plan `2026-06-03-tenant-mgmt-sliceA1-substrate-foundation.md` covers A1; A2 has its own
+plan (`2026-06-04-tenant-mgmt-sliceA2-herdbook-adopt.md`).
 
 **A new core-table category — *auth-scoped*.** `core.tenant`/`core.tenant_pack` are global
 (above any single tenant) and must be readable by `PrismaTenantRegistry` with **no
@@ -234,9 +244,11 @@ model TenantPack {
 }
 ```
 
-**Live-verify:** herdbook still runs end-to-end reading its tenant from the DB; seed a
-second tenant + prove an animal created under tenant A is invisible under tenant B's
-`tenant_pack_id` (RLS isolation across two *real* tenants — first time this is exercised).
+**Live-verify:** herdbook runs end-to-end reading its tenant from the DB (A2 ✓). The
+two-real-tenant RLS-isolation check (an animal under tenant A invisible under tenant B's
+`tenant_pack_id`) requires the **request-scoped pack data plane (A3)** — A2 alone keeps the
+data plane single-tenant (the constant tpid through the providers), so that check lands with
+A3, not A2.
 
 **ADR:** `substrate-architect` authors "persisted tenants + DbTenantRegistry" (operationalizes
 ADR-027 Invariant 2; auth-scoped table posture; tenant_pack_id continuity).
