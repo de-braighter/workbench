@@ -193,6 +193,25 @@ Everything breaking (the 1.0 train) and the two large domain arcs (WS-7, WS-9) e
 ## 9. Tracking
 
 - **This doc** is the program index.
-- **GitHub epics** (coarse, story-tracker convention) on the owning repo per arc: WS-3/WS-6/WS-8 on `de-braighter/substrate`, WS-7 on `de-braighter/conservation`, WS-9 on the chosen domain, WS-4 on `de-braighter/substrate`.
-- **ADRs** on `layers/specs` for the breaking/design changes: legacy-port retirement (WS-3), subject-ontology (WS-8), tenancy convention (WS-4), conservation consume-vs-fork resolution (WS-7); ADR-204 already covers WS-6.
 - **The implementation plan** (`docs/superpowers/plans/2026-06-04-substrate-coherence-remediation-plan.md`) decomposes the do-now set into ordered, independently-reviewable tasks for subagent-driven execution.
+
+### Tracking ledger (live as of 2026-06-04 execution)
+
+**ADRs** (`de-braighter/specs`): ADR-212 (WS-3 legacy-port retirement) + ADR-213 (WS-8 subject-ontology) authored → PR #260. ADR-204 already covers WS-6. WS-4 tenancy convention + WS-7 consume-vs-fork resolution ADRs are deferred to their arcs.
+
+**GitHub epics:**
+
+| Arc | Issue | Repo | State |
+|---|---|---|---|
+| substrate@1.0 coordinating (WS-3+6+8) | #92 | substrate | open |
+| WS-3 retire legacy inference port | #93 | substrate | open · ADR-212 |
+| WS-6 execute FHIR eviction | #94 | substrate | open · ADR-204 |
+| WS-8 subject-ontology | #95 | substrate | open · ADR-213 |
+| WS-4 tenancy consistency (re-scoped) | #96 | substrate | open · relates #57 |
+| WS-9 reproducibility proof | #97 | substrate | open |
+| WS-7 conservation de-fork (ex-pedigree) | #18 | conservation | open |
+| WS-5 derived-state rule ratification | #261 | specs | open |
+
+**Do-now PRs:** WS-1/1b specs reconciliation → specs #259 (corpus now green; closes specs #245 + #238). WS-2 enforcement: markets pre-push gate → markets #5 (proven end-to-end); remaining 5 code repos + specs B3 pending. WS-5 audit → `docs/superpowers/notes/2026-06-04-derived-state-exception-audit.md`.
+
+**Re-scope corrections (origin/main truth pass):** the prior evaluation ran on stale local checkouts — ADRs 205–211 + the persisted tenant model (ADR-209) already shipped; WS-4 shrank (org-vs-pack axis resolved by ADR-209); WS-7 shrank (pedigree already de-vendored); WS-6 confirmed not-in-progress.
