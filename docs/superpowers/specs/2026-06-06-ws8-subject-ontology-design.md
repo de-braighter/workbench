@@ -27,13 +27,13 @@ Therefore WS-8 is **not** "delete the guard." It is **convert a domain-gate into
 
 ## 3. Goals / Non-goals
 
-**Goals**
+### Goals
 
 1. A non-person subject runs a posterior with **no workaround**; markets drops the `kind:'person'` crypto-asset lie (the ADR-213 / substrate#95 done-when).
 2. `SubjectRef.kind` carries **inference structure only**; the domain label moves to an opaque, pack-namespaced `role` the kernel never branches on.
 3. Add **no** kernel table, verb, or relation (ADR-176 — the change *removes* a domain assumption).
 
-**Non-goals**
+### Non-goals
 
 - Not touching exercir's pack-local `PersonSubjectRef` / `actorRef` / `playerRef` domain modeling (see §6 — out of scope; they never cross the substrate inference boundary).
 - Not adding a subject-kind **registry / governance** (Approach 3, rejected: ADR-176 minimality + ADR-198's opaque-label precedent give opacity for free without new kernel machinery).
