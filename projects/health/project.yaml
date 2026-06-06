@@ -1,0 +1,30 @@
+# health — FHIR projection pack (relocated from the substrate kernel)
+# Status: bootstrapping — single projection library `@de-braighter/health-fhir`.
+# Form: pack-on-platform (ADR-027). Created by WS-6 / ADR-204 (FHIR eviction):
+#       the FHIR runtime (AuditEvent + plan-tree projectors, bulk-export, R5 types)
+#       was demoted out of substrate-runtime — it failed the ADR-176 inclusion test
+#       (not a kernel concern; ≤1 pack; superseded ADR-032 premise) — and relocated
+#       here, composing the published kernel. Builds against published
+#       @de-braighter/substrate-{contracts@^0.14.0, runtime@^0.27.0}.
+# NO live consumer yet (exercir imports no FHIR symbol; only a deferred `fhirMapping`
+#       manifest field). Provisional per ADR-204 OQ-4 (deletion trigger if the
+#       deferred binding never lands). Stands ready for the future health vertical.
+# Design: docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design.md
+# Tracking: substrate#94 (WS-6 epic), substrate#115 (relocation + complete the
+#       contracts-side R5-type eviction at the substrate@1.0 cut).
+
+name: health
+domain: fhir-projection
+status: bootstrapping
+repo: github.com/de-braighter/health
+local: domains/health/
+
+# Hints for orchestrator judgment, not enforcement. health-fhir is a pure
+# projection library (no api/DB/inference/UI tiers) — kernel rows → FHIR R5
+# resources — so the curation skews FHIR-shape + Swiss-EPD profiling.
+enabled:
+  agents:
+    suggested:
+      - fhir-pro
+      - swiss-pro
+      - substrate-coder-pro
