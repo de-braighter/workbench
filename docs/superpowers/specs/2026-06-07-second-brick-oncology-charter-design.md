@@ -8,6 +8,7 @@
 - **Owners (full-charter authoring):** `swiss-pro` (regulatory / nDSG / EPD / auth) · `fhir-pro` (EPD-FHIR / terminology / mCODE) ·
   `substrate-architect` (PHI-safe kernel tenancy + how the pathway/survival/reproducibility spine composes).
 - **Ratification gate:** the founder ratifies the charter; `charter-checker` + `exercir-charter-checker` must pass the supersession.
+- **Founder pre-ratification (2026-06-07):** the founder **pre-ratified** the charter these keystone decisions define ("it's ratified"). The eventual `status: draft → ratified` flip is carried on this authority *once the authored charter passes the watchdog gates faithfully encoding §2's decisions* — **no separate ratification ceremony**. Condition: a **material deviation** surfaced during specialist authoring (e.g. risk class lands at MDR Class III not IIb; the narrow-v1 market-entry claim is legally untenable; EPD-write staging conflicts with a Stammgemeinschaft requirement) is a *new decision* and escalates to the founder — it is not covered by the pre-ratification.
 - **Predecessor:** `docs/superpowers/specs/2026-06-07-second-brick-oncology-handoff.md` (workbench PR #82).
 
 ---
