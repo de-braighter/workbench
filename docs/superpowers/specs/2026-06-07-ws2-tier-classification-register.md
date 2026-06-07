@@ -52,7 +52,7 @@ Founder resolves RULINGS 1–4 + confirms the charter set (walked one-at-a-time)
 - **R5 → FINAL CHARTER SET = 33** (26 ADR + 7 concept): base 27 + amendment promotions (149/198/150/151) + **ADR-144** (child-safety, cluster ethical invariant) + **ADR-168** (bricks 'packs compose' UI corollary). ADR-204 stays design-global (it *applies* ADR-176, doesn't *define* it).
 
 **Execution (staged into reviewable PRs):**
-- **Stage 2a — STAMP (non-destructive):** add `tier:`/`scope:` frontmatter to all ~374 docs per the resolved classification; add platform/meta/business to validator `SCOPE_KNOWN`; fold in the `foundation-fhir` stub `moved-to`→frontmatter fix. One specs PR — no file moves → no cross-ref breakage.
+- **Stage 2a — STAMP — ✅ MERGED (specs #283, `58d001a`, 2026-06-07).** Stamped 382 docs: **charter 34** / **design-global 247** (substrate 213, platform 14, meta 10, business 10) / **design-local 101** (exercir 72, health 26, devloop 3). Validator 388 conform, **zero warnings**; verifier wave PASS (purely additive, no cross-ref breakage). foundation-fhir stub `moved-to`→frontmatter done. **3 flagged local-vs-global defaults** kept at design-global/substrate for later spot-correction: ADR-119 (payrexx adapter), ADR-165 (inference port shape), ADR-174 (pixelmatch drill-board diff).
 - **Stage 2b — FOLDER-SORT (destructive, within specs):** tier-1 → `charter/`, tier-2 → `design/`; repoint all referrers (referrer-integrity-critical, like B1). ~230 docs.
 - **Stage 2c — TIER-3 RELOCATION (destructive, cross-repo):** ~115 local docs → their domains (exercir 78 / health 28 / devloop 6 / markets 1) with redirect stubs in specs. Multi-repo, multi-PR; sequence per-domain.
 
