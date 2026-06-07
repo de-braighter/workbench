@@ -3,6 +3,8 @@
 > **Status:** approved (brainstorming) — epic concept. S0 (+S1) get their own detailed spec→plan next; S2–S5 each get a spec→plan when reached.
 > **Date:** 2026-06-07
 > **Relates to:** exercir#214 (two-board reconciliation — this is its resolution), ADR-160 (Scene 5 visual editor), ADR-177 (SVG canonical), drill-board-skins (exercir#211), the #129 tactical-board contract promotion, ADR-176 (kernel minimality — the "minimal core, specialize in adapters" shape applied at pack-UI level).
+>
+> **Re-founded 2026-06-07 (north-star):** this epic is the **first consumer** of a generic *substrate-tree renderer + render-definition registry* — see [2026-06-07-substrate-tree-renderer-north-star.md](2026-06-07-substrate-tree-renderer-north-star.md). Per ADR-176 demand-driven promotion, we build the runtime in pack-football now and promote the *generic* renderer to design-system/substrate only at the **2nd consumer** (plan-tree viz / another pack). The §10 "where it lives" boundary is the extraction seam — keep it clean. substrate-architect verdict: the render-definition's **draw-half** likely promotes; the **edit-half** (heterogeneous undo, per-kind hit-testing) is the ambitious/unproven part that may stay per-pack (a read-only render-tree *viewer* is the safe consumer-#2 fallback). `BoardGeometry` (S0) is football's render-tree instance — a flat presentation tree of render-nodes.
 
 ## 1. Problem
 
