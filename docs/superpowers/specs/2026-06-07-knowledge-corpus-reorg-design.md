@@ -3,7 +3,7 @@
 - **Status:** design — structural foundation DECIDED (the three-tier taxonomy + identity rule); workstream detail + three open decisions remain.
 - **Date:** 2026-06-07
 - **Author:** orchestrator session (founder-directed brainstorming)
-- **Scope anchor:** OPEN — `layers/specs`-first vs whole-cluster (see §6.1). Default working assumption: specs-first.
+- **Scope:** DECIDED (2026-06-07) — `layers/specs`-first; per-repo docs (design-system, domains) are fast-follow passes.
 - **Related:** `layers/specs/concepts/README.md` §Pending (the long-deferred `substrate/` → `abstract-models/` + `packs/` reorg this program executes) · ADR-181 (frontmatter governance — the schema gains `tier:`/`scope:`) · ADR-148 (cross-repo pack-split policy — relocating tier-3 to domains) · the substrate coherence remediation program (the WS-1…WS-9 precedent this mirrors).
 
 ---
@@ -59,7 +59,7 @@ The 214 ADRs are cross-referenced across all ~1000+ docs, in code comments, in C
 - **`ADR-NNN` stays the permanent, never-reused global key** (exactly as today). The number is the universal handle.
 - Every doc gains **`tier:`** (`charter` / `design-global` / `design-local`) and **`scope:`** (`cluster` / `substrate` / `<domain>`) frontmatter. *(This extends the ADR-181 frontmatter schema → the validator `tools/validators/frontmatter-schema.mjs` must be updated, and ADR-181 amended.)*
 - **Only tier-3 docs physically relocate** into their domain repo (e.g. `domains/exercir/adr/adr-156-*.md`), each leaving a **one-line redirect stub** in `specs/adr/` (`moved-to: domains/<d>/...`) so number-references and links still resolve.
-- **Tier 1 & 2 stay in `layers/specs`**, sorted — either into folders (`specs/charter/` vs `specs/design/`) or by tag alone. *(Folder-vs-tag is open — §6.4.)*
+- **Tier 1 & 2 stay in `layers/specs`**, sorted into **separate folders** — `specs/charter/` (tier 1) and `specs/design/` (tier 2). *(DECIDED 2026-06-07: folders, not tag-only — the folder is a fast visual + path signal on top of the `tier:` tag.)*
 
 So **the number carries identity; the tag + location carry the tier.** No cross-ref breakage.
 
@@ -67,9 +67,9 @@ So **the number carries identity; the tag + location carry the tier.** No cross-
 
 **Order: Staleness → Locality → Naming.** Structural rationale (reinforces the founder's priority): you do not want to carefully *relocate* and *rename* garbage. De-stale first, reorganize the survivors, rename last — otherwise dead names (`curir`) propagate into the new structure and effort is spent moving docs that should have been archived.
 
-- **WS-1 · Staleness (first, most crucial).** An **audit that produces a reviewed triage register**, not blind edits — because these are load-bearing cross-refs in a PR-gated repo, superseded ADRs are deliberately *retained* with pointers, and the ADR-212 trap (looks stale but isn't, or vice-versa) is real. Register classifies each doc: `status-doc-lag` / `superseded-but-unmarked` / `contradicts-live-code` / `dead-naming` / `archive` / `leave`. Founder reviews → batched fix PRs.
+- **WS-1 · Staleness (first, most crucial).** An **audit that produces a reviewed triage register**, not blind edits — because these are load-bearing cross-refs in a PR-gated repo, superseded ADRs are deliberately *retained* with pointers, and the ADR-212 trap (looks stale but isn't, or vice-versa) is real. **Broad staleness definition (DECIDED 2026-06-07):** all of `status-doc-lag` / `superseded-but-unmarked` / `contradicts-live-code` / `dead-naming` / `obsolete-but-harmless` are in scope, plus `archive` / `leave`. Register classifies each doc into one. Founder reviews → batched fix PRs.
 - **WS-2 · Locality (the tiering reorg).** Apply §3: stamp `tier:`/`scope:` on every surviving doc, update the ADR-181 schema + validator, sort tier-1/2 in `specs`, relocate tier-3 → domain repos with redirect stubs, and execute the long-pending `concepts/` subfolder reorg. Depends on WS-1 (only move survivors).
-- **WS-3 · Naming.** Reconcile `curir`/`verir` → the real domain set (`exercir` / `health` / `conservation` / `herdbook` / `markets` / `devloop`), decide the `-ir` brand question (dead vs retained marketing brand — §6.3), and propagate canonical names. Last, so it lands on a clean, de-staled, reorganized corpus.
+- **WS-3 · Naming.** **Purge** the dead `-ir` brand labels — `Curir`/`Verir` are dead names, **not** retained brands (DECIDED 2026-06-07) — reconciling every reference to the real domain set (`exercir` / `health` / `conservation` / `herdbook` / `markets` / `devloop`). ~110 `curir` mentions + the `verir` set + the README's `Care-cluster (Curir)` / `Association-cluster (Verir)` taxonomy + the `packs/{exercir,curir,verir}/` reorg plan. Last, so it lands on a clean, de-staled, reorganized corpus. (Historical ADRs keep their original wording per the README naming-legend convention — *names are not rewritten in place where that would falsify the record*; the purge targets live taxonomy/indexes/prose, not frozen decision records. The audit register marks which dead-naming hits are "live, rewrite" vs "historical, leave + legend".)
 
 Each workstream is its own spec → plan → execution cycle (subagent-driven execution per standing practice).
 
@@ -78,13 +78,21 @@ Each workstream is its own spec → plan → execution cycle (subagent-driven ex
 - **Orphaned worktrees/clones** cluttering the cluster root: `layers/specs-wt-206`, `layers/specs-prosefix-wt`, `layers/substrate-ws4`, `domains/markets-prepush-wt` (plus this session's transient `layers/specs-wt-query-lang`, retained until PR #279 merges, and this workbench worktree). Sweep after confirming none hold unpushed work.
 - **`domains/health` holds 1 doc** while the oncology design sits in `specs/concepts/` — a concrete tier-3 relocation candidate for WS-2.
 
-## 6. OPEN decisions (to resolve before the workstreams)
+## 6. Resolved decisions (2026-06-07)
 
-1. **Scope boundary.** `layers/specs`-first (578 docs — the epicenter; per-repo docs as fast-follow) **vs** whole-cluster (~1000+ at once). Lean: specs-first.
-2. **Staleness definition + approach.** Audit-first reviewed register (recommended) vs fix-as-found; and what counts as "stale" — `contradicts-live-code` only, or also `obsolete-but-harmless` (dead `-ir` branding, never-built `verir` docs, pre-pivot framing) and `superseded-but-unmarked`.
-3. **Naming / brand.** Is **`Curir`/`Verir`** a *dead name* (purge) or a *retained marketing brand* over a domain (keep, distinct from the repo name, as `Exercir` is over `exercir`)? Founder's call — gates WS-3.
-4. **Tier-1/2 physical separation.** Folders (`specs/charter/` vs `specs/design/`) vs tag-only sorting. Affects path-based cross-refs.
+All four open decisions are resolved (founder-directed):
 
-## 7. Next step
+1. **Scope boundary → `layers/specs`-first.** 578 docs (the epicenter). Per-repo docs (design-system 347, exercir 105, substrate 75, herdbook 79, …) are fast-follow passes once the pattern is proven.
+2. **Staleness → audit-first reviewed register, broad definition.** No edits before the founder sees the register; "stale" spans doc-lag / superseded-unmarked / contradicts-live-code / dead-naming / obsolete-but-harmless.
+3. **`Curir`/`Verir` → purge.** Dead names, not retained brands. (Only `Exercir` == its domain; the care cluster is `health`, the association cluster never became a domain.)
+4. **Tier-1/2 → separate folders.** `specs/charter/` (tier 1) and `specs/design/` (tier 2), on top of the `tier:` tag.
 
-Resolve §6 (esp. scope boundary + staleness approach), then open **WS-1**: dispatch the staleness audit (build on the `spec-auditor` agent + targeted readers) to produce the triage register for founder review.
+## 7. Next step — WS-1 is open
+
+The staleness audit is running against a current `origin/main` view of `layers/specs`, in three slices, producing a **v1 triage register for founder review before any edits**:
+
+- **structural staleness** (`spec-auditor`): dangling cross-refs, numbering collisions, superseded-pointer integrity, frontmatter conformance, stale index entries — corpus-wide.
+- **doc-lag** (code-reading agent): the 15 `proposed` ADRs — which shipped but still read `proposed` (the ADR-212 class) vs genuinely in-flight.
+- **dead-naming** (grep sweep): `curir`/`verir` + other legacy renames, per-file, split live-rewrite vs historical-leave.
+
+Register lands here for review; then WS-2 (locality/tiering) and WS-3 (naming purge) execute against the de-staled survivors.
