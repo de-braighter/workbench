@@ -125,6 +125,9 @@ The obsolescence pass + 4 founder close-calls resolve all 21 pre-collapse docs:
 
 ## Status / next step
 
-- **WS-1 mechanical PR #280** — ✅ MERGED (squash `4b4dc2d`).
-- **B1 remediation + B4 triage** — executing (subagent) → PR(s): a specs PR (archives + extraction + keep-repair link fixes + historical headers + B4 fix-real-drop-dead + the foundation-fhir stub) and a `domains/health` PR (the relocated FHIR doc). Destructive → PR-gated review before merge.
-- Then **WS-2** (tiering reorg: `tier:`/`scope:` frontmatter + `charter/`+`design/` folders + tier-3 relocations) and **WS-3** (brand + clean 1:1 naming) on the de-staled corpus.
+- **WS-1 — ✅ COMPLETE (2026-06-07). Staleness fully remediated.**
+  - Mechanical batch — specs PR #280 (squash `4b4dc2d`): 6 status flips, 13 slugs, 33 path-bugs, index repair.
+  - B1 obsolescence remediation — specs PR #281 (squash `6cd86c9`) + health PR #2 (squash `b18c709`): 6 archived (+ evidence-loop governance extracted into `evidence-projection-concept.md`), 8 keep+repair, 6 historical, `foundation-fhir` relocated to `domains/health` + redirect stub, B4 triage. Verifier wave **PASS** (zero new live danglers). Twin ritual run on every merge.
+- **WS-2 (next)** — tiering reorg: stamp `tier:`/`scope:` frontmatter; **amend ADR-181 to admit `tier:`/`scope:`/`moved-to`** (the relocation-stub identity rule needs `moved-to` in frontmatter — surfaced by the B1 stub workaround); update the validator; sort tier-1/2 into `charter/`+`design/` folders; relocate tier-3 docs to their domains with stubs.
+- **WS-3** — brand purge + clean 1:1 legacy-name renames.
+- **Deferred tail:** ADR-222/223 body-`Proposed` vs frontmatter-`ratified` mismatch; the 5 sibling `concepts/substrate/*-concept.md` `../adr` one-level-short bugs; the judgment-heavy naming (`exercir-service` paths, `eyecatcher→brick`).
