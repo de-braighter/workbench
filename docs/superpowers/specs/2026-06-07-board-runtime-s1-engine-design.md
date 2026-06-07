@@ -34,11 +34,14 @@ The drill surface (`DrillEditorPanel`) becomes a consumer: mounts `board-editor.
 
 ## 5. Decomposition (each ships green; drill specs stay green)
 
-- **S1.1 — `board-ops` + `board-editor.store` on `BoardGeometry`.** Pure modules + unit tests. Low-risk (the S0-flavored part). Includes the config shape for id-prefix/clamp. *(First detailed spec→plan.)*
-- **S1.2 — `board-editor.component` + the drill render-config.** The SVG/interaction generalization + the palette/render-config that reproduces the drill editor's look + tools exactly. Tested against the drill editor's behaviour.
-- **S1.3 — drill cutover.** `DrillEditorPanel` mounts the engine with the drill config + S0 converters; delete the old `DrillBoardEditorComponent`; the ~24 drill-board + bibliothek specs stay green (byte-preserved). The risky integration slice.
+- **S1.1 — `board-ops` + `board-editor.store` on `BoardGeometry`.** Pure modules + unit tests. Low-risk (the S0-flavored part). Includes the config shape for id-prefix/clamp. ✅ SHIPPED (#219).
 
-Build **S1.1 now**, checkpoint before S1.2/S1.3.
+> **Revised 2026-06-07 (Approach B — demand-driven, founder-confirmed).** The original S1.2/S1.3 below built the generic `board-editor.component` + a fat render-config for ONE consumer (drill) — speculative per ADR-176 + substrate-architect's caution (the edit-half may stay per-pack). Replaced with:
+>
+> - **S1.2 (revised) — wire the drill editor onto the engine.** Refactor `DrillBoardEditorComponent`'s INTERNALS only: hold `BoardGeometry` via `BoardEditorStore` + `board-ops`; convert at the component boundary (`drillDiagramToBoardGeometry` on the `diagram` input → working geometry; `boardGeometryToDrillDiagram` for the layout/render + the `diagramChange` emit). Interaction calls `board-ops` with drill kind-tokens (`pack-football.drill-diagram.{kind}`) + id-prefixes `'d'`/`'a'`; single-zone composed from `addZone`/`removeZone` at id `'drill-zone'` (the S0 `DRILL_ZONE_ID`); selection `'dot'`→`'marker'`. Public API + template structure + interaction signatures + the ~23 drill-editor specs stay byte-identical. **Finding:** the `DrillEditorStore` persistence half (saveStatus/fork) is vestigial — called nowhere outside the store + its spec (the panel owns its own save via the `diagramChange` output) — so the store swap is contained, no panel ripple. This proves the engine + S0 converters live on the most-sophisticated board NOW, with far less risk than a from-scratch generic component.
+> - **The generic `BoardEditorComponent` + render-config moves to S3**, when the tactical board is the genuine **2nd consumer** — so the render-config is shaped by both boards' needs (ADR-176 promote-on-2nd-consumer), not drill-retrofitted. S3 extracts the shared component from the (now engine-backed) drill editor + applies it to tactical.
+
+Checkpoint after S1.1 (done); S1.2 (revised) is the next detailed spec→plan.
 
 ## 6. Byte-preservation discipline (the non-negotiables)
 
