@@ -104,16 +104,16 @@ ADR `ratifies:` frontmatter using bare concept basenames (resolve from `adr/` �
 
 ---
 
-## What I recommend approving now vs deciding
+## Decisions (resolved 2026-06-07)
 
-**Approve to batch immediately (low-risk, mechanical):**
-- Bucket A (6 doc-lag flips), B2 (stale slugs), B5 (13 path-bugs), C (index repair).
+**Mechanical buckets — APPROVED, executing now** as a single WS-1 PR (subagent): Bucket A (6 doc-lag flips) · B2 (stale slugs) · B5 (13 path-bugs) · C (index repair).
 
-**Decisions needed from you before those buckets execute:**
-1. **B1** — the pre-collapse foundation/vision cluster: archive the ~8 obsolete concept docs, or keep + repair links? (recommend a dedicated per-doc obsolescence pass — it's the highest-value staleness finding.)
-2. **B4** — out-of-corpus links: fix / drop / accept.
-3. **E** — WS-3 scope: brand-only purge, or full legacy-name sweep.
+1. **B1 → dedicated obsolescence pass.** The surviving pre-collapse concept docs get a focused read-only audit slice deciding *per doc* — archive vs keep+repair vs keep-as-historical — with evidence measured against the current framing (north-star §9 collapse, ADR-127 four concerns, ADR-204 FHIR demotion). Output = a recommendations register for founder review; the B1 link/archive remediation is a *separate* PR. (NOT a wholesale archive.)
+2. **B4 → triage each.** Per out-of-corpus link: fix where a real target exists, drop the truly dead/placeholder ones. Small follow-on task (the mechanical PR deliberately left these alone).
+3. **WS-3 scope → brand + clean 1:1 renames.** `curir`/`verir` purge + the unambiguous org/scope/repo renames in live prose (frozen ADRs left, covered by naming-legend rows). **DEFER** the 2 judgment-heavy ones — `exercir-service` path refs (454 hits, overlaps the B1 obsolescence work) and `eyecatcher→brick` (ADR-168 conceptual rename) — to a later pass.
 
 ## Next step
 
-On your call: batch the approved mechanical buckets into a WS-1 fix PR (specs repo), and — if you greenlight it — run the B1 obsolescence pass as a focused second audit slice. WS-2 (tiering reorg) and WS-3 (naming) follow on the de-staled corpus.
+- **WS-1 mechanical PR** (A/B2/B5/C) — executing (subagent) → PR incoming.
+- **B1 obsolescence pass** — running (read-only) → recommendations register for review.
+- Then: **B1 remediation PR** (per reviewed recommendations) + **B4 triage**, then **WS-2** (tiering reorg) and **WS-3** (brand + 1:1 naming) on the de-staled corpus.

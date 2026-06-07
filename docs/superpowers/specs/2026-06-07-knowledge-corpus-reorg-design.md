@@ -84,7 +84,7 @@ All four open decisions are resolved (founder-directed):
 
 1. **Scope boundary → `layers/specs`-first.** 578 docs (the epicenter). Per-repo docs (design-system 347, exercir 105, substrate 75, herdbook 79, …) are fast-follow passes once the pattern is proven.
 2. **Staleness → audit-first reviewed register, broad definition.** No edits before the founder sees the register; "stale" spans doc-lag / superseded-unmarked / contradicts-live-code / dead-naming / obsolete-but-harmless.
-3. **`Curir`/`Verir` → purge.** Dead names, not retained brands. (Only `Exercir` == its domain; the care cluster is `health`, the association cluster never became a domain.)
+3. **`Curir`/`Verir` → purge.** Dead names, not retained brands. (Only `Exercir` == its domain; the care cluster is `health`, the association cluster never became a domain.) **WS-3 scope (set 2026-06-07 after the WS-1 audit revealed a hundreds-of-hits legacy-name footprint): brand + clean 1:1 renames** — curir/verir + the unambiguous org/scope/repo renames (braighter-io → de-braighter, packs-workspace → exercir, exercir-specs/the-braighter-specs → specs, exercir-platform → platform, de-braighter-eyecatchers/braighter-design-system → design-system) in live prose only. **Defer** the two judgment-heavy ones — `exercir-service` path refs (overlaps the B1 obsolescence work) and `eyecatcher→brick` (ADR-168 conceptual rename).
 4. **Tier-1/2 → separate folders.** `specs/charter/` (tier 1) and `specs/design/` (tier 2), on top of the `tier:` tag.
 
 ## 7. Next step — WS-1 is open
