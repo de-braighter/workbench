@@ -31,6 +31,10 @@ Thumbs.db
 .claude/settings.local.json
 _attic/
 
+# Ideas inbox — raw founder inputs are scratch; only the README contract is tracked
+docs/ideas-inbox/*
+!docs/ideas-inbox/README.md
+
 # Local-only secrets — never commit
 .env
 .env.*
