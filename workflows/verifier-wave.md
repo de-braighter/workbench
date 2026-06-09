@@ -27,13 +27,15 @@ Every PR that touches code, schema, or contract surface. Includes:
 
 Four fire on every wave; `exercir-charter-checker` is added only when the PR touches the exercir product domain (`domains/exercir/`).
 
-| Agent | Verifies | When | Read-only? |
-|---|---|---|---|
-| `local-ci` | Build + test + lint + PHI scan on PR head in an isolated worktree | Always | Yes (uses temp worktree) |
-| `reviewer` | Adversarial code review of the diff, incl. architecture drift (kernel creep, hidden coupling, boundary erosion). Severity-tagged: must-fix / should-fix / nit | Always | Yes |
-| `charter-checker` | The **substrate constitution** — ring boundaries, the four kernel concerns, the ADR-176 inclusion test, "store generators, derive graphs". Domain-agnostic | Always | Yes |
-| `qa-engineer` | Cross-cutting: test coverage, accessibility, performance budgets, observability, contract drift, doc completeness, ring-ownership + scalability integrity | Always | Yes |
-| `exercir-charter-checker` | The **Exercir product charter** — `prototype-assumptions-charter.md` (demo-mode, sandbox deps, no-real-PHI) | exercir-domain PRs | Yes |
+| Agent | Model | Verifies | When | Read-only? |
+|---|---|---|---|---|
+| `local-ci` | `haiku` | Build + test + lint + PHI scan on PR head in an isolated worktree | Always | Yes (uses temp worktree) |
+| `reviewer` | `opus` | Adversarial code review of the diff, incl. architecture drift (kernel creep, hidden coupling, boundary erosion). Severity-tagged: must-fix / should-fix / nit | Always | Yes |
+| `charter-checker` | `opus` | The **substrate constitution** — ring boundaries, the four kernel concerns, the ADR-176 inclusion test, "store generators, derive graphs". Domain-agnostic | Always | Yes |
+| `qa-engineer` | `sonnet` | Cross-cutting: test coverage, accessibility, performance budgets, observability, contract drift, doc completeness, ring-ownership + scalability integrity | Always | Yes |
+| `exercir-charter-checker` | `sonnet` | The **Exercir product charter** — `prototype-assumptions-charter.md` (demo-mode, sandbox deps, no-real-PHI) | exercir-domain PRs | Yes |
+
+**Model tiering** (set per agent in `.claude/agents/<name>.md` `model:` frontmatter, tiered by judgment required — not convenience): the two bug-finding roles that need the strongest reasoning, `reviewer` and `charter-checker`, run on `opus`; the broad-but-structured `qa-engineer` and the checklist-driven `exercir-charter-checker` run on `sonnet`; the mechanical `local-ci` (execute gates → parse → report) runs on `haiku`. To override for one wave, pass `model:` on the `Agent` spawn — the frontmatter is only the default.
 
 ## How to dispatch
 
