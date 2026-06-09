@@ -1,0 +1,40 @@
+# gridiron — NFL 4th-down what-if (inference showcase)
+# Status: prototype — slices 1–5 built + live-verified on the 2023 season (4,222 plays); local-only (no remote yet).
+# Form: pack-on-platform (ADR-027), zero kernel change (ADR-176). Full runtime coupling:
+#       substrate-runtime host, persisted kernel.event_log, published INFERENCE_BACKBONE,
+#       Normal-Normal posterior-per-arm + evidence gate, Angular what-if UI, oracle validation.
+# Design: docs/superpowers/specs/2026-06-09-gridiron-nfl-4th-down-what-if-design.md
+#         (plans: docs/superpowers/plans/2026-06-09-gridiron-slice{1,2,3,4}-*.md)
+# Result: kernel-vs-4th-down-bot agreement 9/11 (82%) among confident recs after the evidence gate.
+
+name: gridiron
+domain: nfl-analytics
+status: prototype
+repo: local-only
+local: domains/gridiron/
+
+# Hints for orchestrator judgment, not enforcement. gridiron is a full-stack substrate
+# consumer (NestJS + Prisma + RLS ingestion, Normal-Normal inference readout, Angular what-if
+# UI), so the curation skews backend + substrate + inference + a11y UI.
+enabled:
+  agents:
+    suggested:
+      - designer
+      - substrate-architect
+      - substrate-coder-pro
+      - implementer
+      - reviewer
+      - charter-checker
+      - qa-engineer
+      - local-ci
+      - prisma-pro
+      - test-pro
+      - ui-pro
+      - a11y-pro
+  skills:
+    suggested:
+      - architecture-concierge
+      - angular-architecture-concierge
+      - diff-refactor-engine
+      - md-quality-review
+      - nx-tag-architecture-governance
