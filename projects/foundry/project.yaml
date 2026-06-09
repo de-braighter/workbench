@@ -1,0 +1,27 @@
+# foundry — the multi-product machine's control plane (F1 of the Foundry design)
+# Status: v1 — claim-MCP server live (queue, atomic claims, gates, session prompts).
+# Form: standalone control-plane repo (NOT a substrate pack; ADR-176 applied to the
+#       machine itself: arbitration + queue + gates, nothing else). Event log is
+#       devloop-envelope-compatible for twin ingestion (F6).
+# Design: docs/superpowers/specs/2026-06-09-foundry-multi-product-machine-design.md
+#         (plan: docs/superpowers/plans/2026-06-10-foundry-f1-control-plane.md)
+
+name: foundry
+domain: control-plane
+status: v1
+repo: github.com/de-braighter/foundry
+local: domains/foundry/
+
+# Hints for orchestrator judgment, not enforcement. Pure-TS event-sourced server:
+# no UI, no DB, no kernel coupling — the curation skews backend + test + review.
+enabled:
+  agents:
+    suggested:
+      - implementer
+      - reviewer
+      - qa-engineer
+      - local-ci
+      - test-pro
+  skills:
+    suggested:
+      - md-quality-review
