@@ -1,5 +1,9 @@
 # devloop — PR-comment findings harvest: capture agent review findings at the finding level (design)
 
+> **Status (2026-06-09): S1–S4 all SHIPPED.** S1 capture (devloop#65) · S2 posting (#66) · S3 readout +
+> whatif `findings` indicator (#67) · S4 resolution + per-verifier precision (#68, design in the
+> sibling `2026-06-09-devloop-finding-resolution-s4-design.md`). The "deferred" notes below are historical.
+
 > Let our verifier-wave agents **post their findings as tagged PR review comments**, and
 > deepen the existing review harvest from comment-**counting** to finding-**recording** — so
 > per-verifier, per-severity findings become durable, queryable data instead of evaporating.
