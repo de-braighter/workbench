@@ -60,21 +60,30 @@ tie-break).
 // survival.weibull-aft@1   — conjugateWith: []
 { "scale": { "type": "number", "minimum": 0 },
   "shape": { "type": "number", "minimum": 0 },
-  "fit": { "method": "newton-raphson-profile-shape", "init": { "shape": 1 },
-           "tol": 1e-10, "maxIter": 100, "order": "durationT asc, eventObserved asc, entryT asc" } }
+  "fit": { "method": "newton-raphson-profile-shape", "init": { "shape": "1" },
+           "tol": "1e-10", "maxIter": "100", "order": "durationT asc, eventObserved asc, entryT asc" } }
 
 // survival.loglogistic-aft@1   — conjugateWith: []
 { "scale": { "type": "number", "minimum": 0 },
   "shape": { "type": "number", "minimum": 0 },
   "fit": { "method": "newton-raphson-2d-logistic",
-           "init": { "locationSeed": "mean-ln-t-over-events", "s": 1 },
-           "tol": 1e-10, "maxIter": 100, "order": "durationT asc, eventObserved asc, entryT asc" } }
+           "init": { "locationSeed": "mean-ln-t-over-events", "s": "1" },
+           "tol": "1e-10", "maxIter": "100", "order": "durationT asc, eventObserved asc, entryT asc" } }
 
 // survival.kaplan-meier@1   — conjugateWith: []   (non-parametric: the "recipe" is the estimator + tie-break)
 { "estimator": { "const": "product-limit" },
   "fit": { "method": "product-limit", "tieBreaking": "events-before-censors",
            "order": "durationT asc, eventObserved desc" } }
 ```
+
+> **Every `fit`-block scalar is a STRING token** (`"tol": "1e-10"`, `"maxIter": "100"`, `"init.shape": "1"`),
+> NOT a JSON number. Rationale: the digest proof (§5.6) asserts the in-memory seed objects and the
+> Prisma-read migration rows hash byte-identically, but a JSON float (`1e-10`) can round-trip through Postgres
+> JSONB as `0.0000000001` — a different canonical-JSON → a *false* hash divergence that would break replay.
+> String tokens round-trip identically through both paths. The param-shape `{ "type":"number","minimum":0 }`
+> keeps integer `0` (it already round-trips — it is byte-identical to the proven Normal seed). This is a
+> correctness refinement discovered in planning; it does not change the design intent (the recipe is pinned +
+> hashed) — it makes the hashing deterministic across the JS↔JSONB boundary.
 
 `pdfRef`/`cdfRef`/`sampleRef` follow the Normal seed convention (`kernel.dist.<family>` / `.cdf` / `.sample`),
 e.g. `kernel.dist.survival.weibull-aft`. KM (no pdf) sets `pdfRef` to `kernel.dist.survival.kaplan-meier.step`
