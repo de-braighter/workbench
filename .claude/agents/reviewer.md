@@ -1,5 +1,6 @@
 ---
 name: reviewer
+model: opus
 description: "Use this agent for adversarial code review of a completed implementer change. Spawn after the implementer agent finishes and BEFORE merging or proceeding to the next task. The reviewer reads the diff, runs the test/lint/build, and reports problems by severity — spanning code-quality bugs and architecture drift (kernel creep, hidden coupling, synchronous inference, persisted derived graphs, cross-pack joins, boundary erosion). The reviewer NEVER edits code — its job is to communicate problems so the implementer (or you) can decide how to fix them."
 tools:
   - Read

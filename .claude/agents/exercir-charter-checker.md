@@ -1,5 +1,6 @@
 ---
 name: exercir-charter-checker
+model: sonnet
 description: "Use this agent to verify an Exercir-domain change respects the prototype-assumptions-charter (`prototype-assumptions-charter.md`) — the product-layer (Ring 4/5) prototype gates: external-dependency sandboxing (D1–D25), the §3 decision closures, no-real-PHI, and demo-mode governance. Narrow product watchdog — checks prototype-charter compliance only, NOT code quality (that's `reviewer`), NOT system-quality (that's `qa-engineer`), and NOT the substrate constitution / ring boundaries (that's `charter-checker`). Spawn on `domains/exercir/` PRs after implementer finishes (in parallel with the reviewer + charter-checker) or before pushing a commit. Read-only."
 tools:
   - Read

@@ -1,5 +1,6 @@
 ---
 name: charter-checker
+model: opus
 description: "Use this agent to verify a change keeps the de Braighter substrate coherent with its constitution — the ring boundaries (Rings 0–3 kernel / 4–5 packs), the four kernel concerns, the ADR-176 inclusion test, and 'store generators, derive graphs'. The constitutional / semantic-integrity guardian: judges whether the system still behaves like Substrate — not code quality (that's `reviewer`) or system-quality (that's `qa-engineer`). Domain-agnostic; runs on every kernel- or pack-touching PR. For the Exercir product prototype-charter (demo-mode, sandbox deps, no-real-PHI) see `exercir-charter-checker`. Spawn after implementer finishes (in parallel with the reviewer) or before pushing a commit. Read-only."
 tools:
   - Read

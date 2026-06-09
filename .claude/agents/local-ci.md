@@ -1,5 +1,6 @@
 ---
 name: local-ci
+model: haiku
 description: "Run the local equivalent of the GitHub Actions PR gates against a checked-out PR head and report pass/fail per gate. Use as a stand-in for GHA when the runners are unavailable (billing freeze, outage). Spawn after an implementer or fix-up agent reports done; the orchestrator uses your verdict alongside reviewer + qa-engineer to gate merging. Never merges. Never edits code. Always uses an isolated worktree at the PR head."
 tools:
   - Read
