@@ -1,5 +1,5 @@
 # gridiron — NFL 4th-down what-if (inference showcase)
-# Status: prototype — slices 1–5 built + live-verified on the 2023 season (4,222 plays); local-only (no remote yet).
+# Status: prototype — slices 1–5 built + live-verified on the 2023 season (4,222 plays).
 # Form: pack-on-platform (ADR-027), zero kernel change (ADR-176). Full runtime coupling:
 #       substrate-runtime host, persisted kernel.event_log, published INFERENCE_BACKBONE,
 #       Normal-Normal posterior-per-arm + evidence gate, Angular what-if UI, oracle validation.
@@ -10,7 +10,7 @@
 name: gridiron
 domain: nfl-analytics
 status: prototype
-repo: local-only
+repo: github.com/de-braighter/gridiron
 local: domains/gridiron/
 
 # Hints for orchestrator judgment, not enforcement. gridiron is a full-stack substrate
