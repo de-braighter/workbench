@@ -444,6 +444,7 @@ describe('playRowToEnvelope', () => {
       decision: 'go',
       epa: 0.42,
       rawOutcome: null,
+      observedAt: '2023-09-11T00:00:00.000Z',
       archetypeKey: 'short|opp-side|trail|q4-early',
       yardsToGo: 2,
       yardline100: 35,
@@ -528,6 +529,7 @@ export function playRowToEnvelope(tenantPackId: string, row: PlayRow): DomainEve
       decision: arm,
       epa: row.epa,
       rawOutcome: null, // B-ready: Approach B's ETL fills the independent outcome
+      observedAt: `${row.game_date}T00:00:00.000Z`, // timestampPath source (evidence repo reads from payload, not occurred_at)
       archetypeKey: key,
       yardsToGo: row.ydstogo,
       yardline100: row.yardline_100,

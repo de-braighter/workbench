@@ -110,16 +110,13 @@ The source-spine is a **batch loader** (unlike markets' live poller). It reads n
 - **Indicator** = `payload.epa` (slice 1, `gridiron.epa` indicator key); flipping to `payload.rawOutcome` ⇒ Approach B.
 - **Projection** = `ObservationProjection` over `gridiron:Play.v1`, numerator path `payload.epa`, timestamp path `occurredAt`.
 
-> **OPEN-1 (resolve in the plan — the one real technical risk):** exactly how observations bind to an arm/tree in `counterfactual()`. Two viable encodings:
-> - **(a) Arm-in-subject** — the composite `aggregateId` is `(archetype × arm)`, so each arm is its own subject; rank via 3× `posterior()` and use `counterfactual()` for the headline paired arm comparison.
-> - **(b) Arm-as-discriminator** — single archetype subject; the projection filters observations by `payload.decision`.
-> Resolve by reading exercir's `compare-drill-what-if.service.ts` closely during planning to match the established tree↔observation binding. **(a)** is the current front-runner because it needs no new projection-filter capability.
+> **OPEN-1 — RESOLVED: (a) arm-in-subject.** Each arm is its own inference *subject*: `aggregateId = uuidv5(situationKey × arm)`. Confirmed against the substrate evidence repo (`prisma-evidence-log.repository.ts`): the per-subject query is `WHERE aggregate_id = subject.id AND event_type IN (projection.eventTypes)` under RLS — no `aggregate_type` filter, no payload-value filter. **Consequence:** the kernel `counterfactual()` primitive takes *one subject + two plan trees* (not two subjects), so it does **not** apply to a multi-arm decision encoded as multiple subjects. The readout/what-if therefore **composes `posterior()` calls** (one per arm-subject) and computes lift/ranking domain-side. Timestamps are read from `payload.observedAt` (the evidence repo evaluates `timestampPath` against `payload`, not the `occurred_at` column). Subject shape: `{ kind:'individual', id: archetypeArmId, role:'gridiron.situation' }`.
 
 ## 7. Inference & counterfactual surface
 
-- `GET /readout?archetype=<id>` → three posteriors (`go`/`punt`/`kick`) ranked by mean EPA (markets `/readout` pattern, 3× `posterior()`), each with summary (mean / p10 / p50 / p90 / sd) + health/confidence.
-- `POST /gridiron/what-if` body `{ archetypeId, baselineArm, counterfactualArm }` → reuses kernel `counterfactual()` for the headline paired comparison (e.g. punt vs. go), returning the same `WhatIfComparison` shape exercir already renders (baseline arm + counterfactual arm + `liftMean` + `direction` + shared `runId`).
-- **Multi-lever demonstration (#2):** the `go` arm splits into a nested `go-run` / `go-pass` sub-tree — a genuine multi-node intervention tree — proving effect declarations compose along the single-parent path without any kernel change.
+- `POST /gridiron/situation-readout` body = the four aspects `{ distance, field, score, time }` → builds the `situationKey`, derives the arm-subject ids, calls `posterior()` once per arm, returns the arms ranked by mean EPA (each: decision, mean, p10/p50/p90, sd) + the `recommendedArm` + the lift of the recommended arm over the status-quo (punt). Mirrors the markets `/readout` shape (3× `posterior()`), but parameterized by situation rather than enumerating all subjects.
+- **No kernel `counterfactual()`** (per OPEN-1): the comparison is a domain-side reduction over the per-arm posteriors (lift = `topArm.mean − puntArm.mean`, dead-banded direction), returning a `WhatIfComparison`-shaped result the UI renders.
+- **Multi-lever demonstration (#2):** widen the arm space from `{go, punt, kick}` to `{go-run, go-pass, punt, kick}` — each its own arm-subject (`armFromPlayType` already distinguishes run vs pass) — so the readout combines the *decision* aspect with the *play-type* aspect without any kernel change. (Deferred past slice 3; the encoding already supports it.)
 
 ## 8. UI
 
