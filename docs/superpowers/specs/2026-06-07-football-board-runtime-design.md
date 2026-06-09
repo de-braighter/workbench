@@ -1,6 +1,6 @@
 # Football Board Runtime — Architecture & Slice Ladder (epic design)
 
-> **Status:** approved (brainstorming) — epic concept. S0 (+S1) get their own detailed spec→plan next; S2–S5 each get a spec→plan when reached.
+> **Status:** ✅ COMPLETE 2026-06-09 — all slices S0–S5 shipped; **#214 closed**. pack-football's three board surfaces (drill editor, the former Scene-5 authoring board, the routed coach board) are converged onto ONE domain-free engine + one rich board component + a portable persistence port; the routed `/coach/board` is now live-SSE + authoring + formation picker + history; the duplicate `CoachTacticalBoardComponent` + the unrouted Scene-5 page (+ its dev-preview route) are retired. Follow-up: exercir#229 (re-home the injured-player bench exclusion). See [[exercir-board-runtime-arc]] for the per-slice detail. (Originally: approved (brainstorming) — epic concept; S0+S1 detailed first, S2–S5 specced when reached.)
 > **Date:** 2026-06-07
 > **Relates to:** exercir#214 (two-board reconciliation — this is its resolution), ADR-160 (Scene 5 visual editor), ADR-177 (SVG canonical), drill-board-skins (exercir#211), the #129 tactical-board contract promotion, ADR-176 (kernel minimality — the "minimal core, specialize in adapters" shape applied at pack-UI level).
 >
