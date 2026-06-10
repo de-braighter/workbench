@@ -1,5 +1,10 @@
 # Markets Phase 3a — Inference Backend + GET /readout Implementation Plan
 
+> **⚠️ STALE API.** Executed 2026-06-03; kept as a frozen execution artifact. The
+> substrate API details in here (`kind:'person'` subjects, 4-arg
+> `InferenceBackboneRouter`) predate substrate 1.2.0 — see
+> `.claude/skills/new-domain/SKILL.md` for the current API facts (workbench#117).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Wire the published `INFERENCE_BACKBONE` (Normal-Normal conjugate) over real `kernel.event_log` rows to compute a log-price posterior for BTC, ETH, and ADA, then expose the result at `GET /readout` with prices exponentiated back to USD.

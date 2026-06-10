@@ -1,6 +1,6 @@
 ---
 name: new-domain
-description: Use when standing up a brand-new substrate domain in the de-braighter cluster — scaffold a building, testing, registered pnpm-workspace domain (reusable spine lib + pack lib + NestJS api), optionally with the DB-persistence, inference-backbone, and Angular-UI tiers. Codifies the markets reference run.
+description: Use when standing up a brand-new substrate domain in the de-braighter cluster — scaffold a building, testing, registered pnpm-workspace domain (reusable spine lib + pack lib + NestJS api), optionally with the DB-persistence, inference-backbone, and Angular-UI tiers. Codifies the markets reference run, API-refreshed against the agri-ecosystem-twin run (substrate 1.2.0).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, TodoWrite
 tags: [tooling, scaffolding]
 ---
@@ -39,6 +39,7 @@ Templates live under `templates/<tier>/`. To apply a tier: copy its tree into th
 |---|---|
 | `{{DOMAIN}}` | the kebab domain name (Step 1) |
 | `{{DOMAIN_PASCAL}}` | PascalCase of the name |
+| `{{DOMAIN_PASCAL_UPPER}}` | UPPER_SNAKE of the name (e.g. `AGRI_ECOSYSTEM_TWIN`) — DB/inference tier configs + env prefix |
 | `{{HTTP_PORT}}` | chosen api port |
 | `{{PG_PORT}}` | chosen postgres port |
 | `{{PURPOSE}}` | the one-line purpose |

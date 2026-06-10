@@ -1,5 +1,11 @@
 # `/new-domain` Scaffolder Skill Implementation Plan
 
+> **⚠️ SUPERSEDED — STALE API.** Executed 2026-06-03; kept as a frozen execution
+> artifact. The substrate API details in here (`kind:'person'` subjects, 4-arg
+> `InferenceBackboneRouter`, `^0.14`/`^0.19` pins) predate substrate 1.2.0. The
+> shipped skill at `.claude/skills/new-domain/SKILL.md` is authoritative
+> (workbench#117 / PR #118). Do NOT follow API details here.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the `new-domain` skill at `de-braighter/.claude/skills/new-domain/` — a `SKILL.md` (frontmatter + 8-step Process with inline gotcha callouts) plus a `templates/{foundation,db,inference,ui}/` tree and `WORKBENCH-REGISTRATION.md`, codifying the shipped markets reference run as a tiered scaffolder.

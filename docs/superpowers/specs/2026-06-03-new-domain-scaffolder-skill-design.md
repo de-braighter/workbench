@@ -1,6 +1,7 @@
 ---
 title: "/new-domain scaffolder skill — design"
-status: approved
+status: superseded
+superseded-by: .claude/skills/new-domain/SKILL.md
 kind: technical-design
 created: 2026-06-03
 author: stibe
@@ -14,6 +15,11 @@ relates-to:
 ---
 
 # `/new-domain` scaffolder skill
+
+> **⚠️ SUPERSEDED — STALE API.** This design captures the 1.0-era substrate API
+> (`kind:'person'` subjects, 4-arg `InferenceBackboneRouter`, `^0.14`/`^0.19` pins).
+> The shipped skill at `.claude/skills/new-domain/SKILL.md` is the authoritative,
+> 1.2.0-current version (workbench#117 / PR #118). Do NOT follow API details here.
 
 > The markets domain (Phase 1/2/3, shipped 2026-06-03) was the deliberate **reference
 > run** for this skill. This extracts that run into a reusable, tiered scaffolder so a
