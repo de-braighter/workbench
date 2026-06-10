@@ -105,9 +105,9 @@ ships.
 - **Acceptance:** `GET /counterfactual` (cover-crop mix A vs B, the 3 indicators)
   returns posterior mean + credible interval per indicator per arm, plus the
   A→B delta; reproducible from the seed (seed-pinned, run manifest emitted).
-- **Reuse:** the **exercir what-if lane** (multi-arm `counterfactual()` endpoint +
-  overlay UI, exercir#119/#120) is the prior-art shape for the multi-arm endpoint
-  and the posterior-readout contract.
+- **Reuse:** the **exercir what-if lane** (two-arm `counterfactual()` endpoint —
+  baseline vs counterfactual tree — + overlay UI, exercir#119/#120) is the
+  prior-art shape for the A-vs-B endpoint and the posterior-readout contract.
 - **Items:** E3.1.
 
 ### E4 — Ported twin UI
@@ -219,9 +219,12 @@ full consumed-package set, so non-E1 items must NOT add root-level dependencies
 (root `package.json`/`pnpm-lock.yaml` sit outside every non-E1 pathPrefix) and
 must NOT extend the root `tools/db/*` scripts — E2.3's seed-loader lives in-app
 under `apps/agri-ecosystem-twin-api/src/` (the markets ingestion-adapter shape),
-not in root tools. An item that genuinely needs either is a disjointness
-violation in the making: hand back via `foundry_handoff` and fix the lane map
-here.
+not in root tools. Likewise i18n (UI text is i18n'd per the working-language
+convention): each UI surface's strings live in a page-scoped i18n file inside
+its own pathPrefix; E4.1 owns the i18n loader wiring and any shared/common
+keys — no surface item edits a shared root i18n file. An item that genuinely
+needs either is a disjointness violation in the making: hand back via
+`foundry_handoff` and fix the lane map here.
 
 ## Work items
 

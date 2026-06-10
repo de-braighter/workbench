@@ -74,8 +74,9 @@ safe at claim time exactly because disjointness was *designed* here — F1's
 
 ## The disjointness algorithm (design against EXACTLY this)
 
-The claim plane (foundry `scopesDisjoint`, fail-closed) treats two item scopes
-as disjoint iff:
+The claim plane (foundry `scopesDisjoint` — source of truth:
+`domains/foundry/src/state.ts`; fail-closed) treats two item scopes as
+disjoint iff:
 
 1. different `repo` → disjoint;
 2. same repo, BOTH scopes carry `pathPrefix` → disjoint iff neither normalized
@@ -98,7 +99,10 @@ is disjoint from every ACTIVE claim. Design consequences:
 - **Shared files break path disjointness** — mutations of shared surfaces
   (route tables, module barrels, app config, root package.json) belong in a
   *sequencing item* that the parallel items `dependsOn`; a parallel item's
-  pathPrefix must contain every file it will touch.
+  pathPrefix must contain every file it will touch. Root-level files
+  (`package.json`, the lockfile, root `tools/` scripts) are the common
+  greenfield trap — they sit outside every non-scaffold pathPrefix, so
+  dependency additions belong to the scaffold or a sequencing item.
 - `lane` is informational labeling only (no claim semantics); the real
   parallelism contract is `dependsOn` + disjoint scopes.
 
@@ -144,6 +148,9 @@ is disjoint from every ACTIVE claim. Design consequences:
    design-system-brick pages. Each in-scope surface becomes an item under a UI
    epic, pathPrefix'd to its own page directory; the UI shell (routing, app
    config, shared layout) is a sequencing item the surface items `dependsOn`.
+   UI text is i18n'd (working-language convention): each surface's strings
+   live in a page-scoped i18n file INSIDE its pathPrefix; the shell item owns
+   the i18n loader wiring and any shared/common keys.
 5. **ADR needs.** List the ADRs the path requires. T0: expected none
    (pack-native; an apparent kernel need is a charter design smell to escalate,
    not to build). T1: the ADR set goes to Gate 2. T2: additionally mark
@@ -153,7 +160,7 @@ is disjoint from every ACTIVE claim. Design consequences:
    coverage-delta, mutation tier, non-superuser DB tests, a11y battery) and
    which obligations land on which items (an applicability table).
 7. **Decompose into work items.** For each item: `itemId` (`<key>/E<n>` or
-   `<key>/E<n>.<m>`), `title`, `epic`, `scope` (`repo` + `pathPrefix` and/or
+   `<key>/E<n>.<m>`), `title`, `epic` (optional), `scope` (`repo` + `pathPrefix` and/or
    `issue` — greenfield products rely on pathPrefix), `dependsOn` (itemIds),
    `lane`, `qualityObligations`. `scope.issue` is filled when the target repo +
    story issues exist; worker sessions create story issues per the
@@ -308,7 +315,7 @@ PR body:
 - Plan: docs/superpowers/plans/2026-06-10-foundry-f4-build-path.md
 
 Producer: orchestrator/claude-fable-5 [superpowers:writing-plans, superpowers:subagent-driven-development]
-Effort: standard
+Effort: deep
 Effect: cycle-time 0.01±0.02 expert
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
