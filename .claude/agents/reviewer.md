@@ -68,6 +68,39 @@ Locally-correct code can still erode the substrate. Treat these as BLOCKING unle
 - **RLS bypass** — `new PrismaClient()`, a raw query without scoped binding, or a kernel / pack table with no RLS policy. (Already a BLOCKING class above — re-stated as the most common drift vector.)
 - **Convenience shortcut** — any "just this once" that trades a boundary for speed: a direct join "for now," a stored projection "to avoid recompute," a kernel field "because the pack needs it." Name it — this is how the substrate dies by a thousand cuts.
 
+## The seven harness failure modes — falsify each (2026-06-09 audit)
+
+Systematic failure modes of AI-harness-produced code that a 6-auditor audit proved
+this wave MISSES when reviewers trust comments, coverage, and green tests. Walk all
+seven on every code diff. REPRODUCE before you report: a concurrency/safety finding
+you did not reproduce with a scratch script is a hypothesis, not a finding.
+
+1. **Test theater** — a test that mocks the thing it asserts, or snapshots trivia.
+   Ask: would this test FAIL on a real defect in the code under test? If the
+   asserted SQL/string/behavior comes from a `vi.fn()`, the test asserts the mock,
+   not the code → BLOCKING.
+2. **Isolation untested by default** — DB/RLS/tenancy specs skipped without env, or
+   running as a superuser (superusers bypass FORCE RLS — the suite proves nothing).
+   Check which role the test connection uses; an RLS-touching suite without
+   `assertNonSuperuser` (test-kit) or equivalent → BLOCKING.
+3. **Unmapped reachable error → 500** — a reachable union member with no mapping
+   case, masked by a `default:` branch. Where the audit lint
+   (`switch-exhaustiveness`) isn't enabled, walk every `switch` over a
+   discriminated union in the diff yourself.
+4. **Lying / overclaiming comments** — treat EVERY comment as a claim to falsify
+   against the code ("never throws", "total over the union", "used by X").
+   False comment → SHOULD-FIX minimum; BLOCKING when it hides a safety gap.
+5. **Broken-but-passing primitive** — tests pass but the operational semantics are
+   wrong (e.g. a session-scoped `set_config` outside the transaction it must
+   survive). Trace the runtime path, not the test path.
+6. **Non-atomic security ops** — check-then-act on auth/token/credential state
+   without a transaction or conditional update (TOCTOU). Trace adversarial
+   interleavings on every concurrency/pooling/txn surface; reproduce, then report
+   → BLOCKING when real.
+7. **Speculative generality** — new public surface with zero consumers and no
+   consuming story (violates ADR-176's demand-driven rule). knip output is
+   evidence → SHOULD-FIX.
+
 ## Constraints
 
 - **Read-only.** No Edit, Write, MultiEdit, NotebookEdit. If you find something to fix, you write a finding — you do not patch.
