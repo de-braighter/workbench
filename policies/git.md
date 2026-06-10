@@ -1,6 +1,6 @@
 ---
 title: Git + PR discipline
-last_updated: 2026-05-24
+last_updated: 2026-06-10
 ---
 
 # Git + PR discipline
@@ -8,6 +8,27 @@ last_updated: 2026-05-24
 ## PR-everywhere
 
 **All repos go through PRs**, including `specs/` (ADRs, concept docs). No direct-to-main pushes. This reverses the previous "Specs/main workflow vs services PR workflow" split documented in the legacy `exercir-workbench/.claude/agent-workflow.md` §6.4.
+
+## Claims & worktrees (multi-session safety)
+
+Concurrent sessions sharing one clone switch branches under each other — the
+worktree mandate closes this structurally (Foundry spec §5: "No session ever
+works in the shared clone").
+
+- **Foundry-tracked work is claim-gated.** A session working a Foundry queue
+  item follows `.claude/skills/foundry-worker/SKILL.md`: atomic `foundry_claim`
+  at session start (BEFORE any write), then a dedicated git worktree at
+  `<repo>/.claude/worktrees/<item-slug>` on branch `feat/<item-slug>`, release
+  on completion. Repos that don't gitignore `.claude/worktrees/` get a
+  local-only `.git/info/exclude` entry.
+- **Fail closed.** Foundry MCP unavailable or claim rejected → do not start the
+  work (read-only at most). A generated session prompt holds no lock — only
+  `foundry_claim` does.
+- **Everywhere else, prefer worktrees.** Whenever another session may be active
+  in the same repo, work in a worktree (verifier agents already do, via
+  `isolation: "worktree"`); at minimum verify the branch before every commit.
+- **Stale claims** (TTL 240 min without heartbeat) surface in `foundry_status`
+  with their abandoned worktree path for cleanup; reclaim is explicit, never silent.
 
 ## Verifier wave
 
