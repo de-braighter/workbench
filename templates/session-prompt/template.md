@@ -22,7 +22,7 @@ Scope (hard boundary — do not touch anything outside it): <owner/repo>[ — is
 Quality obligations (tier floor): <comma-separated; omit the line if none>
 
 Invoke the workbench skill foundry-worker (Skill tool) and follow it end to end — it is the canonical session protocol. Fallback protocol if the skill is unavailable — mandatory, in order:
-1. CLAIM — derive your worktree (<repo-local-path>/.claude/worktrees/<item-slug>) and branch (feat/<item-slug>), then call foundry MCP tool foundry_claim with { itemId: "<itemId>", sessionId: "<your session id>", worktree, branch }. If rejected, STOP immediately; never work unclaimed.
+1. CLAIM — mint a session id (sess-<yyyyMMdd-HHmmss>-<4 hex>), derive your worktree (<repo-local-path>/.claude/worktrees/<item-slug>) and branch (feat/<item-slug>), then call foundry MCP tool foundry_claim with { itemId: "<itemId>", sessionId, worktree, branch }. If rejected, STOP immediately; never work unclaimed.
 2. ISOLATE — create the claimed git worktree and work only there; never in the shared clone.
 3. EXECUTE — implement the item within its scope. Route through existing skills (superpowers:subagent-driven-development for plan execution).
 4. QUALITY — run the repo's local gates (ci:local) and the verifier wave per risk tier <tier>; post findings to the PR before merge.

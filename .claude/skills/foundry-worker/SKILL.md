@@ -18,8 +18,9 @@ existing arsenal and adds only collision safety + tier-gated quality.
   session prompt holds no lock; only `foundry_claim` does.
 - **Never edit in the shared clone.** Every write happens in the claim's worktree.
 - **Never bypass quality gates.** Floor can't go green → release `blocked`.
-- **Scope is a hard boundary.** Touch nothing outside the item's scope — repo +
-  pathPrefix are the enforceable boundary (the issue scopes intent).
+- **Scope is a hard boundary.** Touch nothing outside the item's scope. Same-repo
+  disjointness is proven by non-nested pathPrefixes or distinct issues (the
+  server's rules); pathPrefix is the boundary you can CHECK against the diff.
 - **One item per session.** Release, report, stop.
 
 ## Phase 0 — BOOT
@@ -62,13 +63,16 @@ git fetch origin main
 grep -q '\.claude/worktrees/' .gitignore .git/info/exclude 2>/dev/null || echo '.claude/worktrees/' >> .git/info/exclude
 git worktree add .claude/worktrees/<slug> -b feat/<slug> origin/main
 cd .claude/worktrees/<slug>
-npm install   # or pnpm install — lockfile decides; worktrees don't share node_modules
+npm install   # or pnpm install — lockfile decides; a fresh worktree starts without node_modules
 ```
 
-- A leftover worktree/branch at the slug is from an EXPIRED claim (your claim
-  succeeding proves no active one exists): remove it (`git worktree remove --force`,
-  `git branch -D`) and retry. Creation still fails →
-  `foundry_release { claimId, outcome: "blocked", note }` and stop.
+- A leftover worktree/branch at the slug is usually from an EXPIRED claim — but
+  distinct itemIds CAN collide on one slug, so never assume. Check
+  `foundry_status` first: ANY active claim referencing that worktree path →
+  STOP and report (slug collision with live work — do not touch it). Only when
+  no active claim references it, remove the leftover
+  (`git worktree remove --force`, `git branch -D`) and retry. Creation still
+  fails → `foundry_release { claimId, outcome: "blocked", note }` and stop.
 - Nx-repo gotcha: a worktree's nx daemon can lock the main clone's nx db —
   set `NX_DAEMON=false` in the worktree if builds wedge.
 
@@ -87,6 +91,10 @@ Route by situation — never invent a new build style:
 - Discover you must touch files outside the scope → spec §7 stance: the OLDER
   claim proceeds; YOU hand back — `foundry_handoff { claimId, note: <what overlaps> }`,
   then stop. The build-path lane map gets corrected upstream.
+- The build dead-ends (infeasible item, unresolvable dependency, repeated
+  failures unrelated to your changes) → `foundry_release { claimId,
+  outcome: "blocked", note: <why> }` and stop — never sit on a claim; the item
+  re-queues with the reason attached.
 
 ## Phase 4 — QUALITY (tier-gated; PR opens BEFORE the wave)
 
@@ -123,10 +131,12 @@ Route by situation — never invent a new build style:
 1. Merge per tier: **T0** green wave → squash-merge. **T1** green wave + Sonar →
    squash-merge. **T2** → `foundry_gate_request { productKey, gateType: "ship",
    payloadRef: <pr url> }` and WAIT for the founder — never auto-merge (still
-   pending at session end → quickref: release `blocked` with the gateId).
+   pending at session end → `foundry_release { claimId, outcome: "blocked",
+   note: "gate <gateId> pending" }`).
 2. Twin ritual (mandatory, from `domains/devloop`): after the wave
-   `npm run dev -- drain <repo#pr>`; after merge
-   `npm run dev -- backfill <owner>/<repo>` then `npm run dev -- reconcile`;
+   `npm run dev -- drain <repo#pr>` (short form OK for drain); after merge
+   `npm run dev -- backfill <owner>/<repo>` (full form, like `post-findings`)
+   then `npm run dev -- reconcile`;
    `npm run ritual:post-merge` covers reviews + resolve-findings.
 3. Cleanup from the repo root: `git worktree remove .claude/worktrees/<slug>`
    (it should be clean after a merge — investigate before reaching for
@@ -149,5 +159,6 @@ Then STOP. Final report: item, PR, wave verdicts, ritual confirmations, claim re
 | Worktree creation fails | `foundry_release(blocked)` + note. |
 | Scope overlap discovered mid-build | Older claim proceeds; newer `foundry_handoff` + stop. |
 | Quality floor red | `foundry_release(blocked)` with the failure attached. |
+| Build dead-ends mid-EXECUTE (infeasible / unresolvable) | `foundry_release(blocked)` + why — never hold the claim until TTL. |
 | Heartbeat errors (claim superseded) | Stop working immediately; report. |
 | Founder gate still pending at session end | `foundry_release(blocked)` + note the gateId — the item re-queues; a later session merges after approval. Gates never block other products' lanes. |
