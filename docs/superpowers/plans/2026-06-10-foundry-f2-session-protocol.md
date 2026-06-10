@@ -141,11 +141,13 @@ npm install   # or pnpm install — lockfile decides; a fresh worktree starts wi
 
 - A leftover worktree/branch at the slug is usually from an EXPIRED claim — but
   distinct itemIds CAN collide on one slug, so never assume. Check
-  `foundry_status` first: ANY active claim referencing that worktree path →
-  STOP and report (slug collision with live work — do not touch it). Only when
-  no active claim references it, remove the leftover
-  (`git worktree remove --force`, `git branch -D`) and retry. Creation still
-  fails → `foundry_release { claimId, outcome: "blocked", note }` and stop.
+  `foundry_status` first: any OTHER session's active claim referencing that
+  worktree path means slug collision with live work — do not touch it;
+  `foundry_release { claimId, outcome: "blocked", note: "slug collision with
+  <other item>" }` and stop (the item re-queues). Only when no other active
+  claim references it, remove the leftover (`git worktree remove --force`,
+  `git branch -D`) and retry. Creation still fails →
+  `foundry_release { claimId, outcome: "blocked", note }` and stop.
 - Nx-repo gotcha: a worktree's nx daemon can lock the main clone's nx db —
   set `NX_DAEMON=false` in the worktree if builds wedge.
 
