@@ -1,7 +1,8 @@
 // Canonical a11y battery (player-surfaces arc patterns) — copy next to each page
 // component as `a11y.spec.ts` and adapt the imports/selectors. Kills the
-// inaccessible-by-default failure mode. Structural checks only — color contrast
-// and reduced-motion need a real browser pass (qa-engineer dimension 2).
+// inaccessible-by-default failure mode. The fixture is body-attached so rendered
+// geometry is real (ChromeHeadless lays out for real). Color contrast and
+// reduced-motion need a real browser pass (qa-engineer dimension 2).
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 
@@ -13,7 +14,12 @@ describe('a11y battery: AppComponent', () => {
     await TestBed.configureTestingModule({ imports: [AppComponent] }).compileComponents();
     fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
+    document.body.appendChild(fixture.nativeElement);
     root = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => {
+    (fixture.nativeElement as HTMLElement).remove();
   });
 
   it('every label points at an existing control (label/for)', () => {
@@ -51,7 +57,6 @@ describe('a11y battery: AppComponent', () => {
   it('interactive targets meet the 24px minimum (SC 2.5.8)', () => {
     for (const el of Array.from(root.querySelectorAll<HTMLElement>('button, a[href]'))) {
       const { height, width } = el.getBoundingClientRect();
-      if (height === 0 && width === 0) continue; // not rendered in this fixture
       expect(height)
         .withContext(`<${el.tagName.toLowerCase()}> height ${height}px < 24px`)
         .toBeGreaterThanOrEqual(24);

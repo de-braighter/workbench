@@ -121,7 +121,7 @@ After scaffolding:
    FORCE RLS, so a suite running as superuser proves nothing:
 
    ```ts
-   import { assertNonSuperuser } from '@de-braighter/test-kit';
+   import { assertNonSuperuser } from '@de-braighter/test-kit/pg-roles';
    await assertNonSuperuser((sql) => appPrisma.$queryRawUnsafe(sql));
    ```
 4. **UI tier:** copy the a11y battery next to each page component (Step 5 item 6).

@@ -2,4 +2,6 @@ import { defineStrykerConfig } from '@de-braighter/test-kit/stryker';
 
 // Tier comes from the product charter (docs/foundry/<key>/charter.md).
 // t0 = report-only; t1 = break<60 fails; t2 = break<75 fails.
+// @stryker-mutator/* live in the workspace ROOT devDependencies (pnpm puts the
+// root .bin on script PATH) — do not add per-lib copies (version drift).
 export default defineStrykerConfig({ tier: 't0' });

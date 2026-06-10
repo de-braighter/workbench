@@ -48,7 +48,7 @@ test-kit 0.2.0, published).
   both satisfy it). Config mirrored `defineStrykerConfig({ tier: 't1' })`
   (kit unpublished at run time) + `vitest: { configFile: 'vitest.config.ts' }`
   — the hint was REQUIRED (devloop's config carries a load-bearing
-  `exclude: '**/.claude/**'`); accepted without warnings.
+  `exclude: '**/.claude/**'`); accepted without warnings. (Post-wave: the pnpm plugin-discovery gap below also dates this run's layout-specificity — see the addendum.)
 - **Modules mutated (3 best-covered pure-logic modules, 486 LOC ≈ 10% of src):**
   `src/inference/calibration.ts`, `src/inference/whatif.ts`, `src/events.ts`.
 - **Raw results:** 417 mutants, **score 75.54** (covered 78.16) — passes
@@ -107,6 +107,21 @@ test-kit 0.2.0, published).
   break 60 / t2 break 75).
 - ci:local posture confirmed: knip report-mode in the local gate, strict knip
   + mutation as tier obligations at wave time; mutation never in `ci:local`.
+
+## Post-wave addendum (the wave extended the prove-itself)
+
+The #115 verifier wave ran the battery against a REAL pnpm scaffold probe and
+caught a layout-specific failure the devloop run structurally could not:
+Stryker's plugin auto-discovery (a directory scan from @stryker-mutator/core's
+own location) finds the vitest runner on npm's FLAT node_modules (devloop) but
+NOT under pnpm's isolated layout (what `/new-domain` ships) — `stryker run`
+died with "no TestRunner plugins were loaded" on first scaffold use; an
+explicit `plugins: ['@stryker-mutator/vitest-runner']` fixes it. Fixed at kit
+level in foundation 0.2.1 (`defineStrykerConfig` now emits the plugins entry
+for the vitest runner) and re-proven on a pnpm scaffold. Also from the same
+probe: `.stryker-tmp/` must be lint-ignored (0.2.1 preset) and gitignored, or
+a mutation run breaks the next `ci:local` lint. Lesson for spec §8: prove-itself
+runs must match the TARGET layout (pnpm), not just a convenient repo.
 
 ## What this does NOT prove
 

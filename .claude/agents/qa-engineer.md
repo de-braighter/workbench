@@ -117,7 +117,7 @@ spots:
 |---|---|---|---|
 | 1 | Test theater | Stryker mutation score per tier (`quality:mutation`) | dim 1 |
 | 2 | Isolation untested by default | DB suite under a NOBYPASSRLS role (`assertNonSuperuser` in setup) | dim 1/9 |
-| 3 | Unmapped error → 500 | `auditConfig` switch-exhaustiveness lint | dim 1 |
+| 3 | Unmapped error → 500 | `auditConfig` switch-exhaustiveness lint | dim 4/9 |
 | 4 | Lying comments | reviewer falsification pass (no deterministic gate — confirm reviewer ran it) | dim 6 |
 | 5 | Broken-but-passing primitive | integration tier exercises the real runtime path | dim 1/9 |
 | 6 | Non-atomic security ops | reviewer adversarial-interleaving pass with reproduction | dim 9 |
