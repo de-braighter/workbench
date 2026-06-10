@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Substrate · Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <rect width="200" height="200" fill="#f0e8d8"/>
+    <circle cx="100" cy="100" r="62" stroke="#1a1612" stroke-width="2" fill="none"/>
+    <path d="M 100 50 Q 130 75 130 100 Q 130 130 100 158 Q 70 130 70 100 Q 70 75 100 50 Z" fill="#f0c764"/>
+    <line x1="100" y1="50" x2="100" y2="158" stroke="#1a1612" stroke-width="1.4"/>
+    <text x="100" y="188" text-anchor="middle" font-family="Spectral, serif" font-size="13" font-weight="500" letter-spacing="3" fill="#1a1612">SUBSTRATE</text>
+  </svg>
+</template>
+
+<style>
+  :root {
+    --paper:        #f0e8d8;
+    --paper-2:      #e6dcc6;
+    --paper-3:      #d8cdb4;
+    --ink:          #1a1612;
+    --ink-2:        #3a322a;
+    --ink-3:        #6a5e4e;
+    --ink-soft:     #8a7e6e;
+    --dark:         #161a16;
+    --dark-2:       #1f231e;
+    --gold:         #f0c764;
+    --gold-2:       #d4a04a;
+    --moss:         #5a7a35;
+    --moss-deep:    #3d6b3a;
+    --terra:        #b8533a;
+    --rust:         #8a4a2b;
+    --steel:        #4a7d9e;
+    --line:         rgba(26,22,18,0.14);
+    --line-2:       rgba(26,22,18,0.28);
+    --line-strong:  rgba(26,22,18,0.55);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; }
+  body { font-family: "IBM Plex Sans", system-ui, sans-serif; color: var(--ink); font-feature-settings: "ss01"; }
+  deck-stage:not(:defined) { visibility: hidden; }
+
+  /* ===== SLIDE BASE ===== */
+  deck-stage > section {
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(240,199,100,0.06), transparent 45%),
+      radial-gradient(circle at 0% 100%, rgba(184,83,58,0.05), transparent 45%);
+    color: var(--ink);
+    padding: 64px 80px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  deck-stage > section.dark {
+    background: var(--dark);
+    background-image:
+      radial-gradient(circle at 80% 20%, rgba(240,199,100,0.10), transparent 50%),
+      radial-gradient(circle at 10% 90%, rgba(90,122,53,0.08), transparent 50%);
+    color: var(--paper);
+  }
+
+  /* slide chrome */
+  .chrome-top {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    color: var(--ink-3);
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 36px;
+  }
+  .dark .chrome-top { color: rgba(240,232,216,0.5); border-bottom-color: rgba(240,232,216,0.18); }
+  .chrome-brand { display: flex; align-items: center; gap: 12px; }
+  .chrome-brand-mark { display: inline-flex; align-items: center; }
+  .chrome-brand-name { font-family: "Spectral", serif; font-weight: 500; letter-spacing: 0.26em; font-size: 15px; color: var(--ink); }
+  .dark .chrome-brand-name { color: var(--paper); }
+  .chrome-meta { display: flex; gap: 28px; align-items: center; }
+  .chrome-section { color: var(--ink-2); }
+  .dark .chrome-section { color: var(--gold); }
+
+  .chrome-bottom {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+  }
+  .dark .chrome-bottom { border-top-color: rgba(240,232,216,0.18); color: rgba(240,232,216,0.5); }
+
+  /* type system */
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    letter-spacing: 0.22em;
+    color: var(--gold-2);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  .display-xl { font-family: "Spectral", serif; font-size: 132px; font-weight: 300; line-height: 0.95; letter-spacing: -0.01em; }
+  .display-l  { font-family: "Spectral", serif; font-size: 92px;  font-weight: 300; line-height: 1.0; letter-spacing: -0.005em; }
+  .display    { font-family: "Spectral", serif; font-size: 64px;  font-weight: 400; line-height: 1.05; letter-spacing: -0.005em; }
+  .display-s  { font-family: "Spectral", serif; font-size: 44px;  font-weight: 400; line-height: 1.1; }
+  .lead       { font-family: "Spectral", serif; font-size: 28px;  font-weight: 300; line-height: 1.35; color: var(--ink-2); }
+  .lead em    { color: var(--rust); font-style: italic; }
+  .dark .lead em { color: var(--gold); }
+  .body       { font-size: 18px; line-height: 1.5; color: var(--ink-2); }
+  .body em    { font-style: italic; color: var(--rust); }
+  .small      { font-size: 14px; color: var(--ink-3); }
+  .mono       { font-family: "IBM Plex Mono", monospace; }
+
+  /* ===== SLIDE 1: COVER ===== */
+  .cover {
+    background: var(--dark) !important;
+    background-image:
+      radial-gradient(circle at 80% 20%, rgba(240,199,100,0.18), transparent 50%),
+      radial-gradient(circle at 15% 80%, rgba(90,122,53,0.14), transparent 50%) !important;
+    color: var(--paper);
+    padding: 80px;
+  }
+  .cover-top {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    color: rgba(240,232,216,0.55);
+  }
+  .cover-main {
+    margin: auto 0;
+  }
+  .cover-mark { display: flex; align-items: center; gap: 24px; margin-bottom: 56px; }
+  .cover-name {
+    font-family: "Spectral", serif;
+    font-size: 220px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    line-height: 0.9;
+    color: var(--paper);
+  }
+  .cover-tag {
+    font-family: "Spectral", serif;
+    font-style: italic;
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--gold);
+    margin-top: 32px;
+    line-height: 1.2;
+    max-width: 1100px;
+  }
+  .cover-sub {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 16px;
+    color: rgba(240,232,216,0.65);
+    letter-spacing: 0.12em;
+    margin-top: 28px;
+    max-width: 900px;
+    line-height: 1.55;
+  }
+  .cover-footer {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    padding-top: 28px;
+    border-top: 1px solid rgba(240,199,100,0.3);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: rgba(240,232,216,0.55);
+  }
+  .cover-version { color: var(--gold); }
+
+  /* ===== TWO-COLUMN ===== */
+  .two-col { display: grid; grid-template-columns: 1fr 1.1fr; gap: 80px; flex: 1; align-items: flex-start; }
+  .two-col-narrow { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; flex: 1; }
+
+  /* ===== ANNOTATIONS ===== */
+  .annot {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    line-height: 1.4;
+  }
+  .annot.gold { color: var(--gold-2); }
+
+  /* ===== STATS ===== */
+  .stat-row { display: flex; gap: 56px; margin-top: 32px; }
+  .stat { display: flex; flex-direction: column; line-height: 1.1; }
+  .stat-num { font-family: "Spectral", serif; font-size: 72px; font-weight: 300; color: var(--ink); }
+  .dark .stat-num { color: var(--paper); }
+  .stat-unit { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-3); letter-spacing: 0.14em; margin-top: 4px; }
+
+  /* ===== PRODUCT FRAME ===== */
+  .product-frame {
+    flex: 1;
+    margin-top: 28px;
+    background: var(--dark);
+    border: 1px solid var(--line-2);
+    box-shadow: 0 32px 80px rgba(26,22,18,0.18), 0 4px 20px rgba(26,22,18,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  .product-frame iframe {
+    width: 100%; height: 100%;
+    border: none;
+    display: block;
+  }
+  .product-tag {
+    position: absolute; bottom: 12px; right: 12px;
+    background: rgba(15,18,15,0.85);
+    backdrop-filter: blur(6px);
+    padding: 6px 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    border: 1px solid rgba(240,199,100,0.3);
+    z-index: 10;
+  }
+
+  /* ===== MODEL DIAGRAM ===== */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+    flex: 1;
+  }
+  .model-cell {
+    display: flex;
+    flex-direction: column;
+    padding: 28px 28px 32px;
+    background: var(--paper);
+    border: 1px solid var(--line-2);
+    border-top: 3px solid var(--moss-deep);
+    position: relative;
+  }
+  .model-cell.indicators  { border-top-color: var(--gold-2); }
+  .model-cell.observations { border-top-color: var(--steel); }
+  .model-cell.interventions { border-top-color: var(--rust); }
+  .model-cell-id {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .model-cell-title {
+    font-family: "Spectral", serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 12px;
+    line-height: 1.05;
+  }
+  .model-cell-defn {
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--ink-2);
+    margin-bottom: 20px;
+  }
+  .model-cell-list {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .model-cell-item {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    letter-spacing: 0.02em;
+  }
+  .model-cell-item::before { content: "·  "; color: var(--gold-2); }
+
+  /* ===== THREE COLUMN ===== */
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; margin-top: 48px; flex: 1; }
+  .force {
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0 0;
+    border-top: 1px solid var(--ink);
+  }
+  .force-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: var(--gold-2);
+    margin-bottom: 8px;
+  }
+  .force-title {
+    font-family: "Spectral", serif;
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+  .force-body {
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .force-data {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+
+  /* ===== QUOTE / THESIS ===== */
+  .thesis-wrap {
+    display: flex; flex-direction: column; justify-content: center;
+    flex: 1;
+    align-items: center;
+    text-align: center;
+    padding: 0 80px;
+  }
+  .thesis {
+    font-family: "Spectral", serif;
+    font-size: 78px;
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    max-width: 1500px;
+  }
+  .thesis em { font-style: italic; color: var(--rust); }
+  .thesis-sub {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+    margin-top: 48px;
+  }
+
+  /* ===== DIFFERENTIATION MATRIX ===== */
+  .matrix { margin-top: 40px; flex: 1; display: flex; flex-direction: column; }
+  .matrix-row {
+    display: grid;
+    grid-template-columns: 280px repeat(4, 1fr);
+    align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .matrix-row.head {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .matrix-row.head .matrix-cell { text-align: center; }
+  .matrix-row.head .matrix-cell.us { color: var(--rust); font-weight: 500; }
+  .matrix-cap {
+    font-family: "Spectral", serif;
+    font-size: 19px;
+    color: var(--ink);
+    font-weight: 400;
+  }
+  .matrix-cell {
+    text-align: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .matrix-cell.us { color: var(--rust); font-weight: 500; }
+  .matrix-check  { display: inline-block; width: 14px; height: 14px; background: var(--rust); border-radius: 2px; }
+  .matrix-dash   { display: inline-block; width: 14px; height: 2px; background: var(--line-2); border-radius: 1px; vertical-align: middle; }
+  .matrix-partial{ display: inline-block; width: 14px; height: 14px; background: var(--paper-3); border: 1.5px solid var(--ink-soft); border-radius: 2px; }
+
+  /* ===== ROADMAP ===== */
+  .roadmap { margin-top: 48px; flex: 1; display: flex; flex-direction: column; }
+  .roadmap-track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .roadmap-track::before {
+    content: "";
+    position: absolute; left: 0; right: 0;
+    top: 36px; height: 1px;
+    background: var(--line-2);
+  }
+  .roadmap-phase { position: relative; padding: 0 24px 0 0; }
+  .roadmap-tick {
+    position: relative;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+  .roadmap-dot { width: 16px; height: 16px; background: var(--ink); border-radius: 50%; position: relative; z-index: 1; }
+  .roadmap-phase.active .roadmap-dot { background: var(--rust); box-shadow: 0 0 0 4px rgba(184,83,58,0.18); }
+  .roadmap-when {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--gold-2);
+  }
+  .roadmap-phase-title {
+    font-family: "Spectral", serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 12px;
+    padding-left: 28px;
+  }
+  .roadmap-phase-body { font-size: 14px; line-height: 1.45; color: var(--ink-2); padding-left: 28px; }
+  .roadmap-phase-meta { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-3); margin-top: 16px; padding-left: 28px; letter-spacing: 0.04em; }
+
+  /* ===== BUSINESS MODEL ===== */
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 48px; flex: 1; }
+  .price-card { display: flex; flex-direction: column; padding: 36px 32px; background: var(--paper); border: 1px solid var(--line-2); }
+  .price-card.featured { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .price-tier { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--gold-2); margin-bottom: 12px; }
+  .price-card.featured .price-tier { color: var(--gold); }
+  .price-name { font-family: "Spectral", serif; font-size: 32px; font-weight: 400; margin-bottom: 8px; line-height: 1.05; }
+  .price-amount { font-family: "Spectral", serif; font-size: 56px; font-weight: 300; line-height: 1; margin-top: 16px; margin-bottom: 4px; }
+  .price-card.featured .price-amount { color: var(--gold); }
+  .price-period { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
+  .price-card.featured .price-period { color: rgba(240,232,216,0.55); }
+  .price-meta { font-size: 14px; color: var(--ink-2); margin-bottom: 24px; line-height: 1.4; }
+  .price-card.featured .price-meta { color: rgba(240,232,216,0.75); }
+  .price-feat-list { margin-top: auto; padding-top: 20px; border-top: 1px dashed var(--line); display: flex; flex-direction: column; gap: 8px; }
+  .price-card.featured .price-feat-list { border-top-color: rgba(240,232,216,0.2); }
+  .price-feat { font-size: 13.5px; color: var(--ink-2); display: flex; align-items: flex-start; gap: 8px; }
+  .price-card.featured .price-feat { color: rgba(240,232,216,0.85); }
+  .price-feat::before { content: "·"; color: var(--gold-2); font-weight: bold; }
+
+  /* ===== ASK ===== */
+  .ask-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; flex: 1; align-items: center; }
+  .ask-num {
+    font-family: "Spectral", serif;
+    font-size: 200px;
+    font-weight: 300;
+    color: var(--rust);
+    line-height: 0.9;
+  }
+  .ask-num-suffix {
+    font-family: "Spectral", serif;
+    font-size: 56px;
+    font-weight: 300;
+    color: var(--rust);
+    margin-top: 18px;
+  }
+  .ask-list { display: flex; flex-direction: column; gap: 18px; }
+  .ask-item {
+    display: grid; grid-template-columns: 28px 1fr;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .ask-item-num { font-family: "IBM Plex Mono", monospace; font-size: 14px; color: var(--gold-2); padding-top: 4px; letter-spacing: 0.06em; }
+  .ask-item-body { display: flex; flex-direction: column; gap: 4px; }
+  .ask-item-title { font-family: "Spectral", serif; font-size: 22px; line-height: 1.2; color: var(--ink); }
+  .ask-item-detail { font-size: 14px; color: var(--ink-3); }
+
+  /* ===== problem ===== */
+  .problem-list { display: flex; flex-direction: column; gap: 24px; margin-top: 36px; }
+  .problem-item { display: grid; grid-template-columns: 60px 1fr; align-items: baseline; gap: 16px; padding-bottom: 22px; border-bottom: 1px dashed var(--line); }
+  .problem-num { font-family: "IBM Plex Mono", monospace; font-size: 14px; color: var(--gold-2); letter-spacing: 0.08em; }
+  .problem-text { font-family: "Spectral", serif; font-size: 26px; line-height: 1.3; color: var(--ink); font-weight: 400; }
+  .problem-text em { color: var(--rust); font-style: italic; }
+
+  /* market expansion */
+  .market-cols { display: grid; grid-template-columns: 1fr 2fr; gap: 60px; flex: 1; margin-top: 32px; }
+  .market-segments { display: flex; flex-direction: column; gap: 14px; }
+  .market-seg { padding: 16px 20px; background: var(--paper); border-left: 3px solid var(--moss-deep); }
+  .market-seg.featured { background: var(--ink); color: var(--paper); border-left-color: var(--gold); }
+  .market-seg-tier { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0.18em; color: var(--gold-2); }
+  .market-seg.featured .market-seg-tier { color: var(--gold); }
+  .market-seg-name { font-family: "Spectral", serif; font-size: 22px; line-height: 1.1; margin-top: 4px; }
+  .market-seg-meta { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-3); margin-top: 4px; letter-spacing: 0.04em; }
+  .market-seg.featured .market-seg-meta { color: rgba(240,232,216,0.6); }
+
+  /* substrate-style topographic header decoration */
+  .topo-bg {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  }
+  .topo-bg path { fill: none; stroke: var(--line); stroke-width: 0.8; }
+  .dark .topo-bg path { stroke: rgba(240,199,100,0.10); }
+
+  /* speaker notes placeholder hidden */
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+  <!-- ===== SLIDE 1: COVER ===== -->
+  <section data-label="Cover" class="cover">
+    <svg class="topo-bg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <path d="M0,200 C300,140 700,180 1100,160 S1700,220 1920,180"/>
+      <path d="M0,300 C300,240 700,280 1100,260 S1700,320 1920,280"/>
+      <path d="M0,420 C300,360 700,400 1100,380 S1700,440 1920,400"/>
+      <path d="M0,560 C300,500 700,540 1100,520 S1700,580 1920,540"/>
+      <path d="M0,720 C300,660 700,700 1100,680 S1700,740 1920,700"/>
+      <path d="M0,880 C300,820 700,860 1100,840 S1700,900 1920,880"/>
+    </svg>
+    <div class="cover-top">
+      <span>SUBSTRATE — INVESTOR MEMO · CONFIDENTIAL</span>
+      <span>v0.4 — MAY 2026</span>
+    </div>
+    <div class="cover-main">
+      <div class="cover-mark">
+        <svg viewBox="0 0 96 96" width="84" height="84">
+          <circle cx="48" cy="48" r="42" stroke="#f0c764" stroke-width="2" fill="none"/>
+          <path d="M 48 12 Q 66 36 66 48 Q 66 66 48 84 Q 30 66 30 48 Q 30 36 48 12 Z" fill="#f0c764"/>
+          <line x1="48" y1="12" x2="48" y2="84" stroke="#161a16" stroke-width="1.6"/>
+        </svg>
+      </div>
+      <div class="cover-name">Substrate</div>
+      <div class="cover-tag">An ecosystem twin for living ground.</div>
+      <div class="cover-sub">Soil. Plants. Weather. Time. — A causal simulator for regenerative agriculture that turns hunches and field‑days into measurable, comparable, compounding intervention plans.</div>
+    </div>
+    <div class="cover-footer">
+      <span>SEED — $2.4M</span>
+      <span class="cover-version">SUBSTRATE.AG</span>
+      <span>OAKLAND · CALIFORNIA</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 2: THE PROBLEM ===== -->
+  <section data-label="The problem">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>02 / 14</span>
+        <span class="chrome-section">THE PROBLEM</span>
+      </div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="eyebrow">The world today</div>
+        <h1 class="display" style="margin-top: 20px;">Farm software<br/>manages <em style="font-style:italic;color:var(--rust)">operations</em>.<br/>Not <em style="font-style:italic;color:var(--rust)">ground</em>.</h1>
+        <p class="lead" style="margin-top: 36px; max-width: 520px;">Spreadsheets, ERPs, and compliance tools. Yield maps with no causal layer. Sustainability reporting that is mostly attestation, not measurement.</p>
+        <div class="stat-row">
+          <div class="stat">
+            <span class="stat-num">$13B</span>
+            <span class="stat-unit">AG-TECH SPEND, 2025</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">3%</span>
+            <span class="stat-unit">REACHES SOIL & ECOLOGY</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Five things broken</div>
+        <div class="problem-list">
+          <div class="problem-item">
+            <div class="problem-num">01</div>
+            <div class="problem-text">Regen practices are <em>uncompared</em>. No farmer can say if vetch+rye beat phacelia on their hillside.</div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-num">02</div>
+            <div class="problem-text">Soil is treated as a <em>cost center</em>, not a state variable that compounds.</div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-num">03</div>
+            <div class="problem-text">Carbon and biodiversity projects are <em>spreadsheets</em>, not ecological models.</div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-num">04</div>
+            <div class="problem-text">Advisors carry knowledge in <em>their head</em>. None of it networks.</div>
+          </div>
+          <div class="problem-item">
+            <div class="problem-num">05</div>
+            <div class="problem-text">Weather hides everything. Without uncertainty, every outcome is <em>cherry‑picked</em>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>02</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 3: THE THESIS ===== -->
+  <section data-label="Thesis" class="dark">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#f0c764" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#f0c764"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>03 / 14</span>
+        <span class="chrome-section">THESIS</span>
+      </div>
+    </div>
+    <div class="thesis-wrap">
+      <div class="thesis">
+        Agriculture is a complex,<br/>
+        state‑changing system <em>—</em><br/>
+        and the soil it sits on is the<br/>
+        most important state variable<br/>
+        nobody is <em>simulating</em>.
+      </div>
+      <div class="thesis-sub">— THE OPPORTUNITY HIDDEN INSIDE EVERY HECTARE</div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>03</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 4: THE MODEL ===== -->
+  <section data-label="The model">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>04 / 14</span>
+        <span class="chrome-section">THE MODEL</span>
+      </div>
+    </div>
+    <div class="eyebrow">Four primitives</div>
+    <h1 class="display" style="margin-top: 18px; max-width: 1400px;">A causal model of a farm — composable, nested, weather‑aware.</h1>
+    <div class="model-grid">
+      <div class="model-cell">
+        <div class="model-cell-id">01 — NESTED</div>
+        <div class="model-cell-title">Subjects</div>
+        <div class="model-cell-defn">The things you manage. Recursive: a plot rolls up to a field rolls up to a farm rolls up to a watershed.</div>
+        <div class="model-cell-list">
+          <div class="model-cell-item">plot</div>
+          <div class="model-cell-item">field</div>
+          <div class="model-cell-item">soil zone</div>
+          <div class="model-cell-item">herd</div>
+          <div class="model-cell-item">farm</div>
+          <div class="model-cell-item">watershed</div>
+          <div class="model-cell-item">cooperative</div>
+        </div>
+      </div>
+      <div class="model-cell indicators">
+        <div class="model-cell-id">02 — STATE</div>
+        <div class="model-cell-title">Indicators</div>
+        <div class="model-cell-defn">The measurable state of a subject at a moment. The numbers a plan is trying to move.</div>
+        <div class="model-cell-list">
+          <div class="model-cell-item">soil organic carbon</div>
+          <div class="model-cell-item">soil moisture</div>
+          <div class="model-cell-item">microbial activity</div>
+          <div class="model-cell-item">biodiversity score</div>
+          <div class="model-cell-item">pest pressure</div>
+          <div class="model-cell-item">water retention</div>
+          <div class="model-cell-item">yield · resilience index</div>
+        </div>
+      </div>
+      <div class="model-cell observations">
+        <div class="model-cell-id">03 — EVIDENCE</div>
+        <div class="model-cell-title">Observations</div>
+        <div class="model-cell-defn">Raw evidence streaming in. Each observation updates the posterior on every related indicator.</div>
+        <div class="model-cell-list">
+          <div class="model-cell-item">soil tests · PLFA</div>
+          <div class="model-cell-item">satellite NDVI / NDWI</div>
+          <div class="model-cell-item">drone imagery</div>
+          <div class="model-cell-item">weather stations</div>
+          <div class="model-cell-item">field notes · pest logs</div>
+          <div class="model-cell-item">yield records</div>
+          <div class="model-cell-item">biodiversity surveys</div>
+        </div>
+      </div>
+      <div class="model-cell interventions">
+        <div class="model-cell-id">04 — ACTION</div>
+        <div class="model-cell-title">Interventions</div>
+        <div class="model-cell-defn">Actions with declared effect vectors. The catalog learns which practices work where, under what weather. <em style="font-style:italic;color:var(--rust)">What you plant</em> is just another intervention.</div>
+        <div class="model-cell-list">
+          <div class="model-cell-item">cover crop mixes</div>
+          <div class="model-cell-item">reduced tillage</div>
+          <div class="model-cell-item">compost · biochar</div>
+          <div class="model-cell-item">grazing integration</div>
+          <div class="model-cell-item">crop rotation / variety</div>
+          <div class="model-cell-item">agroforestry corridor</div>
+          <div class="model-cell-item">keyline swales · hedgerows</div>
+        </div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>04</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 5: KILLER FEATURE ===== -->
+  <section data-label="Killer feature" class="dark">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#f0c764" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#f0c764"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>05 / 14</span>
+        <span class="chrome-section">KILLER FEATURE</span>
+      </div>
+    </div>
+    <div style="display: flex; flex: 1; align-items: center; gap: 80px;">
+      <div style="flex: 1;">
+        <div class="eyebrow">The wedge</div>
+        <h1 class="display-l" style="margin-top: 18px; color: var(--paper);">Ecological<br/>counterfactuals.</h1>
+        <p class="lead" style="margin-top: 32px; color: rgba(240,232,216,0.75); max-width: 580px;">
+          Two futures of the same hectare, side by side — running through five seasons of weather, watching soil, biodiversity, microbes, pest pressure, and yield <em style="color: var(--gold);">diverge</em>.
+        </p>
+        <p class="body" style="margin-top: 24px; color: rgba(240,232,216,0.55); max-width: 560px; font-style: italic; font-family: 'Spectral', serif; font-size: 22px;">
+          “What is the likely effect of adding cover crop mix A versus B on soil moisture, pest pressure, and yield over three seasons?”
+        </p>
+      </div>
+      <div style="flex: 1.2; display: flex; flex-direction: column; gap: 20px;">
+        <div style="background: rgba(15,18,15,0.5); border: 1px solid rgba(240,199,100,0.25); padding: 32px 36px;">
+          <div class="mono" style="font-size: 12px; letter-spacing: 0.16em; color: var(--gold); margin-bottom: 18px;">SCENARIO A — COVER + COMPOST</div>
+          <div style="font-family: 'Spectral', serif; font-size: 56px; font-weight: 400; color: var(--paper);">3.04<span style="font-size: 22px; color: var(--ink-soft); margin-left: 8px;">% SOC, Y+4</span></div>
+          <div style="display: flex; gap: 28px; margin-top: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: rgba(240,232,216,0.65);">
+            <span>BIODIV <span style="color: var(--moss);">2.85</span></span>
+            <span>PEST <span style="color: var(--moss);">0.27</span></span>
+            <span>YIELD <span style="color: var(--gold);">5.98 t/ha</span></span>
+          </div>
+        </div>
+        <div style="background: rgba(15,18,15,0.5); border: 1px solid rgba(184,83,58,0.45); padding: 32px 36px;">
+          <div class="mono" style="font-size: 12px; letter-spacing: 0.16em; color: var(--terra); margin-bottom: 18px;">SCENARIO B — FULL REGEN STACK</div>
+          <div style="font-family: 'Spectral', serif; font-size: 56px; font-weight: 400; color: var(--paper);">3.71<span style="font-size: 22px; color: var(--ink-soft); margin-left: 8px;">% SOC, Y+4</span></div>
+          <div style="display: flex; gap: 28px; margin-top: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: rgba(240,232,216,0.65);">
+            <span>BIODIV <span style="color: var(--moss);">3.41</span></span>
+            <span>PEST <span style="color: var(--moss);">0.19</span></span>
+            <span>YIELD <span style="color: var(--gold);">6.32 t/ha</span></span>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 16px 36px; background: rgba(240,199,100,0.08); border: 1px dashed rgba(240,199,100,0.4);">
+          <span class="mono" style="color: var(--gold); font-size: 12px; letter-spacing: 0.18em;">DELTA · 4 YEARS</span>
+          <span class="mono" style="color: var(--gold); font-size: 13px;">SOC +0.67 · BIODIV +0.56 · PEST −0.08 · YIELD +0.34 t/ha</span>
+        </div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>05</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 6: PRODUCT - THE TWIN ===== -->
+  <section data-label="Product: the twin">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>06 / 14</span>
+        <span class="chrome-section">PRODUCT · THE TWIN</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 32px; align-items: flex-end; margin-bottom: 20px;">
+      <div style="flex: 1;">
+        <div class="eyebrow">Live prototype</div>
+        <h1 class="display-s" style="margin-top: 10px; max-width: 1100px;">A working twin of a 44‑hectare Mendocino estate — six vine blocks, a row‑crop field, seven indicator layers, four scenarios, five years of weather.</h1>
+      </div>
+      <div class="annot gold" style="text-align: right;">
+        TELLURIAN ESTATE · ANDERSON VALLEY<br/>
+        NAVARRO WATERSHED · 44.0 HA · EST. 1978
+      </div>
+    </div>
+    <div class="product-frame">
+      <iframe src="Substrate.html?demo=hero" loading="lazy" title="Substrate — hero"></iframe>
+      <div class="product-tag">▶ LIVE · interact directly</div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>06</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 7: PRODUCT - COUNTERFACTUALS ===== -->
+  <section data-label="Product: counterfactuals">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>07 / 14</span>
+        <span class="chrome-section">PRODUCT · COUNTERFACTUALS</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 32px; align-items: flex-end; margin-bottom: 20px;">
+      <div style="flex: 1;">
+        <div class="eyebrow">Split mode · Y+4</div>
+        <h1 class="display-s" style="margin-top: 10px; max-width: 1200px;">Two intervention plans, one piece of land. The map recolors, the rollup shows deltas, the timeline keeps pace.</h1>
+      </div>
+      <div class="annot gold" style="text-align: right;">
+        COVER + COMPOST  ·  vs  ·  FULL REGEN STACK<br/>
+        LAYER: SOIL ORGANIC CARBON
+      </div>
+    </div>
+    <div class="product-frame">
+      <iframe src="Substrate.html?demo=split" loading="lazy" title="Substrate — counterfactuals"></iframe>
+      <div class="product-tag">▶ LIVE · scrub the timeline</div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>07</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 8: PRODUCT - PLAN BUILDER ===== -->
+  <section data-label="Product: plan builder">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>08 / 14</span>
+        <span class="chrome-section">PRODUCT · PLAN BUILDER</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 32px; align-items: flex-end; margin-bottom: 20px;">
+      <div style="flex: 1;">
+        <div class="eyebrow">My plan · drag and drop · perennial or annual</div>
+        <h1 class="display-s" style="margin-top: 10px; max-width: 1300px;">For perennials, the plan is amendments and structure. For annuals, <em style="font-style:italic;color:var(--rust)">what you plant</em> is the most powerful intervention.</h1>
+      </div>
+      <div class="annot gold" style="text-align: right;">
+        PLOT I — EAST FIELD ROW CROPS · 5.6 HA<br/>
+        DEPLETED SOIL · CONTINUOUS CORN<br/>
+        BUILDING A 4-YR ROTATION PLAN
+      </div>
+    </div>
+    <div class="product-frame">
+      <iframe src="Substrate.html?demo=plan-rotation" loading="lazy" title="Substrate — plan builder"></iframe>
+      <div class="product-tag">▶ LIVE · drag chips, watch deltas</div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>08</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 9: WHY NOW ===== -->
+  <section data-label="Why now">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>09 / 14</span>
+        <span class="chrome-section">WHY NOW</span>
+      </div>
+    </div>
+    <div class="eyebrow">Three forces converging in 2026</div>
+    <h1 class="display" style="margin-top: 18px;">The data is finally cheap. The pressure is finally real.</h1>
+    <div class="three-col">
+      <div class="force">
+        <div class="force-num">FORCE 01</div>
+        <div class="force-title">Sensing collapsed in price.</div>
+        <div class="force-body">Sub‑meter satellite imagery is $0.10/ha/yr. PLFA microbial assays dropped 70% since 2019. Soil EC and moisture probes cost &lt; $40 each. Every farm can now stream evidence.</div>
+        <div class="force-data">SAT $0.10/ha · PLFA −70% · IoT &lt;$40</div>
+      </div>
+      <div class="force">
+        <div class="force-num">FORCE 02</div>
+        <div class="force-title">Carbon and biodiversity markets are pricing soil.</div>
+        <div class="force-body">$67B in nature‑based credits committed by 2030. Every credit needs a defensible MRV. Without a causal model, every project is a spreadsheet attestation walking onto a discount.</div>
+        <div class="force-data">CDR DEMAND 7× SINCE '22 · CARBON $42–180/t</div>
+      </div>
+      <div class="force">
+        <div class="force-num">FORCE 03</div>
+        <div class="force-title">Regen is no longer fringe — it's a credential.</div>
+        <div class="force-body">Patagonia, Diageo, General Mills, Cargill all running multi‑year regen sourcing programs. Off‑takers want third‑party data. Farmers want the price premium. Neither has the tool to prove it.</div>
+        <div class="force-data">FORTUNE 500 REGEN PROGRAMS · 47 IN 2026</div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>09</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 10: MARKET ===== -->
+  <section data-label="Beachhead">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>10 / 14</span>
+        <span class="chrome-section">BEACHHEAD · EXPANSION</span>
+      </div>
+    </div>
+    <div class="eyebrow">Start narrow. Compound the catalog.</div>
+    <h1 class="display" style="margin-top: 18px;">Specialty vineyards first — then everywhere a hectare has a story.</h1>
+    <div class="market-cols">
+      <div>
+        <p class="body" style="margin-bottom: 24px;">Vineyards are where regen agriculture has the cleanest unit economics. Margins on a bottle absorb $400/ha in tools. Bonded acreage means data persists. And every consultant in Napa already speaks our language.</p>
+        <div class="stat-row" style="margin-top: 16px; flex-direction: column; gap: 20px;">
+          <div class="stat">
+            <span class="stat-num">42K</span>
+            <span class="stat-unit">US SPECIALTY WINE ACRES (REGEN)</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">$48M</span>
+            <span class="stat-unit">WEDGE SAM AT $1,200/HA/YR</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">$3.2B</span>
+            <span class="stat-unit">TAM AT FULL ROW‑CROP EXPANSION</span>
+          </div>
+        </div>
+      </div>
+      <div class="market-segments">
+        <div class="market-seg featured">
+          <div class="market-seg-tier">Y1 — BEACHHEAD</div>
+          <div class="market-seg-name">Specialty vineyards · Anderson Valley, Sonoma, Willamette, Finger Lakes</div>
+          <div class="market-seg-meta">~3,800 estates · 28% already running regen practices · advisor‑led sales</div>
+        </div>
+        <div class="market-seg">
+          <div class="market-seg-tier">Y2 — ADJACENT</div>
+          <div class="market-seg-name">Specialty orchards, olive groves, almonds, hops</div>
+          <div class="market-seg-meta">Same buyer · same advisors · same indicator stack</div>
+        </div>
+        <div class="market-seg">
+          <div class="market-seg-tier">Y3 — REGEN ROW CROPS</div>
+          <div class="market-seg-name">Regen wheat, oats, soy via co‑ops and off‑takers</div>
+          <div class="market-seg-meta">Patagonia, General Mills, Kernza — pre‑sold via brand programs</div>
+        </div>
+        <div class="market-seg">
+          <div class="market-seg-tier">Y4 — INSTITUTIONAL</div>
+          <div class="market-seg-name">Carbon project devs, conservation NGOs, gov't programs (USDA NRCS)</div>
+          <div class="market-seg-meta">Built on the same primitive model · MRV layer on top</div>
+        </div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>10</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 11: DIFFERENTIATION ===== -->
+  <section data-label="Differentiation">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>11 / 14</span>
+        <span class="chrome-section">DIFFERENTIATION</span>
+      </div>
+    </div>
+    <div class="eyebrow">What none of them do</div>
+    <h1 class="display" style="margin-top: 18px; max-width: 1500px;">Existing tools either log what happened — or attest to what didn't. We model what could.</h1>
+    <div class="matrix">
+      <div class="matrix-row head">
+        <div></div>
+        <div class="matrix-cell">FARM ERP<br/><span style="opacity:0.6">Granular · Climate FieldView</span></div>
+        <div class="matrix-cell">SAT IMAGERY<br/><span style="opacity:0.6">Indigo · Planet</span></div>
+        <div class="matrix-cell">CARBON MRV<br/><span style="opacity:0.6">Truterra · Regrow</span></div>
+        <div class="matrix-cell us">SUBSTRATE</div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cap">Nested subjects (plot → watershed)</div>
+        <div class="matrix-cell"><span class="matrix-partial"></span></div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-partial"></span></div>
+        <div class="matrix-cell us"><span class="matrix-check"></span></div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cap">Causal intervention model</div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-partial"></span></div>
+        <div class="matrix-cell us"><span class="matrix-check"></span></div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cap">Counterfactual scenarios</div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell us"><span class="matrix-check"></span></div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cap">Weather‑confounded uncertainty</div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-partial"></span></div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell us"><span class="matrix-check"></span></div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cap">Catalog that compounds across farms</div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-partial"></span></div>
+        <div class="matrix-cell us"><span class="matrix-check"></span></div>
+      </div>
+      <div class="matrix-row">
+        <div class="matrix-cap">Advisor‑grade reporting</div>
+        <div class="matrix-cell"><span class="matrix-partial"></span></div>
+        <div class="matrix-cell"><span class="matrix-dash"></span></div>
+        <div class="matrix-cell"><span class="matrix-check"></span></div>
+        <div class="matrix-cell us"><span class="matrix-check"></span></div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>11</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 12: BUSINESS MODEL ===== -->
+  <section data-label="Business model">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>12 / 14</span>
+        <span class="chrome-section">BUSINESS MODEL</span>
+      </div>
+    </div>
+    <div class="eyebrow">Three tiers, one model</div>
+    <h1 class="display" style="margin-top: 18px;">Software priced per hectare. Catalog priced by the credit.</h1>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tier">FARM</div>
+        <div class="price-name">Estate</div>
+        <div class="price-meta">Single farm, full twin, all scenarios, advisor handoff.</div>
+        <div class="price-amount">$1,200</div>
+        <div class="price-period">PER HECTARE / YEAR</div>
+        <div class="price-feat-list">
+          <div class="price-feat">Unlimited plots & seasons</div>
+          <div class="price-feat">All indicator layers</div>
+          <div class="price-feat">Counterfactual scenarios</div>
+          <div class="price-feat">Quarterly advisor report</div>
+        </div>
+      </div>
+      <div class="price-card featured">
+        <div class="price-tier">ADVISOR</div>
+        <div class="price-name">Practice</div>
+        <div class="price-meta">For agronomists & consultants running 8–40 farms. Cross‑farm catalog.</div>
+        <div class="price-amount">$24K</div>
+        <div class="price-period">PER ADVISOR / YEAR</div>
+        <div class="price-feat-list">
+          <div class="price-feat">Multi‑farm canvas</div>
+          <div class="price-feat">White‑labeled client portal</div>
+          <div class="price-feat">Catalog access (read + contribute)</div>
+          <div class="price-feat">Custom intervention library</div>
+        </div>
+      </div>
+      <div class="price-card">
+        <div class="price-tier">PROGRAM</div>
+        <div class="price-name">Institutional</div>
+        <div class="price-meta">Carbon devs, co‑ops, off‑takers, NGOs. Built on the model API.</div>
+        <div class="price-amount">$0.40</div>
+        <div class="price-period">PER TONNE CO₂e MRV</div>
+        <div class="price-feat-list">
+          <div class="price-feat">API + bulk subject ingest</div>
+          <div class="price-feat">MRV‑grade outputs</div>
+          <div class="price-feat">Cohort & program analytics</div>
+          <div class="price-feat">Regional model fine‑tunes</div>
+        </div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>12</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 13: ROADMAP ===== -->
+  <section data-label="Roadmap">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#1a1612" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#1a1612"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>13 / 14</span>
+        <span class="chrome-section">ROADMAP · 24 MONTHS</span>
+      </div>
+    </div>
+    <div class="eyebrow">From prototype to network</div>
+    <h1 class="display" style="margin-top: 18px;">Substrate becomes more accurate every season — by design.</h1>
+    <div class="roadmap">
+      <div class="roadmap-track">
+        <div class="roadmap-phase active">
+          <div class="roadmap-tick">
+            <div class="roadmap-dot"></div>
+            <div class="roadmap-when">NOW · MAY '26</div>
+          </div>
+          <div class="roadmap-phase-title">Prototype shipped</div>
+          <div class="roadmap-phase-body">Twin of Tellurian Estate. 4 scenarios, 10 interventions, weather variance, plan builder. 6 design‑partner vineyards lined up for Q3 onboarding.</div>
+          <div class="roadmap-phase-meta">$2.4M SEED — IN PROGRESS</div>
+        </div>
+        <div class="roadmap-phase">
+          <div class="roadmap-tick">
+            <div class="roadmap-dot"></div>
+            <div class="roadmap-when">Q4 '26 — MVP</div>
+          </div>
+          <div class="roadmap-phase-title">Anderson Valley pilot</div>
+          <div class="roadmap-phase-body">15 paying vineyards. Satellite + soil sensor ingest. Advisor‑grade PDF. Counterfactual catalog v1 seeded with paired trials.</div>
+          <div class="roadmap-phase-meta">15 ESTATES · 540 HA</div>
+        </div>
+        <div class="roadmap-phase">
+          <div class="roadmap-tick">
+            <div class="roadmap-dot"></div>
+            <div class="roadmap-when">Q3 '27 — SCALE</div>
+          </div>
+          <div class="roadmap-phase-title">Specialty crops + advisor practice</div>
+          <div class="roadmap-phase-body">Orchards + olives. Advisor SaaS launches with 30 practitioners. First regional model fine‑tune (Mediterranean). Series A.</div>
+          <div class="roadmap-phase-meta">200 ESTATES · 14K HA · $4M ARR</div>
+        </div>
+        <div class="roadmap-phase">
+          <div class="roadmap-tick">
+            <div class="roadmap-dot"></div>
+            <div class="roadmap-when">Q3 '28 — NETWORK</div>
+          </div>
+          <div class="roadmap-phase-title">Programs & MRV API</div>
+          <div class="roadmap-phase-body">First carbon project deploys on Substrate API. Off‑taker partnerships (Diageo, GM). Catalog now informs every projection with neighbor priors.</div>
+          <div class="roadmap-phase-meta">1,200 ESTATES · 90K HA · $16M ARR</div>
+        </div>
+      </div>
+    </div>
+    <div class="chrome-bottom">
+      <span>SUBSTRATE.AG / 2026</span>
+      <span>13</span>
+    </div>
+  </section>
+
+  <!-- ===== SLIDE 14: ASK / CLOSE ===== -->
+  <section data-label="Ask" class="dark">
+    <div class="chrome-top">
+      <div class="chrome-brand">
+        <svg viewBox="0 0 32 32" width="18" height="18">
+          <circle cx="16" cy="16" r="14" stroke="#f0c764" stroke-width="1" fill="none"/>
+          <path d="M 16 4 Q 22 12 22 16 Q 22 22 16 28 Q 10 22 10 16 Q 10 12 16 4 Z" fill="#f0c764"/>
+        </svg>
+        <span class="chrome-brand-name">SUBSTRATE</span>
+      </div>
+      <div class="chrome-meta">
+        <span>14 / 14</span>
+        <span class="chrome-section">THE ASK</span>
+      </div>
+    </div>
+    <div class="ask-grid">
+      <div>
+        <div class="eyebrow">Raising</div>
+        <div class="ask-num">$2.4<span class="ask-num-suffix" style="display:inline; font-size: 80px; color: var(--gold);">M</span></div>
+        <div class="mono" style="font-size: 13px; letter-spacing: 0.18em; color: var(--gold); margin-top: 12px;">SEED · 18‑MONTH RUNWAY</div>
+        <p class="lead" style="margin-top: 36px; color: rgba(240,232,216,0.75); font-size: 26px; max-width: 540px;">
+          To turn the prototype into Anderson Valley's twin, hire the soil scientists who will own our catalog, and ship the advisor SaaS by Q3 '27.
+        </p>
+      </div>
+      <div>
+        <div class="eyebrow">Use of funds</div>
+        <div class="ask-list" style="margin-top: 24px;">
+          <div class="ask-item">
+            <div class="ask-item-num">42%</div>
+            <div class="ask-item-body">
+              <div class="ask-item-title" style="color: var(--paper);">Engineering & ML</div>
+              <div class="ask-item-detail" style="color: rgba(240,232,216,0.55);">Causal model, sensor ingest, catalog infra · 6 hires</div>
+            </div>
+          </div>
+          <div class="ask-item">
+            <div class="ask-item-num">28%</div>
+            <div class="ask-item-body">
+              <div class="ask-item-title" style="color: var(--paper);">Soil & ag science</div>
+              <div class="ask-item-detail" style="color: rgba(240,232,216,0.55);">Intervention library, paired‑trial design, advisor relationships · 3 hires</div>
+            </div>
+          </div>
+          <div class="ask-item">
+            <div class="ask-item-num">18%</div>
+            <div class="ask-item-body">
+              <div class="ask-item-title" style="color: var(--paper);">Sensor & data costs</div>
+              <div class="ask-item-detail" style="color: rgba(240,232,216,0.55);">540 ha satellite + soil sensor coverage for design partners</div>
+            </div>
+          </div>
+          <div class="ask-item">
+            <div class="ask-item-num">12%</div>
+            <div class="ask-item-body">
+              <div class="ask-item-title" style="color: var(--paper);">Operations</div>
+              <div class="ask-item-detail" style="color: rgba(240,232,216,0.55);">Pilot operations, advisory board, legal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chrome-bottom" style="border-top: 1px solid rgba(240,199,100,0.4);">
+      <span>Sofia Okafor · CEO · sofia@substrate.ag</span>
+      <span style="color: var(--gold);">SUBSTRATE — TURN REGENERATIVE PRACTICES INTO COMPOUNDING INTERVENTION PLANS.</span>
+    </div>
+  </section>
+
+</deck-stage>
+
+<script src="deck-stage.js"></script>
+</body>
+</html>
