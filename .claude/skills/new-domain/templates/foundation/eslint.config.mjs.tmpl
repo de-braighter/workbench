@@ -1,0 +1,13 @@
+import { auditConfig, deBraighterPreset } from '@de-braighter/lint-kit/eslint';
+
+export default [
+  ...deBraighterPreset(),
+  ...auditConfig({
+    project: [
+      'libs/{{DOMAIN}}-spine/tsconfig.json',
+      'libs/{{DOMAIN}}-pack/tsconfig.json',
+      'apps/{{DOMAIN}}-api/tsconfig.json',
+    ],
+    tsconfigRootDir: import.meta.dirname,
+  }),
+];
