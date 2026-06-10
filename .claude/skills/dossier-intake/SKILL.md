@@ -27,7 +27,11 @@ becomes addressable. Spec §3 stage 1 of
 1. **Resolve the source.** Input is a path or a name under `docs/ideas-inbox/`:
    - Zip not yet extracted → `Expand-Archive` into
      `docs/ideas-inbox/_extracted/<zip-stem>/` (the established layout), then
-     use that folder.
+     use that folder. `Expand-Archive` preserves the zip's internal structure;
+     if extraction yields a single wrapping top-level folder, descend into it —
+     the source root must be unambiguous before the manifest count. An existing
+     `_extracted/` folder may be a PARTIAL hand extraction: verify its file
+     count against the zip's entry list before trusting it.
    - Already-extracted folder (or a loose folder) → use it directly.
 2. **Derive the product key** — kebab-case of the idea name
    (`Agricultural Ecosystem Twin` → `agri-ecosystem-twin`). Confirm with the

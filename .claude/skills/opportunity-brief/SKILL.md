@@ -8,7 +8,9 @@ tags: [foundry, assessment, pipeline]
 
 Scores **substrate fit** — does the idea decompose into the four kernel
 concerns? — plus the opportunity rubric demonstrated in
-`docs/ideas-inbox/substrate_saas_opportunity_dossier/substrate_saas_opportunity_dossier/01_overview_and_scoring.md`.
+`docs/ideas-inbox/substrate_saas_opportunity_dossier/substrate_saas_opportunity_dossier/01_overview_and_scoring.md`
+(untracked founder material — a provenance citation only; the eight dimensions
+are reproduced in full in step 4 below).
 Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
 
 ## Procedure

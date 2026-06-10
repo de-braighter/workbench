@@ -32,7 +32,7 @@ de-braighter/ (workbench — built in worktree .claude/worktrees/f3-intake-chart
 ├── docs/foundry/agri-ecosystem-twin/            # NEW — worked example
 │   ├── dossier-record.md
 │   ├── opportunity-brief.md
-│   └── assets/uploads/06_agricultural_ecosystem_twin.md # copied from the inbox extraction (relative path preserved)
+│   └── assets/…                                  # ALL 25 source files from the zip, relative paths preserved
 └── docs/superpowers/plans/2026-06-10-foundry-f3-intake-charter.md  # this plan
 ```
 
@@ -91,7 +91,11 @@ becomes addressable. Spec §3 stage 1 of
 1. **Resolve the source.** Input is a path or a name under `docs/ideas-inbox/`:
    - Zip not yet extracted → `Expand-Archive` into
      `docs/ideas-inbox/_extracted/<zip-stem>/` (the established layout), then
-     use that folder.
+     use that folder. `Expand-Archive` preserves the zip's internal structure;
+     if extraction yields a single wrapping top-level folder, descend into it —
+     the source root must be unambiguous before the manifest count. An existing
+     `_extracted/` folder may be a PARTIAL hand extraction: verify its file
+     count against the zip's entry list before trusting it.
    - Already-extracted folder (or a loose folder) → use it directly.
 2. **Derive the product key** — kebab-case of the idea name
    (`Agricultural Ecosystem Twin` → `agri-ecosystem-twin`). Confirm with the
@@ -176,7 +180,9 @@ tags: [foundry, assessment, pipeline]
 
 Scores **substrate fit** — does the idea decompose into the four kernel
 concerns? — plus the opportunity rubric demonstrated in
-`docs/ideas-inbox/substrate_saas_opportunity_dossier/substrate_saas_opportunity_dossier/01_overview_and_scoring.md`.
+`docs/ideas-inbox/substrate_saas_opportunity_dossier/substrate_saas_opportunity_dossier/01_overview_and_scoring.md`
+(untracked founder material — a provenance citation only; the eight dimensions
+are reproduced in full in step 4 below).
 Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
 
 ## Procedure
@@ -337,14 +343,14 @@ git commit -m "docs(templates): product-charter template — Gate-1 artifact wit
 
 **Files:**
 - Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/dossier-record.md`
-- Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/assets/uploads/06_agricultural_ecosystem_twin.md` (relative path preserved per the skill's step 3)
+- Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/assets/**` (all 25 zip files, relative paths preserved per the skill's step 3)
 - Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/opportunity-brief.md`
 
-- [ ] **Step 1: Execute `/dossier-intake` BY THE SKILL TEXT** (Task 2's procedure, literally — this validates the skill) against source `docs/ideas-inbox/_extracted/Agricultural Ecosystem Twin/` (one file: `uploads/06_agricultural_ecosystem_twin.md` — read it from the MAIN clone's inbox, copy into the worktree's `assets/`). Write the dossier record per the skill's template. The manifest has exactly 1 row.
+- [ ] **Step 1: Execute `/dossier-intake` BY THE SKILL TEXT** (Task 2's procedure, literally — this validates the skill) against the REAL dossier `docs/ideas-inbox/Agricultural Ecosystem Twin.zip` (25 files: `uploads/06_agricultural_ecosystem_twin.md` + 7 frontend-prototype sources (`app.jsx`, `map.jsx`, `inspector.jsx`, `panels.jsx`, `tweaks-panel.jsx`, `deck-stage.js`, `data.js`) + 2 HTML decks + 16 plan-builder screenshots). Expand the zip per the skill (the pre-existing `_extracted/Agricultural Ecosystem Twin/` folder is a PARTIAL hand extraction — exactly the trap the skill's verify-against-the-zip rule exists for). Copy every file into the worktree's `assets/` preserving relative paths. The manifest has exactly 25 rows; the UI-prototype section lists the .jsx app + decks + screenshots (they are F4's UI-surface input).
 
-- [ ] **Step 2: Execute `/opportunity-brief` BY THE SKILL TEXT** (Task 3's procedure). Ground facts to use: the existing scoring (01_overview_and_scoring.md row 5: Strategic fit 5, Market pain 4, Buyer clarity 4, Data feasibility 3, MVP feasibility 3, Differentiation 5, Regulatory ease 4, Platform leverage 5 = 33/40) may inform but the brief must re-derive scores with one-sentence justifications; substrate-fit decomposition must name the concrete plan-tree (season/intervention plans), event-log (sensor + operations observations), inference (yield/intervention posteriors), reproducibility (catalog of intervention subtrees) shapes; reuse inventory should name kernel event_log + inference backbone + herdbook lineage patterns. Recommended tier: T0 (per spec §3 examples) unless the material argues otherwise. Do NOT request the gate (the orchestrator does that live, after merge).
+- [ ] **Step 2: Execute `/opportunity-brief` BY THE SKILL TEXT** (Task 3's procedure). Ground facts to use: the existing scoring (01_overview_and_scoring.md row 5: Strategic fit 5, Market pain 4, Buyer clarity 4, Data feasibility 3, MVP feasibility 3, Differentiation 5, Regulatory ease 4, Platform leverage 5 = 33/40) may inform but the brief must re-derive scores with one-sentence justifications; substrate-fit decomposition must name the concrete plan-tree (season/intervention plans), event-log (sensor + operations observations), inference (yield/intervention posteriors), reproducibility (catalog of intervention subtrees) shapes; reuse inventory should name kernel event_log + inference backbone + herdbook lineage patterns. Recommended tier: T0 (per spec §3 examples) unless the material argues otherwise. The UI prototype's existence is real feasibility signal — score MVP feasibility on the FULL material honestly (justify any change from the prior 3). No "verbatim" reuse overclaims (the backbone exposes `counterfactual()`, not an agronomy model), and state the prior-scorecard relationship plainly without an unfalsifiable independence claim. Do NOT request the gate (the orchestrator does that live, after merge).
 
-- [ ] **Step 3: Self-check** — record + brief carry valid frontmatter; manifest row count == asset file count (1); brief frontmatter `recommended_tier`/`rubric_total` filled.
+- [ ] **Step 3: Self-check** — record + brief carry valid frontmatter; manifest row count == asset file count (25); brief frontmatter `recommended_tier`/`rubric_total` filled.
 
 - [ ] **Step 4: Commit**
 
