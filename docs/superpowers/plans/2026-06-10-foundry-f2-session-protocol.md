@@ -214,6 +214,7 @@ Then STOP. Final report: item, PR, wave verdicts, ritual confirmations, claim re
 | Scope overlap discovered mid-build | Older claim proceeds; newer `foundry_handoff` + stop. |
 | Quality floor red | `foundry_release(blocked)` with the failure attached. |
 | Heartbeat errors (claim superseded) | Stop working immediately; report. |
+| Founder gate still pending at session end | `foundry_release(blocked)` + note the gateId — the item re-queues; a later session merges after approval. Gates never block other products' lanes. |
 ````
 
 - [ ] **Step 2: Verify frontmatter + structure**
@@ -413,6 +414,7 @@ git checkout -b feat/f2-prompt-skill-alignment
 
 ```typescript
     expect(text).toContain('foundry-worker'); // F2: prompt bootstraps into the canonical skill
+    expect(text).toContain('prRef: "<owner>/<repo>#<pr>"'); // full form — devloop tooling 404s on short
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
@@ -420,7 +422,9 @@ git checkout -b feat/f2-prompt-skill-alignment
 Run: `cd domains/foundry && npx vitest run test/prompts-status.test.ts`
 Expected: FAIL — `expected ... to contain 'foundry-worker'`.
 
-- [ ] **Step 4: Implement** — in `src/prompts.ts`, change the line
+- [ ] **Step 4: Implement** — in `src/prompts.ts`, two line changes in the template string (everything else unchanged — the 6 steps stay as the degraded-mode fallback):
+
+Change
 
 ```text
 Protocol — mandatory, in order:
@@ -432,7 +436,7 @@ to
 Invoke the workbench skill foundry-worker (Skill tool) and follow it end to end — it is the canonical session protocol. Fallback protocol if the skill is unavailable — mandatory, in order:
 ```
 
-(One line in the template string; everything else unchanged — the 6 steps stay as the degraded-mode fallback.)
+and in step 6 of the protocol change `prRef: "<repo>#<pr>"` to `prRef: "<owner>/<repo>#<pr>"` (mirror fidelity with the skill + template; the full form is what `post-findings`/`backfill` require).
 
 - [ ] **Step 5: Run the full suite**
 
@@ -463,7 +467,8 @@ gh pr create --repo de-braighter/foundry --title "feat(prompts): bootstrap worke
 
 renderSessionPrompt now tells the session to invoke the workbench `foundry-worker`
 skill (the canonical protocol, single source of truth); the inline 6-step summary
-stays as the degraded-mode fallback. One template-string line + one test assertion.
+stays as the degraded-mode fallback. Also aligns the prRef placeholder to the full
+`<owner>/<repo>#<pr>` form. Two template-string lines + two test assertions.
 
 Companion: de-braighter/workbench F2 PR (the skill itself).
 
@@ -484,4 +489,4 @@ Then the orchestrator runs the wave (`local-ci` + `reviewer` + `qa-engineer`, fo
 
 - **Spec coverage:** §5 steps 1–6 → skill Phases 1–6 (boot split out as Phase 0); §5 crash recovery → stale-claim quickref + heartbeat-error stance; §3 tier table → Phase 4/5 tier mapping (decision 5); §7 stances → skill quickref table (all five rows); §6 F2 deliverables: boot/claim skill (Task 2), worktree mandate in policies/git.md (Task 3), prompt templates (Task 4 + PR B alignment Tasks 7–8).
 - **Placeholder scan:** none — every artifact's full content is in its task.
-- **Consistency:** worktree path/branch/slug conventions identical across skill (Phase 0/2), policy section, and Task 1's dogfood; the template's prompt block matches `renderSessionPrompt` post-PR-B verbatim (the added skill line included); `post-findings` full-form `owner/repo#pr` everywhere.
+- **Consistency:** worktree path/branch/slug conventions identical across skill (Phase 0/2), policy section, and Task 1's dogfood; the template's prompt block matches `renderSessionPrompt` post-PR-B verbatim (the added skill line and the full-form prRef included); `post-findings` full-form `owner/repo#pr` everywhere.

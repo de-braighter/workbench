@@ -141,3 +141,4 @@ Then STOP. Final report: item, PR, wave verdicts, ritual confirmations, claim re
 | Scope overlap discovered mid-build | Older claim proceeds; newer `foundry_handoff` + stop. |
 | Quality floor red | `foundry_release(blocked)` with the failure attached. |
 | Heartbeat errors (claim superseded) | Stop working immediately; report. |
+| Founder gate still pending at session end | `foundry_release(blocked)` + note the gateId — the item re-queues; a later session merges after approval. Gates never block other products' lanes. |
