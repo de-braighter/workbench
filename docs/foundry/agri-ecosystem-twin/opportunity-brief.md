@@ -1,7 +1,7 @@
 ---
 product_key: agri-ecosystem-twin
 brief_date: 2026-06-10
-status: brief
+status: chartered
 substrate_fit: natural
 rubric_total: 34/40
 recommended_tier: T0
