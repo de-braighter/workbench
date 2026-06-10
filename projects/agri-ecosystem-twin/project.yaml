@@ -1,0 +1,38 @@
+# agri-ecosystem-twin — regenerative-farm digital twin: A-vs-B ecological
+# counterfactuals over nested farm subjects (plot → field → farm), seeded data.
+# Status: bootstrapping — E1 scaffold (all six /new-domain tiers); E2–E5 ladder
+#         per docs/foundry/agri-ecosystem-twin/build-path.md (Foundry T0 charter).
+# Form: pack-on-platform (ADR-027), zero kernel change (ADR-176). Full runtime
+#       coupling: substrate-runtime host, persisted kernel.event_log, published
+#       INFERENCE_BACKBONE; api :3500 / pg :5475 / ui :4250.
+
+name: agri-ecosystem-twin
+domain: agri-ecosystem-twin
+status: bootstrapping
+repo: github.com/de-braighter/agri-ecosystem-twin
+local: domains/agri-ecosystem-twin/
+
+# Hints for orchestrator judgment, not enforcement. Full-stack substrate
+# consumer (NestJS + Prisma + RLS + Angular UI), so curation spans backend,
+# substrate, and UI (the E4 surface ladder is UI-heavy).
+enabled:
+  agents:
+    suggested:
+      - designer
+      - substrate-architect
+      - substrate-coder-pro
+      - implementer
+      - reviewer
+      - charter-checker
+      - qa-engineer
+      - local-ci
+      - prisma-pro
+      - test-pro
+      - ui-pro
+      - a11y-pro
+  skills:
+    suggested:
+      - architecture-concierge
+      - angular-architecture-concierge
+      - diff-refactor-engine
+      - md-quality-review
