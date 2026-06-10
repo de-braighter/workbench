@@ -30,7 +30,7 @@ brief: docs/foundry/<key>/opportunity-brief.md
 | Tier | Examples | Gates | Quality parameters |
 | --- | --- | --- | --- |
 | **T0** prototype/demo | markets, gridiron | greenlight + ship | wave standard, auto-merge OK |
-| **T1** product | herdbook, exercir | + architecture approval | wave + deep effort on kernel-touching items, mutation thresholds enforced |
+| **T1** product | herdbook, exercir | + architecture approval | wave + `deep` effort on kernel-touching items, mutation thresholds enforced |
 | **T2** regulated | oncology (MDR Class IIb) | + every kernel-touching ADR + designer-first mandatory | full battery, RLS/tenancy proofs required, no auto-merge |
 
 ## Scope (the wedge)

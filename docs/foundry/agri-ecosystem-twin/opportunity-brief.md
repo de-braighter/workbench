@@ -84,9 +84,10 @@ Concrete cluster assets this idea would compose (it authors no kernel concepts):
 ## Scorecard
 
 The 8 demonstrated dimensions (`…/01_overview_and_scoring.md`), each re-derived
-from this dossier with a one-sentence justification. The prior scoring (row 5)
-totalled 33/40; this independent re-derivation converges on the same total, but
-every score is grounded below.
+from this dossier with a one-sentence justification. The scores match the prior
+scorecard on every dimension (total: 33/40); each justification below was
+derived independently from the dossier text, not inferred from the prior
+scorecard.
 
 | Dimension | Score | Justification |
 | --- | ---:| --- |

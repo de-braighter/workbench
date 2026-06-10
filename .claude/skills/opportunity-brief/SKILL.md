@@ -23,6 +23,8 @@ Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
    - **Reproducibility** — what needs versioned catalogs / replay?
    **Gate rule:** any core concern `absent` → the idea is not substrate-shaped;
    the brief may recommend at most a T0 experiment or `defer`, never a T1+ build.
+   **Frontmatter aggregation:** all four `natural` → `substrate_fit: natural`;
+   any `forced` → `partial`; any `absent` → `absent`.
 3. **Reuse inventory** — which existing cluster assets apply (kernel event_log +
    inference backbone, design-system bricks, herdbook/exercir/markets patterns,
    devloop loop, …). Name concrete packages/patterns, not vibes.
@@ -59,9 +61,14 @@ Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
    ```
 
 8. **Gate 1 (founder greenlight).** Present the brief summary. If the founder
-   says go: `foundry_gate_request { productKey: <key>, gateType: "greenlight",
-   payloadRef: "docs/foundry/<key>/opportunity-brief.md" }` and report the
-   gateId. The **charter** (`templates/charter/template.md` →
+   says go: the F1 server only knows products registered via
+   `foundry_queue_push`, so register first (idempotent by productKey; an empty
+   `items` array is legal): `foundry_queue_push { product: { productKey: <key>,
+   name: <Idea Name>, repo: "de-braighter/<key>", riskTier: <recommended
+   tier> }, items: [] }` — the charter remains the tier authority if the
+   founder later overrides. Then `foundry_gate_request { productKey: <key>,
+   gateType: "greenlight", payloadRef:
+   "docs/foundry/<key>/opportunity-brief.md" }` and report the gateId. The **charter** (`templates/charter/template.md` →
    `docs/foundry/<key>/charter.md`) is authored only AFTER
    `foundry_gate_decide` approves — the charter binds name, tier, scope,
    what-NOT-to-build, quality plan, gate schedule.
@@ -71,5 +78,5 @@ Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
 - Foundry MCP unavailable → write the brief anyway (it's a file); flag that the
   gate record is pending and must be requested when the MCP is back. Never
   treat a chat "looks good" as a decided gate.
-- Founder rejects at Gate 1 → record stays with `recommendation` unchanged;
-  set frontmatter `status: declined`; nothing is deleted.
+- Founder rejects at Gate 1 → the brief keeps its `recommendation`; set the
+  BRIEF's frontmatter to `status: declined`; nothing is deleted.

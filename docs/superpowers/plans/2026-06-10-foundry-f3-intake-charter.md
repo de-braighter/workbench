@@ -32,7 +32,7 @@ de-braighter/ (workbench — built in worktree .claude/worktrees/f3-intake-chart
 ├── docs/foundry/agri-ecosystem-twin/            # NEW — worked example
 │   ├── dossier-record.md
 │   ├── opportunity-brief.md
-│   └── assets/06_agricultural_ecosystem_twin.md # copied from the inbox extraction
+│   └── assets/uploads/06_agricultural_ecosystem_twin.md # copied from the inbox extraction (relative path preserved)
 └── docs/superpowers/plans/2026-06-10-foundry-f3-intake-charter.md  # this plan
 ```
 
@@ -82,7 +82,9 @@ becomes addressable. Spec §3 stage 1 of
   asset manifest. Check: manifest row count == source file count.
 - **One dossier, one product key, one folder.** Re-running intake on the same
   dossier updates `docs/foundry/<key>/` in place (idempotent), never forks a
-  second folder.
+  second folder. Same vs different: compare the existing record's `source:`
+  frontmatter — same source ⇒ update in place; different ⇒ key collision,
+  stop and ask (see Failure stances).
 
 ## Procedure
 
@@ -189,6 +191,8 @@ Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
    - **Reproducibility** — what needs versioned catalogs / replay?
    **Gate rule:** any core concern `absent` → the idea is not substrate-shaped;
    the brief may recommend at most a T0 experiment or `defer`, never a T1+ build.
+   **Frontmatter aggregation:** all four `natural` → `substrate_fit: natural`;
+   any `forced` → `partial`; any `absent` → `absent`.
 3. **Reuse inventory** — which existing cluster assets apply (kernel event_log +
    inference backbone, design-system bricks, herdbook/exercir/markets patterns,
    devloop loop, …). Name concrete packages/patterns, not vibes.
@@ -225,9 +229,14 @@ Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
    ```
 
 8. **Gate 1 (founder greenlight).** Present the brief summary. If the founder
-   says go: `foundry_gate_request { productKey: <key>, gateType: "greenlight",
-   payloadRef: "docs/foundry/<key>/opportunity-brief.md" }` and report the
-   gateId. The **charter** (`templates/charter/template.md` →
+   says go: the F1 server only knows products registered via
+   `foundry_queue_push`, so register first (idempotent by productKey; an empty
+   `items` array is legal): `foundry_queue_push { product: { productKey: <key>,
+   name: <Idea Name>, repo: "de-braighter/<key>", riskTier: <recommended
+   tier> }, items: [] }` — the charter remains the tier authority if the
+   founder later overrides. Then `foundry_gate_request { productKey: <key>,
+   gateType: "greenlight", payloadRef:
+   "docs/foundry/<key>/opportunity-brief.md" }` and report the gateId. The **charter** (`templates/charter/template.md` →
    `docs/foundry/<key>/charter.md`) is authored only AFTER
    `foundry_gate_decide` approves — the charter binds name, tier, scope,
    what-NOT-to-build, quality plan, gate schedule.
@@ -237,8 +246,8 @@ Output: `docs/foundry/<key>/opportunity-brief.md`. Spec §3 stage 2.
 - Foundry MCP unavailable → write the brief anyway (it's a file); flag that the
   gate record is pending and must be requested when the MCP is back. Never
   treat a chat "looks good" as a decided gate.
-- Founder rejects at Gate 1 → record stays with `recommendation` unchanged;
-  set frontmatter `status: declined`; nothing is deleted.
+- Founder rejects at Gate 1 → the brief keeps its `recommendation`; set the
+  BRIEF's frontmatter to `status: declined`; nothing is deleted.
 ````
 
 - [ ] **Step 2: Commit**
@@ -291,7 +300,7 @@ brief: docs/foundry/<key>/opportunity-brief.md
 | Tier | Examples | Gates | Quality parameters |
 | --- | --- | --- | --- |
 | **T0** prototype/demo | markets, gridiron | greenlight + ship | wave standard, auto-merge OK |
-| **T1** product | herdbook, exercir | + architecture approval | wave + deep effort on kernel-touching items, mutation thresholds enforced |
+| **T1** product | herdbook, exercir | + architecture approval | wave + `deep` effort on kernel-touching items, mutation thresholds enforced |
 | **T2** regulated | oncology (MDR Class IIb) | + every kernel-touching ADR + designer-first mandatory | full battery, RLS/tenancy proofs required, no auto-merge |
 
 ## Scope (the wedge)
@@ -328,7 +337,7 @@ git commit -m "docs(templates): product-charter template — Gate-1 artifact wit
 
 **Files:**
 - Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/dossier-record.md`
-- Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/assets/06_agricultural_ecosystem_twin.md`
+- Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/assets/uploads/06_agricultural_ecosystem_twin.md` (relative path preserved per the skill's step 3)
 - Create: `.claude/worktrees/f3-intake-charter/docs/foundry/agri-ecosystem-twin/opportunity-brief.md`
 
 - [ ] **Step 1: Execute `/dossier-intake` BY THE SKILL TEXT** (Task 2's procedure, literally — this validates the skill) against source `docs/ideas-inbox/_extracted/Agricultural Ecosystem Twin/` (one file: `uploads/06_agricultural_ecosystem_twin.md` — read it from the MAIN clone's inbox, copy into the worktree's `assets/`). Write the dossier record per the skill's template. The manifest has exactly 1 row.

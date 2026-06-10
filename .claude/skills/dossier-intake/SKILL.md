@@ -18,7 +18,9 @@ becomes addressable. Spec §3 stage 1 of
   asset manifest. Check: manifest row count == source file count.
 - **One dossier, one product key, one folder.** Re-running intake on the same
   dossier updates `docs/foundry/<key>/` in place (idempotent), never forks a
-  second folder.
+  second folder. Same vs different: compare the existing record's `source:`
+  frontmatter — same source ⇒ update in place; different ⇒ key collision,
+  stop and ask (see Failure stances).
 
 ## Procedure
 
