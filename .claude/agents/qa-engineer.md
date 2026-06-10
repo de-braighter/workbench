@@ -106,6 +106,26 @@ For kernel- or projection-touching changes, and any change that adds computed / 
 - **Event replay holds.** New or changed event types replay deterministically: consumers are idempotent, ordering assumptions are stated, and a replay rebuilds the projection to the same state. A non-idempotent consumer of an at-least-once outbox is BLOCKING.
 - **Migration & versioning are safe.** Event types and published catalogs / subtrees are versioned (`.vN`, semver) from day one — no in-place breaking change. Large-table migrations are `CREATE INDEX CONCURRENTLY` (see dimension 3); every new kernel- or pack-owned table carries an RLS policy.
 
+## Harness failure-mode pre-flight (before the dimensions)
+
+Seven systematic failure modes of AI-produced code (2026-06-09 audit) and the
+deterministic gate that kills each. Verify the gate RAN for this change (output in
+the PR, or reproduce locally) — a green wave without these gates has known blind
+spots:
+
+| # | Failure mode | Deterministic gate | Folds into |
+|---|---|---|---|
+| 1 | Test theater | Stryker mutation score per tier (`quality:mutation`) | dim 1 |
+| 2 | Isolation untested by default | DB suite under a NOBYPASSRLS role (`assertNonSuperuser` in setup) | dim 1/9 |
+| 3 | Unmapped error → 500 | `auditConfig` switch-exhaustiveness lint | dim 1 |
+| 4 | Lying comments | reviewer falsification pass (no deterministic gate — confirm reviewer ran it) | dim 6 |
+| 5 | Broken-but-passing primitive | integration tier exercises the real runtime path | dim 1/9 |
+| 6 | Non-atomic security ops | reviewer adversarial-interleaving pass with reproduction | dim 9 |
+| 7 | Speculative generality | knip (`quality:knip`) | dim 6/9 |
+
+For repos not yet carrying the battery (no `quality:*` scripts), say so in
+"What I did NOT check" — name the missing gates rather than silently passing.
+
 ## Output template
 
 ```
