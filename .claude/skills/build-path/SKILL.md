@@ -27,8 +27,9 @@ as disjoint iff:
 4. anything else → OVERLAP. An item with neither `issue` nor `pathPrefix`
    claims the **whole repo**.
 
-Claimability: an item is claimable when its `dependsOn` items are all released
-`done` AND its scope is disjoint from every ACTIVE claim. Design consequences:
+Claimability: an item is claimable when it is still queued (not done, not
+actively claimed), its `dependsOn` items are all released `done`, AND its scope
+is disjoint from every ACTIVE claim. Design consequences:
 
 - Items **ordered** by the dependency DAG (one transitively depends on the
   other) may share scope — they can never hold claims simultaneously.
@@ -102,7 +103,10 @@ Claimability: an item is claimable when its `dependsOn` items are all released
    `non-nested paths: <a> vs <b>` / `distinct issues`) → verdict. Any pair
    without provable evidence: re-scope (tighter pathPrefixes), move shared
    files into a sequencing item, or add ordering. Never rely on
-   issue-distinctness when both items carry overlapping paths (rule 2).
+   issue-distinctness when both items carry overlapping paths (rule 2). Also
+   verify every `dependsOn` id appears in the item list (or is already queued
+   for this product) — queue_push accepts dangling ids silently, and a dangling
+   dependency bricks its item forever (its deps can never be satisfied).
 9. **Write the doc** `docs/foundry/<key>/build-path.md`:
 
    ```markdown
@@ -137,7 +141,9 @@ Claimability: an item is claimable when its `dependsOn` items are all released
 11. **Push.** Check `foundry_status` first: itemIds must be NEW (queue_push
     rejects existing ones — never re-push). Then `foundry_queue_push {
     product: { productKey, name, repo, riskTier, charterRef, stage:
-    "execution" }, items: [<the full item list>] }`.
+    "execution" }, items: [<the full item list>] }`. For an already-registered
+    product the product block is ignored (registration is write-once via the
+    MCP surface) — the charter FILE stays the tier authority either way.
 12. **Verify + hand off.** `foundry_status` shows the items queued with only
     dependency-free ones claimable; `foundry_next` surfaces them;
     `foundry_session_prompt` renders ready-to-paste launch prompts. Report the
@@ -151,12 +157,21 @@ Claimability: an item is claimable when its `dependsOn` items are all released
   session needs a restart — they're wired in `.mcp.json`.)
 - **queue_push rejects an itemId as already queued** → diff against
   `foundry_status`; push only the new items. Corrections to already-queued
-  items are NEW itemIds (`<id>-v2`) + ask the orchestrator to release/abandon
-  the stale ones — the event log is append-only.
+  items: push the corrected item as a NEW itemId (`<id>-v2`), then RETIRE the
+  stale item — claim it and release with outcome `done` and note
+  `superseded by <id>-v2; do not implement` (the only terminal outcome:
+  `abandoned` re-queues, and the stale item's older `queuedAt` would surface it
+  BEFORE the v2 and suppress the v2 in session prompts). A stale item that is
+  not yet claimable (pending deps) cannot be retired today — flag it to the
+  orchestrator and retire it the moment it becomes claimable; an F1 retire op
+  is the known gap.
 - **Mid-build disjointness violation** (spec §7: two in-flight items turn out
   to touch the same file) → the older claim proceeds, the newer session hands
   back via `foundry_handoff`; THIS stage owns the fix: correct the lane map /
-  scopes in `build-path.md` and re-push corrected items as new itemIds.
+  scopes in `build-path.md`, push the corrected items as new itemIds, and
+  retire the handed-back item (claim → release `done` with a superseded-by
+  note) — the retire-claim is only possible once the older overlapping claim
+  has released; until then the handoff note is the guard.
 - **Gate 2 rejected** → revise per the founder's note; new gate request;
   nothing is pushed until approved.
 - **The charter excludes something the ladder seems to need** → do not queue
