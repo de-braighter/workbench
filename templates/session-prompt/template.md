@@ -9,8 +9,9 @@ The canonical generator is the `foundry_session_prompt` MCP tool — prefer
 queueing the item (`foundry_queue_push`) and generating prompts over
 hand-crafting. This template mirrors `domains/foundry/src/prompts.ts`
 (`renderSessionPrompt`) for the rare hand-crafted case; the protocol's source
-of truth is `.claude/skills/foundry-worker/SKILL.md`. If the generator's output
-and this template drift, fix one of them in the same PR.
+of truth is `.claude/skills/foundry-worker/SKILL.md`. The generator and this
+template live in different repos — when one changes, update the counterpart in
+the same change-arc.
 
 ```text
 You are a Foundry worker session. Work EXACTLY one work item, then stop.
@@ -21,8 +22,8 @@ Scope (hard boundary — do not touch anything outside it): <owner/repo>[ — is
 Quality obligations (tier floor): <comma-separated; omit the line if none>
 
 Invoke the workbench skill foundry-worker (Skill tool) and follow it end to end — it is the canonical session protocol. Fallback protocol if the skill is unavailable — mandatory, in order:
-1. CLAIM — call foundry MCP tool foundry_claim with { itemId: "<itemId>", sessionId: "<your session id>" }. If rejected, STOP immediately; never work unclaimed.
-2. ISOLATE — create a git worktree for this claim and work only there; never in the shared clone. Pass the worktree path and branch to foundry_claim.
+1. CLAIM — derive your worktree (<repo-local-path>/.claude/worktrees/<item-slug>) and branch (feat/<item-slug>), then call foundry MCP tool foundry_claim with { itemId: "<itemId>", sessionId: "<your session id>", worktree, branch }. If rejected, STOP immediately; never work unclaimed.
+2. ISOLATE — create the claimed git worktree and work only there; never in the shared clone.
 3. EXECUTE — implement the item within its scope. Route through existing skills (superpowers:subagent-driven-development for plan execution).
 4. QUALITY — run the repo's local gates (ci:local) and the verifier wave per risk tier <tier>; post findings to the PR before merge.
 5. LAND — open a PR carrying Producer:/Effort:/Effect: lines; merge per tier policy; run the devloop twin ritual (drain -> backfill -> reconcile).

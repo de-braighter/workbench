@@ -18,7 +18,8 @@ existing arsenal and adds only collision safety + tier-gated quality.
   session prompt holds no lock; only `foundry_claim` does.
 - **Never edit in the shared clone.** Every write happens in the claim's worktree.
 - **Never bypass quality gates.** Floor can't go green → release `blocked`.
-- **Scope is a hard boundary.** Touch nothing outside the item's repo/issue/pathPrefix.
+- **Scope is a hard boundary.** Touch nothing outside the item's scope — repo +
+  pathPrefix are the enforceable boundary (the issue scopes intent).
 - **One item per session.** Release, report, stop.
 
 ## Phase 0 — BOOT
@@ -26,14 +27,15 @@ existing arsenal and adds only collision safety + tier-gated quality.
 1. Mint a session id once and reuse it for every foundry call:
    `sess-<yyyyMMdd-HHmmss>-<4 hex>` (e.g. `sess-20260610-143012-a3f9`).
 2. Identify the item: the launch prompt names it. Launched without one →
-   `foundry_next` (limit 3) and take the top item; do NOT pick a different item
-   than the prompt's unless the founder said so.
+   `foundry_next` (limit 3) and take the TOP item — the extras are context only;
+   do NOT pick a different item than the prompt's unless the founder said so.
 3. Derive, before claiming:
    - **slug** — itemId lowercased, every non-`[a-z0-9]` run → `-`
      (`agri/E1.1` → `agri-e1-1`)
    - **branch** — `feat/<slug>`
    - **repo local path** — scope repo `de-braighter/<name>` →
-     `domains/<name>/` or `layers/<name>/` (whichever exists under the cluster root)
+     `domains/<name>/` or `layers/<name>/` (whichever exists under the cluster
+     root); `de-braighter/workbench` → the cluster root itself
    - **worktree** — `<repo-local-path>/.claude/worktrees/<slug>`
 4. Optional sanity: `foundry_status` (board view; stale claims list abandoned worktrees).
 
@@ -51,20 +53,22 @@ foundry_claim { itemId, sessionId, worktree: <planned path>, branch: <planned br
 
 ## Phase 2 — ISOLATE
 
-From the target repo root:
+From the cluster root:
 
 ```bash
 cd <repo-local-path>
 git fetch origin main
-# local-only exclude if the repo doesn't ignore worktrees (no PR pollution):
-grep -q '\.claude/worktrees/' .gitignore || echo '.claude/worktrees/' >> .git/info/exclude
+# local-only exclude if the repo doesn't ignore worktrees (no PR pollution); idempotent:
+grep -q '\.claude/worktrees/' .gitignore .git/info/exclude 2>/dev/null || echo '.claude/worktrees/' >> .git/info/exclude
 git worktree add .claude/worktrees/<slug> -b feat/<slug> origin/main
 cd .claude/worktrees/<slug>
-npm install   # worktrees don't share node_modules
+npm install   # or pnpm install — lockfile decides; worktrees don't share node_modules
 ```
 
-- Worktree creation fails (or a stale worktree/branch from an expired claim is
-  unrecoverable) → `foundry_release { claimId, outcome: "blocked", note }` and stop.
+- A leftover worktree/branch at the slug is from an EXPIRED claim (your claim
+  succeeding proves no active one exists): remove it (`git worktree remove --force`,
+  `git branch -D`) and retry. Creation still fails →
+  `foundry_release { claimId, outcome: "blocked", note }` and stop.
 - Nx-repo gotcha: a worktree's nx daemon can lock the main clone's nx db —
   set `NX_DAEMON=false` in the worktree if builds wedge.
 
@@ -86,22 +90,25 @@ Route by situation — never invent a new build style:
 
 ## Phase 4 — QUALITY (tier-gated; PR opens BEFORE the wave)
 
-1. Repo gate green in the worktree: `npm run ci:local`.
+1. Repo gate green in the worktree: `npm run ci:local` (or `pnpm run ci:local`
+   — lockfile decides).
 2. Scope confinement: `git diff --name-only origin/main...HEAD` — every path
    inside the scope `pathPrefix` (when set). Out-of-scope file → revert it or handoff.
 3. Push the branch, open the PR (template: `templates/pr/template.md`) — the PR
    must exist before the wave so findings are postable. Body carries
    (per `policies/git.md`):
    - `Producer: foundry-worker/<model> [skill1, skill2]`
-   - `Effort: light|standard|deep` (anchored: light = no wave; standard = wave;
-     deep = wave + designer-first and/or ≥2 review rounds)
+   - `Effort: light|standard|deep` — declare what the PR ACTUALLY got (anchored:
+     light = no wave; standard = wave; deep = wave + designer-first and/or
+     ≥2 review rounds), never aspirationally
    - `Effect:` only when defensible — prefer `cycle-time` / `findings`
      (same-session merge cycle-time ≈ 0.005–0.01 h).
 4. Verifier wave per tier — **foreground, never `run_in_background`** (background
    agents lose verdict capture):
    - **T0** — standard wave (`workflows/verifier-wave.md`).
-   - **T1** — wave + Sonar gate (`npm run ci:sonar` / `sonar:scan` where wired) +
-     `Effort: deep` on kernel-touching items.
+   - **T1** — wave + Sonar gate (`npm run ci:sonar` / `sonar:scan` where wired);
+     kernel-touching items get the deep treatment (designer-first and/or ≥2
+     review rounds) — then declare `Effort: deep`.
    - **T2** — full battery + RLS/tenancy proofs where touched + designer-first
      evidence linked in the PR.
 5. Findings ritual BEFORE any fix commit: write the wave's findings to a temp
@@ -115,13 +122,15 @@ Route by situation — never invent a new build style:
 
 1. Merge per tier: **T0** green wave → squash-merge. **T1** green wave + Sonar →
    squash-merge. **T2** → `foundry_gate_request { productKey, gateType: "ship",
-   payloadRef: <pr url> }` and WAIT for the founder — never auto-merge.
+   payloadRef: <pr url> }` and WAIT for the founder — never auto-merge (still
+   pending at session end → quickref: release `blocked` with the gateId).
 2. Twin ritual (mandatory, from `domains/devloop`): after the wave
-   `npm run dev -- drain <repo#pr>`; after merge `npm run dev -- backfill`
-   (full `OWNER/REPO`) then `npm run dev -- reconcile`;
+   `npm run dev -- drain <repo#pr>`; after merge
+   `npm run dev -- backfill <owner>/<repo>` then `npm run dev -- reconcile`;
    `npm run ritual:post-merge` covers reviews + resolve-findings.
 3. Cleanup from the repo root: `git worktree remove .claude/worktrees/<slug>`
-   (add `--force` only if the worktree is dirty by design), delete the merged branch.
+   (it should be clean after a merge — investigate before reaching for
+   `--force`), delete the merged branch.
 
 ## Phase 6 — RELEASE
 
