@@ -1,3 +1,7 @@
+# Pin the compose project name so container/volume identity is independent of the
+# checkout directory (worktrees would otherwise spawn duplicate db containers).
+name: {{DOMAIN}}
+
 services:
   {{DOMAIN}}-db:
     image: postgres:16-alpine

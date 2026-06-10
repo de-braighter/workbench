@@ -32,13 +32,13 @@
   --font-body:    "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Per-asset accent colours — illustrative examples; replace with your domain's palette */
-  --accent-btc:      #6dd2ff;   /* cyan  — example item A */
-  --accent-btc-soft: rgba(109, 210, 255, 0.15);
-  --accent-eth:      #a78bfa;   /* violet — example item B */
-  --accent-eth-soft: rgba(167, 139, 250, 0.15);
-  --accent-ada:      #34d399;   /* mint  — example item C */
-  --accent-ada-soft: rgba(52, 211, 153, 0.15);
+  /* Per-item accent colours — illustrative examples; replace with your domain's palette */
+  --accent-a:      #6dd2ff;   /* cyan  — example item A */
+  --accent-a-soft: rgba(109, 210, 255, 0.15);
+  --accent-b:      #a78bfa;   /* violet — example item B */
+  --accent-b-soft: rgba(167, 139, 250, 0.15);
+  --accent-c:      #34d399;   /* mint  — example item C */
+  --accent-c-soft: rgba(52, 211, 153, 0.15);
 
   /* Glass panel */
   --glass-bg:     rgba(22, 27, 44, 0.72);
