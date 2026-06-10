@@ -23,7 +23,9 @@ tier and the markets-domain-arc memory for the full catalog.
 ## What this produces vs what it does NOT
 
 PRODUCES: workspace structure, substrate wiring, `GET /health` (+ `GET /readout` if
-inference), green `ci:local`, workbench registration. Does NOT design your domain's features,
+inference), the born-with quality floor (lint audit set + knip + tier-parameterized
+Stryker + coverage-wired vitest base + a11y battery template — see Step 2b), green
+`ci:local`, workbench registration. Does NOT design your domain's features,
 choose the conjugate family / observation shape, promote anything into the kernel, or publish
 substrate packages. After scaffolding, brainstorm the actual domain features as a separate cycle.
 
@@ -80,7 +82,8 @@ Record the answers. Add one TodoWrite group per selected tier.
    `libs/{{DOMAIN}}-pack`, `apps/api` → `apps/{{DOMAIN}}-api`.
 4. `pnpm install` (resolves root devDeps + the workspace libs).
 5. The shipped placeholder smoke tests are already green; run `pnpm run ci:local` — build +
-   typecheck + test must pass.
+   typecheck + lint + test + knip report must pass (the quality floor ships with the
+   foundation tier — see Step 2b).
 6. Live-verify the api:
    ```bash
    cd apps/{{DOMAIN}}-api && pnpm run build && node dist/main.js &
@@ -90,6 +93,38 @@ Record the answers. Add one TodoWrite group per selected tier.
    not emit `reflect-metadata`, so NestJS DI silently fails (injected services become
    `undefined`). The `start` script already points at the compiled output.
 7. Commit each package as you go (workspace root → spine → pack → api). Commit `pnpm-lock.yaml`.
+
+### Step 2b — Quality floor (always; born with the foundation tier)
+
+The foundation templates ship the deterministic quality floor (Foundry spec §5) — every
+product is born with it. Each gate kills a named AI-harness failure mode:
+
+| Gate | Kills | Where |
+|---|---|---|
+| ESLint audit set (`auditConfig`: switch-exhaustiveness, no default-masking on unions) | unmapped-error→500 | `eslint.config.mjs` |
+| knip (dead exports / unused deps) | speculative generality (ADR-176) | `knip.ts` + `quality:knip` |
+| Stryker mutation testing, tier thresholds | test-theater | `libs/*/stryker.config.mjs` + `quality:mutation` |
+| test-kit vitest base (lcov coverage) | silent coverage erosion | `*/vitest.config.ts` |
+| Non-superuser DB tests (`assertNonSuperuser`) | broken-but-passing RLS / isolation-untested | DB tier (Step 3 gotchas) |
+| a11y battery template | inaccessible-by-default UI | UI tier (Step 5) |
+
+After scaffolding:
+1. **Set the mutation tier from the product charter** (`docs/foundry/<key>/charter.md`
+   risk tier): edit each `libs/*/stryker.config.mjs` → `defineStrykerConfig({ tier: 't0'|'t1'|'t2' })`.
+   t0 is report-only (`break: null`); t1 breaks under 60; t2 under 75. No charter
+   (non-Foundry domain) → t0 until the owner decides.
+2. `quality:knip` (strict) is the wave-time / `qualityObligations` gate; `ci:local` runs
+   the report mode (`--no-exit-code`) so a fresh scaffold is never blocked by a config
+   false-positive — triage findings, don't suppress them.
+3. **DB tier:** any DB-backed spec's global setup MUST call `assertNonSuperuser` from
+   `@de-braighter/test-kit` on the same connection the tests use — superusers bypass
+   FORCE RLS, so a suite running as superuser proves nothing:
+
+   ```ts
+   import { assertNonSuperuser } from '@de-braighter/test-kit/pg-roles';
+   await assertNonSuperuser((sql) => appPrisma.$queryRawUnsafe(sql));
+   ```
+4. **UI tier:** copy the a11y battery next to each page component (Step 5 item 6).
 
 ### Step 3 — DB persistence tier (if selected)
 1. Copy `templates/db/**` into the domain (`docker-compose.yml`, `.env.example`, `tools/db/*`).
@@ -174,6 +209,10 @@ Record the answers. Add one TodoWrite group per selected tier.
 4. **Set the UI `package.json` test script to `ng test --watch=false --browsers=ChromeHeadless`
    BEFORE running any workspace gate** (see gotchas).
 5. `pnpm install` at the root; `npx ng build`; live-verify the page in a browser.
+6. Copy `templates/ui/a11y.spec.example.ts` to `apps/{{DOMAIN}}-ui/src/app/a11y.spec.ts`
+   (adapt the component import if renamed) — the canonical a11y battery
+   (player-surfaces patterns); it runs with `ng test` in the workspace gate. Copy it
+   again next to every page component you add later.
 
 **GOTCHAS (UI):**
 - **The scaffolded `ng test` defaults to watch mode + a visible browser.** Once `apps/{{DOMAIN}}-ui`

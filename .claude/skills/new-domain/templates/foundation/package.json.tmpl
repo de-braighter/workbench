@@ -8,13 +8,23 @@
     "build":     "pnpm -r run build",
     "test":      "pnpm -r run test",
     "typecheck": "pnpm -r run typecheck",
-    "ci:local":  "pnpm run build && pnpm run typecheck && pnpm run test"
+    "lint":      "eslint . --max-warnings=0",
+    "quality:knip": "knip",
+    "quality:knip:report": "knip --no-exit-code",
+    "quality:mutation": "pnpm -r --if-present run quality:mutation",
+    "ci:local":  "pnpm run build && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run quality:knip:report"
   },
   "devDependencies": {
+    "@de-braighter/lint-kit": "^0.2.0",
+    "@de-braighter/test-kit": "^0.2.0",
+    "@stryker-mutator/core": "^9.0.0",
+    "@stryker-mutator/vitest-runner": "^9.0.0",
     "@types/node": "^20.12.0",
-    "@vitest/coverage-v8": "1.6.1",
-    "typescript": "^5.4.5",
-    "vitest": "1.6.1"
+    "@vitest/coverage-v8": "^4.0.9",
+    "eslint": "^9.8.0",
+    "knip": "^6.16.1",
+    "typescript": "^5.6.0",
+    "vitest": "^4.0.9"
   },
   "engines": { "node": ">=20.0.0", "pnpm": ">=9.0.0" },
   "packageManager": "pnpm@9.1.0"
