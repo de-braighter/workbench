@@ -24,8 +24,8 @@
 
 .btn-ingest {
   background: var(--glass-bg);
-  border: 1px solid var(--accent-btc);
-  color: var(--accent-btc);
+  border: 1px solid var(--accent-a);
+  color: var(--accent-a);
   font-family: var(--font-body);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -35,7 +35,7 @@
   transition: background 0.15s;
 }
 
-.btn-ingest:hover:not(:disabled) { background: var(--accent-btc-soft); }
+.btn-ingest:hover:not(:disabled) { background: var(--accent-a-soft); }
 .btn-ingest:disabled { opacity: 0.5; cursor: default; }
 
 .last-update { font-size: 0.75rem; color: var(--fg-4); font-family: var(--font-mono); }

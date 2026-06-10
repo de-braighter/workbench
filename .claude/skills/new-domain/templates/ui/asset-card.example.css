@@ -11,8 +11,8 @@
 }
 
 /* EXAMPLE accent borders by item id — replace with your domain's item ids. */
-.asset-card[data-item="example-a"] { border-top: 2px solid var(--accent-btc); }
-.asset-card[data-item="example-b"] { border-top: 2px solid var(--accent-eth); }
+.asset-card[data-item="example-a"] { border-top: 2px solid var(--accent-a); }
+.asset-card[data-item="example-b"] { border-top: 2px solid var(--accent-b); }
 
 .card-header {
   display: flex;

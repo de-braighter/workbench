@@ -11,7 +11,9 @@ import {
   type InferenceCatalog,
 } from '@de-braighter/substrate-runtime';
 import {
+  DISTRIBUTION_CATALOG,
   MEMBER_RESOLUTION_PORT,
+  type DistributionCatalog,
   type MemberResolution,
 } from '@de-braighter/substrate-contracts';
 import {
@@ -54,7 +56,16 @@ const NULL_MEMBER_RESOLUTION: MemberResolution = {
     evidence: EvidenceRepository,
     sidecar: null,
     members: MemberResolution,
-  ) => new InferenceBackboneRouter(cat, evidence, sidecar, members),
-  inject: [INFERENCE_CATALOG, EVIDENCE_REPOSITORY, NUMPYRO_SIDECAR, MEMBER_RESOLUTION_PORT],
+    distributions: DistributionCatalog,
+  ) => new InferenceBackboneRouter(cat, evidence, sidecar, members, distributions),
+  // DISTRIBUTION_CATALOG comes from SubstrateModule.forRoot's default binding —
+  // InMemoryDistributionCatalog seeded with the Normal family when the prisma
+  // client has no distributionCatalog delegate. Do NOT provide it yourself.
+  inject: [INFERENCE_CATALOG, EVIDENCE_REPOSITORY, NUMPYRO_SIDECAR, MEMBER_RESOLUTION_PORT, DISTRIBUTION_CATALOG],
 },
 ```
+
+Substrate ≥1.1 made the `DistributionCatalog` the router's **5th required constructor
+arg** — a 4-arg `new InferenceBackboneRouter(...)` no longer typechecks. The
+`DISTRIBUTION_CATALOG` token is exported from `@de-braighter/substrate-contracts`
+(root), not `…/inference`.

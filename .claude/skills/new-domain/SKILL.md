@@ -1,6 +1,6 @@
 ---
 name: new-domain
-description: Use when standing up a brand-new substrate domain in the de-braighter cluster — scaffold a building, testing, registered pnpm-workspace domain (reusable spine lib + pack lib + NestJS api), optionally with the DB-persistence, inference-backbone, and Angular-UI tiers. Codifies the markets reference run.
+description: Use when standing up a brand-new substrate domain in the de-braighter cluster — scaffold a building, testing, registered pnpm-workspace domain (reusable spine lib + pack lib + NestJS api), optionally with the DB-persistence, inference-backbone, and Angular-UI tiers. Codifies the markets reference run, API-refreshed against the agri-ecosystem-twin run (substrate 1.2.0).
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, TodoWrite
 tags: [tooling, scaffolding]
 ---
@@ -39,6 +39,7 @@ Templates live under `templates/<tier>/`. To apply a tier: copy its tree into th
 |---|---|
 | `{{DOMAIN}}` | the kebab domain name (Step 1) |
 | `{{DOMAIN_PASCAL}}` | PascalCase of the name |
+| `{{DOMAIN_PASCAL_UPPER}}` | UPPER_SNAKE of the name (e.g. `AGRI_ECOSYSTEM_TWIN`) — DB/inference tier configs + env prefix |
 | `{{HTTP_PORT}}` | chosen api port |
 | `{{PG_PORT}}` | chosen postgres port |
 | `{{PURPOSE}}` | the one-line purpose |
@@ -136,11 +137,14 @@ After scaffolding:
 3. Copy `templates/db/config/tenants.ts.tmpl` + `templates/db/config/manifest.ts.tmpl` into
    `apps/{{DOMAIN}}-api/src/config/`, rename (strip `.tmpl`), substitute tokens including
    `{{DOMAIN_PASCAL_UPPER}}`.
-4. Add deps to `apps/{{DOMAIN}}-api`: `@de-braighter/substrate-contracts@^0.14.0`,
-   `@de-braighter/substrate-runtime@^0.19.0`, `@prisma/client@^6`, `prisma@^6` (dev). Add a
+4. Add deps to `apps/{{DOMAIN}}-api`: `@de-braighter/substrate-contracts@^1.0.0`,
+   `@de-braighter/substrate-runtime@^1.0.0`, `@prisma/client@^6`, `prisma@^6` (dev). Add a
    `prisma/schema.prisma` with the vendored `EventLog`+`Outbox` kernel models
    (`@@schema("kernel")`, multi-schema datasource) — lift from
-   `domains/markets/apps/markets-api/prisma/schema.prisma`.
+   `domains/markets/apps/markets-api/prisma/schema.prisma`. Set the api `build` script to
+   run `prisma generate` first — `"build": "prisma generate --schema prisma/schema.prisma
+   && tsc -p tsconfig.json"` — and add a matching `db:generate` script (fresh-clone
+   `ci:local` fails otherwise: the vendored prisma client doesn't exist until generate runs).
 5. Splice `templates/db/app-module-db.snippet.md` into `app.module.ts`.
 6. `docker compose up -d {{DOMAIN}}-db && pnpm run db:setup`, then live-verify writes.
 
@@ -161,12 +165,19 @@ After scaffolding:
   `@de-braighter/substrate-contracts/events` (re-exported from substrate-runtime root).
 - `kernel.plan_node` (inference): column is `kind` (not `type`), root needs `tree_root_id = id`,
   and `title` + `created_by` are NOT NULL (no default) → use sentinels in seed.sql.
+- ESLint: `tools/db/**/*.mjs` runs the pinned prisma CLI via `execSync` → add a
+  `{ files: ['tools/db/**/*.mjs'], rules: { 'sonarjs/os-command': 'off' } }` override to
+  `eslint.config.mjs` (dev-only provisioning scripts against local `.env` URLs, never
+  request-path code).
 
 ### Step 4 — Inference backbone tier (if selected; requires DB)
 1. Copy `templates/inference/**`. Put `inference-catalog.example.ts` under
    `apps/{{DOMAIN}}-api/src/config/` and `readout.service.example.ts` +
-   `readout.controller.ts` under `apps/{{DOMAIN}}-api/src/readout/`. Strip the `.example`
-   suffix once you've replaced the EXAMPLE indicator/subject/projection with your domain's.
+   `readout.service.spec.example.ts` + `readout.controller.ts` under
+   `apps/{{DOMAIN}}-api/src/readout/`. Strip the `.example` suffix once you've replaced the
+   EXAMPLE indicator/subject/projection with your domain's. The spec (mocked backbone;
+   happy / error / survival paths) is NOT optional — the verifier wave demands it on every
+   scaffold.
 2. Ensure the DB tier is applied: `db:setup` must include the `kernel-plan-tree.sql` step and
    `db:seed` must seed the plan root (the DB tier ships both; `config/tenants.ts` exports the
    `_PLAN_ROOT_ID` the readout uses).
@@ -176,6 +187,24 @@ After scaffolding:
    controllers + `ReadoutService` to providers.
 4. Live-verify `GET /readout` after writing a few observation events.
 
+**Substrate 1.2.0 API facts** (current published API — verified by the agri-ecosystem-twin
+E1 run, `domains/agri-ecosystem-twin/apps/agri-ecosystem-twin-api/`):
+1. **`InferenceBackboneRouter` takes 5 required ctor args** —
+   `(catalog, evidence, sidecar, members, distributionCatalog: DistributionCatalog)`. The
+   `DISTRIBUTION_CATALOG` token (export of `@de-braighter/substrate-contracts` root) is
+   default-bound by `SubstrateModule.forRoot` — it falls back to
+   `InMemoryDistributionCatalog` seeded with the Normal family when the prisma client has
+   no `distributionCatalog` delegate. Wire the factory's 5th param via
+   `inject: [..., DISTRIBUTION_CATALOG]`; do NOT provide the token yourself.
+2. **Subject taxonomy: `kind:'person'` is GONE.** `SubjectRef` is now
+   `{kind:'individual', id, role}` | `{kind:'cohort', ids, role}` |
+   `{kind:'aggregate', id, role}` — represent a single domain entity as `individual` with a
+   domain-named `role`. The backbone still uses `subject.id` only as the `aggregate_id`
+   filter against `kernel.event_log`.
+3. **`PosteriorHandle.summary` is `PosteriorSummary | SurvivalSummary`.** The moment summary
+   has NO `kind` field — narrow with `if ('kind' in s) { /* survival */ }` BEFORE reading
+   `mean`/`p10`/`p90`.
+
 **GOTCHAS (inference):**
 - `asJsonPath()` returns `Result<JsonPath,…>`, not a string → wrap with `requireJsonPath()`
   (throw on `!ok`). The inference `Result` shape is `{ok, value, error}` (NOT fp-ts
@@ -183,17 +212,14 @@ After scaffolding:
 - The 5-provider chain (all explicit — backbone is NOT auto-bound): `INFERENCE_CATALOG` →
   `EVIDENCE_REPOSITORY` (`new PrismaEvidenceLogRepository(runner, catalog)`) → `NUMPYRO_SIDECAR`
   (`null`) → `MEMBER_RESOLUTION_PORT` (no-op that throws) → `INFERENCE_BACKBONE`
-  (`new InferenceBackboneRouter(catalog, evidence, sidecar, members)`).
-  `INFERENCE_BACKBONE`/`NUMPYRO_SIDECAR` from `…/inference`; `MEMBER_RESOLUTION_PORT` from
-  contracts root.
-- The Normal-Normal fast-path **rejects non-`person` subjects** → represent domain entities as
-  `{ kind: 'person', id: <UUID> }` (the backbone only uses `subject.id` for the `aggregate_id`
-  filter against `kernel.event_log`).
+  (`new InferenceBackboneRouter(catalog, evidence, sidecar, members, distributions)` — see
+  API fact 1 for the 5th arg). `INFERENCE_BACKBONE`/`NUMPYRO_SIDECAR` from `…/inference`;
+  `MEMBER_RESOLUTION_PORT` + `DISTRIBUTION_CATALOG` from contracts root.
 - `build{{DOMAIN_PASCAL}}Catalog()` lives in `apps/{{DOMAIN}}-api/src/config/` — the **library
   must not depend on substrate-runtime** (`InMemoryInferenceCatalog` is a runtime impl).
 - `@Inject(Token)` on constructor params injected by class type (vitest/esbuild emits no
   decorator metadata).
-- `PackManifest.key` (not `.packId`) in contracts 0.14.0.
+- `PackManifest.key` (not `.packId`) since contracts 0.14.
 
 ### Step 5 — Angular UI tier (if selected)
 1. Scaffold an Angular CLI standalone app at `apps/{{DOMAIN}}-ui` (use the latest Angular the
@@ -227,6 +253,10 @@ After scaffolding:
 - `[ngClass]` (not `[class]`) for additive classes — `[class]="str"` replaces the static class.
 - Angular version: the latest may require a newer Node than installed; drop to the latest
   Angular your Node supports (markets used Angular 19 on Node 22.14).
+- ESLint: the UI app needs two `eslint.config.mjs` additions or `lint` fails —
+  `{ ignores: ['**/.angular/**'] }` (the CLI cache is not lintable) and the UI tsconfigs
+  (`apps/{{DOMAIN}}-ui/tsconfig.app.json` + `tsconfig.spec.json`) appended to the
+  `auditConfig` `project` list so the typed rules can resolve UI sources.
 
 ### Step 6 — Workbench registration
 Follow `WORKBENCH-REGISTRATION.md`: branch the workbench, add `{{DOMAIN}}` to `repos.yaml`
@@ -252,7 +282,10 @@ reconcile) after each merge.
   {{DOMAIN}}`; `x-user-id` = a UUID.
 - **UI gate:** the UI `test` script MUST be `ng test --watch=false --browsers=ChromeHeadless`
   or `pnpm -r run test` hangs.
-- **Inference:** `asJsonPath()` returns a `Result`; the 5-provider chain is explicit;
-  Normal-Normal rejects non-`person` subjects; the catalog builder lives in the api, not the lib.
+- **Inference:** `asJsonPath()` returns a `Result`; the 5-provider chain is explicit; the
+  router ctor takes 5 args (5th = `DistributionCatalog` via the `DISTRIBUTION_CATALOG`
+  token); subjects are `{kind:'individual'|'cohort'|'aggregate', …, role}` (no more
+  `kind:'person'`); narrow `summary` with `'kind' in s` before reading moments; the catalog
+  builder lives in the api, not the lib.
 - Full catalog: see the **markets-domain-arc** memory and `domains/markets/` itself (the
   reference run this skill was extracted from).
