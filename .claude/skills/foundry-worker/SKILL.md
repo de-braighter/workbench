@@ -1,6 +1,6 @@
 ---
 name: foundry-worker
-description: "Foundry worker-session boot protocol — atomically claim ONE work item, isolate in a git worktree, execute via existing skills, pass tier-gated quality, land the PR with the twin ritual, release the claim. Use when a pasted session prompt names a foundry work item, or when asked to work an item from the foundry queue."
+description: "Foundry worker-session boot protocol — atomically claim ONE work item, isolate in a git worktree, execute via existing skills, pass tier-gated quality, land the PR with the twin ritual, release the claim. Use when a pasted session prompt names a foundry work item, when asked to work an item from the foundry queue, or in POOL MODE (via the foundry-pool skill) where the session self-serves the top claimable item."
 tags: [foundry, session-protocol, autonomous]
 ---
 
