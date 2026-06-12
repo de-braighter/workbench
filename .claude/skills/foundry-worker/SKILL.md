@@ -13,8 +13,10 @@ existing arsenal and adds only collision safety + tier-gated quality.
 
 ## Hard rules (fail closed)
 
-- **Never work a queue item unclaimed.** `foundry_*` tools unavailable, store
-  errors, or claim rejected → stop (read-only diagnosis at most). A pasted
+- **Never work a queue item unclaimed.** `foundry_*` tools unavailable or store
+  errors → stop (read-only diagnosis at most). A claim rejection is
+  mode-dependent — item mode stops, pool mode takes the bounded Phase-1 retry —
+  but in EVERY mode no write happens without an accepted claim. A pasted
   session prompt holds no lock; only `foundry_claim` does.
 - **Never edit in the shared clone.** Every write happens in the claim's worktree.
 - **Never bypass quality gates.** Floor can't go green → release `blocked`.
@@ -34,8 +36,8 @@ existing arsenal and adds only collision safety + tier-gated quality.
      pick a different one unless the founder said so.
    - **Pool mode** — launched via the `foundry-pool` skill, or asked to "work
      the next foundry item" with no itemId: `foundry_next` (limit 3) and take
-     the TOP item. The extras are your Phase-1 retry ladder, not alternatives
-     to browse by preference.
+     the TOP item. Candidates are re-fetched on each Phase-1 retry — the extras
+     are context, not alternatives to browse by preference.
 3. Derive, before claiming:
    - **slug** — itemId lowercased, every non-`[a-z0-9]` run → `-`
      (`agri/E1.1` → `agri-e1-1`)
@@ -69,7 +71,11 @@ foundry_claim { itemId, sessionId, worktree: <planned path>, branch: <planned br
     `foundry_next` (the lost item drops off the claimable list) and claim the
     new TOP item. At most **3 claim attempts** per session; all rejected or the
     list comes back empty → report the board (`foundry_status`) and stop
-    cleanly. An idle pool worker never waits or polls for work.
+    cleanly. An idle pool worker never waits or polls for work. Only
+    `already claimed` / `scope overlap` are expected races: a `dependencies not
+    done` / `unknown item` / `item already done` rejection in pool mode is NOT
+    a race (`foundry_next` never surfaces such items) — it signals a stale or
+    corrupt queue view; report and stop.
 - Keep the returned `claimId`. Heartbeat discipline from here on:
   `foundry_heartbeat { claimId }` at every phase boundary and at least every
   2 hours (TTL 240 min). A heartbeat **error** means the claim was superseded —
