@@ -1,6 +1,6 @@
 ---
 name: foundry-worker
-description: "Foundry worker-session boot protocol — atomically claim ONE work item, isolate in a git worktree, execute via existing skills, pass tier-gated quality, land the PR with the twin ritual, release the claim. Use when a pasted session prompt names a foundry work item, when asked to work an item from the foundry queue, or in POOL MODE (via the foundry-pool skill) where the session self-serves the top claimable item."
+description: "Foundry worker-session boot protocol — atomically claim ONE work item, isolate in a git worktree, execute via existing skills, pass tier-gated quality, land the PR with the twin ritual, release the claim. Use when a pasted session prompt names a foundry work item, when asked to work an item from the foundry queue, or in POOL MODE (via the foundry-pool skill) where the session self-serves the top pool-eligible claimable item (never T2 / founder-launch-only)."
 tags: [foundry, session-protocol, autonomous]
 ---
 
@@ -35,14 +35,18 @@ existing arsenal and adds only collision safety + tier-gated quality.
    - **Item mode** — the launch prompt names an itemId: work THAT item; do NOT
      pick a different one unless the founder said so.
    - **Pool mode** — launched via the `foundry-pool` skill, or asked to "work
-     the next foundry item" with no itemId: `foundry_next` (limit 3) and take
-     the TOP **pool-eligible** item. Candidates are re-fetched on each Phase-1
-     retry — the extras are context, not alternatives to browse by preference.
+     the next foundry item" with no itemId: `foundry_next` (**limit 50** — the
+     wide window is load-bearing: the queue sorts priority-ascending, so
+     stacked top-priority T2 items would otherwise hide eligible items further
+     down; "all ineligible" may only be concluded after seeing the full
+     claimable list) and take the TOP **pool-eligible** item. Candidates are
+     re-fetched on each Phase-1 retry — the extras are context, not
+     alternatives to browse by preference.
      **Pool eligibility:** skip any candidate whose `riskTier` is **T2** (T2 is
      founder-launch-only by default — `foundry_next` returns `riskTier` per
      item) and any candidate whose `qualityObligations` include
-     `founder-launch-only`. Skipped-as-ineligible does NOT consume a claim
-     attempt. All claimable items ineligible → report them
+     `founder-launch-only`. Skipping an ineligible candidate does not consume a
+     claim attempt. ALL fetched candidates ineligible → report them
      ("awaiting founder-launched sessions") and stop.
 3. Derive, before claiming:
    - **slug** — itemId lowercased, every non-`[a-z0-9]` run → `-`
@@ -75,7 +79,8 @@ foundry_claim { itemId, sessionId, worktree: <planned path>, branch: <planned br
   - **Pool mode** → an `already claimed` / `scope overlap` rejection is an
     EXPECTED race with a sibling pool worker, not a failure: re-run
     `foundry_next` (the lost item drops off the claimable list) and claim the
-    new TOP item. At most **3 claim attempts** per session; all rejected or the
+    new TOP **pool-eligible** item (the Phase-0 eligibility skip applies on
+    EVERY fetch). At most **3 claim attempts** per session; all rejected or the
     list comes back empty → report the board (`foundry_status`) and stop
     cleanly. An idle pool worker never waits or polls for work. Only
     `already claimed` / `scope overlap` are expected races: a `dependencies not
@@ -195,7 +200,7 @@ Then STOP. Final report: item, PR, wave verdicts, ritual confirmations, claim re
 | Situation | Action |
 | --- | --- |
 | Foundry MCP unavailable / store corrupt | No claim → no work. Stop, report. |
-| Claim rejected | Item mode: stop, report which conflict. Pool mode: re-fetch `foundry_next`, claim the new top (≤3 attempts total), then stop. |
+| Claim rejected | Item mode: stop, report which conflict. Pool mode: re-fetch `foundry_next`, claim the new pool-eligible top (≤3 attempts total); all-ineligible → report + stop. |
 | Worktree creation fails | `foundry_release(blocked)` + note. |
 | Scope overlap discovered mid-build | Older claim proceeds; newer `foundry_handoff` + stop. |
 | Quality floor red | `foundry_release(blocked)` with the failure attached. |
