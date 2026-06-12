@@ -21,15 +21,21 @@ existing arsenal and adds only collision safety + tier-gated quality.
 - **Scope is a hard boundary.** Touch nothing outside the item's scope. Same-repo
   disjointness is proven by non-nested pathPrefixes or distinct issues (the
   server's rules); pathPrefix is the boundary you can CHECK against the diff.
-- **One item per session.** Release, report, stop.
+- **One item per session.** Release, report, stop. Pool capacity comes from the
+  founder launching more sessions, never from in-session looping — fresh context
+  per item is a quality feature, not an inefficiency.
 
 ## Phase 0 — BOOT
 
 1. Mint a session id once and reuse it for every foundry call:
    `sess-<yyyyMMdd-HHmmss>-<4 hex>` (e.g. `sess-20260610-143012-a3f9`).
-2. Identify the item: the launch prompt names it. Launched without one →
-   `foundry_next` (limit 3) and take the TOP item — the extras are context only;
-   do NOT pick a different item than the prompt's unless the founder said so.
+2. Identify the item — two launch modes:
+   - **Item mode** — the launch prompt names an itemId: work THAT item; do NOT
+     pick a different one unless the founder said so.
+   - **Pool mode** — launched via the `foundry-pool` skill, or asked to "work
+     the next foundry item" with no itemId: `foundry_next` (limit 3) and take
+     the TOP item. The extras are your Phase-1 retry ladder, not alternatives
+     to browse by preference.
 3. Derive, before claiming:
    - **slug** — itemId lowercased, every non-`[a-z0-9]` run → `-`
      (`agri/E1.1` → `agri-e1-1`)
@@ -39,6 +45,12 @@ existing arsenal and adds only collision safety + tier-gated quality.
      root); `de-braighter/workbench` → the cluster root itself
    - **worktree** — `<repo-local-path>/.claude/worktrees/<slug>`
 4. Optional sanity: `foundry_status` (board view; stale claims list abandoned worktrees).
+5. Product context (mandatory before EXECUTE): check the memory index for the
+   product's arc file (the "Read before <domain> work" line) and read it — it
+   carries the repo's live gotchas (API drift, path traps, install quirks).
+   Sibling ACTIVE claims on the same product are EXPECTED under parallel lanes:
+   never reclaim them, never touch their scope or worktrees, never "clean up"
+   their branches.
 
 ## Phase 1 — CLAIM (before any write)
 
@@ -46,7 +58,18 @@ existing arsenal and adds only collision safety + tier-gated quality.
 foundry_claim { itemId, sessionId, worktree: <planned path>, branch: <planned branch> }
 ```
 
-- Rejected (already claimed / scope overlap / dependencies not done) → report and **STOP**.
+- A rejection comes back as a readable `ERROR:` result naming the precise
+  conflict (`unknown item` / `item already done` / `dependencies not done:
+  <ids>` / `item already claimed by session <sid>` / `scope overlap with active
+  claim on <item>`) — never a transport failure. What to do depends on launch mode:
+  - **Item mode** → report the conflict and **STOP**. The prompt's item is taken
+    or not ready; never substitute another.
+  - **Pool mode** → an `already claimed` / `scope overlap` rejection is an
+    EXPECTED race with a sibling pool worker, not a failure: re-run
+    `foundry_next` (the lost item drops off the claimable list) and claim the
+    new TOP item. At most **3 claim attempts** per session; all rejected or the
+    list comes back empty → report the board (`foundry_status`) and stop
+    cleanly. An idle pool worker never waits or polls for work.
 - Keep the returned `claimId`. Heartbeat discipline from here on:
   `foundry_heartbeat { claimId }` at every phase boundary and at least every
   2 hours (TTL 240 min). A heartbeat **error** means the claim was superseded —
@@ -114,7 +137,10 @@ Route by situation — never invent a new build style:
    - `Effect:` only when defensible — prefer `cycle-time` / `findings`
      (same-session merge cycle-time ≈ 0.005–0.01 h).
 4. Verifier wave per tier — **foreground, never `run_in_background`** (background
-   agents lose verdict capture):
+   agents lose verdict capture). Before composing the wave, consult the twin's
+   advisory: `npm run dev -- wave <owner>/<repo>` from `domains/devloop`
+   (per `workflows/verifier-wave.md` §Consult the twin) — advisory only;
+   thin data falls back to the standard wave:
    - **T0** — standard wave (`workflows/verifier-wave.md`).
    - **T1** — wave + Sonar gate (`npm run ci:sonar` / `sonar:scan` where wired);
      kernel-touching items get the deep treatment (designer-first and/or ≥2
@@ -157,7 +183,7 @@ Then STOP. Final report: item, PR, wave verdicts, ritual confirmations, claim re
 | Situation | Action |
 | --- | --- |
 | Foundry MCP unavailable / store corrupt | No claim → no work. Stop, report. |
-| Claim rejected | Stop, report which conflict. |
+| Claim rejected | Item mode: stop, report which conflict. Pool mode: re-fetch `foundry_next`, claim the new top (≤3 attempts total), then stop. |
 | Worktree creation fails | `foundry_release(blocked)` + note. |
 | Scope overlap discovered mid-build | Older claim proceeds; newer `foundry_handoff` + stop. |
 | Quality floor red | `foundry_release(blocked)` with the failure attached. |
