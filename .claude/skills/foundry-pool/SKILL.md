@@ -16,7 +16,9 @@ disagree, `foundry-worker` (Skill tool, name: `foundry-worker`) wins.
 ## Boot sequence (summary of foundry-worker pool mode)
 
 1. Invoke the `foundry-worker` skill. Phase 0 in pool mode: mint a session id,
-   `foundry_next` (limit 3), take the TOP item, derive slug/branch/worktree.
+   `foundry_next` (limit 3), take the TOP **pool-eligible** item (skip
+   `riskTier: T2` and `founder-launch-only`-obligated candidates — no claim
+   attempt consumed), derive slug/branch/worktree.
 2. Phase 1: `foundry_claim` — a rejection (`already claimed` / `scope overlap`)
    is an EXPECTED race with a sibling pool worker, not a failure: re-fetch
    `foundry_next` (the lost item drops off the claimable list) and claim the
@@ -43,5 +45,9 @@ disagree, `foundry-worker` (Skill tool, name: `foundry-worker`) wins.
 - **Sibling claims are expected.** Parallel lanes are the design, not a
   conflict: never reclaim, touch, or clean up another session's scope,
   worktree, or branch.
-- **Founder gates still gate.** T1/T2 stops are unchanged from
+- **T2 is founder-launch-only.** Pool mode never claims a `riskTier: T2`
+  candidate or one whose obligations include `founder-launch-only` — those
+  items wait for a session the founder launches deliberately (item mode).
+  Skipping an ineligible candidate costs no claim attempt.
+- **Founder gates still gate.** T1 stops are unchanged from
   `foundry-worker`; pool mode changes WHO picks the item, never what may ship.

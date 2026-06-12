@@ -36,8 +36,14 @@ existing arsenal and adds only collision safety + tier-gated quality.
      pick a different one unless the founder said so.
    - **Pool mode** — launched via the `foundry-pool` skill, or asked to "work
      the next foundry item" with no itemId: `foundry_next` (limit 3) and take
-     the TOP item. Candidates are re-fetched on each Phase-1 retry — the extras
-     are context, not alternatives to browse by preference.
+     the TOP **pool-eligible** item. Candidates are re-fetched on each Phase-1
+     retry — the extras are context, not alternatives to browse by preference.
+     **Pool eligibility:** skip any candidate whose `riskTier` is **T2** (T2 is
+     founder-launch-only by default — `foundry_next` returns `riskTier` per
+     item) and any candidate whose `qualityObligations` include
+     `founder-launch-only`. Skipped-as-ineligible does NOT consume a claim
+     attempt. All claimable items ineligible → report them
+     ("awaiting founder-launched sessions") and stop.
 3. Derive, before claiming:
    - **slug** — itemId lowercased, every non-`[a-z0-9]` run → `-`
      (`agri/E1.1` → `agri-e1-1`)
