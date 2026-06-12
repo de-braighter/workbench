@@ -30,6 +30,12 @@ system improves with use.
 | Session spawn | **Hybrid** — the machine maintains the queue and emits ready-to-launch session prompts; the founder launches them. Full automation later = a conductor calling the same MCP |
 | Control-plane home | **Standalone `domains/foundry`** — devloop stays pure measurement; foundry *emits* events to it |
 
+> **Amendment (2026-06-12, workbench#128):** the session-spawn decision gains a **pool-mode**
+> variant — the founder launches a *generic* session (`/foundry-pool`, no itemId) and the
+> session self-serves the top claimable item via `foundry_next` with a bounded claim-retry
+> (`.claude/skills/foundry-pool/SKILL.md`). The founder still launches every session; this is
+> distinct from the conductor (auto-spawn, deliberately deferred in §9).
+
 ## 3. Product lifecycle pipeline & risk tiers
 
 Six stages; every product flows through all of them.
