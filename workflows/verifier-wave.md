@@ -1,6 +1,6 @@
 ---
 title: Verifier wave
-last_updated: 2026-05-24
+last_updated: 2026-06-12
 ---
 
 # Verifier wave
@@ -36,6 +36,20 @@ Four fire on every wave; `exercir-charter-checker` is added only when the PR tou
 | `exercir-charter-checker` | `sonnet` | The **Exercir product charter** — `prototype-assumptions-charter.md` (demo-mode, sandbox deps, no-real-PHI) | exercir-domain PRs | Yes |
 
 **Model tiering** (set per agent in `.claude/agents/<name>.md` `model:` frontmatter, tiered by judgment required — not convenience): the two bug-finding roles that need the strongest reasoning, `reviewer` and `charter-checker`, run on `opus`; the broad-but-structured `qa-engineer` and the checklist-driven `exercir-charter-checker` run on `sonnet`; the mechanical `local-ci` (execute gates → parse → report) runs on `haiku`. To override for one wave, pass `model:` on the `Agent` spawn — the frontmatter is only the default.
+
+## Consult the twin (advisory)
+
+Before composing a wave on a repo with PR-findings history, ask the twin what the finding
+record says about each verifier there:
+
+```bash
+cd domains/devloop && npm run dev -- wave <owner/repo>
+```
+
+The readout reports per-verifier finding precision with sample sizes and flags low-precision
+verifiers ("re-prompt or replace"). It is **advisory** — the composing session decides; thin
+data falls back to the standard wave above. (F6; spec
+`docs/superpowers/specs/2026-06-12-foundry-f6-twin-integration-design.md`.)
 
 ## How to dispatch
 
