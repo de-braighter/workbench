@@ -17,11 +17,14 @@ Every PR that touches code, schema, or contract surface. Includes:
 - Cross-pack contract changes
 - Cross-layer dependency changes
 
-## When to skip
+## The review floor — nothing merges unreviewed
 
-- Pure doc PRs (no code path touched)
-- Single-line bug fixes with obvious test coverage
-- Pure rename refactors
+**Every PR gets at least one adversarial review pass before merge — no exemptions** (founder decision 2026-06-13; the SDLC twin showed ~93% of PRs were merging with *zero* agent review — the exact place a `ci:local`-green-but-wrong change hides, e.g. a flipped boolean or a wrong default that lint can't see).
+
+- **Full wave** (the four agents below) — every PR that touches code, schema, or contract surface (see *When it applies*).
+- **Review floor** — a single `/code-review` pass (one agent, low effort, high-confidence findings only) — for everything the full wave used to skip: pure-doc PRs, single-line fixes, pure renames, comment-only changes. They no longer skip review; they skip the *full wave* but still get one set of eyes.
+
+The floor rides on top of `ci:local` (which every PR already passes) and is cheap — one agent — so nothing merges blind without the wave's overhead on trivia.
 
 ## The agents
 

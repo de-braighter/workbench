@@ -67,7 +67,7 @@ The old prototype directories under `D:/development/projects/braighter/` and `/e
 ## Workflow rules
 
 - **PR-gated everywhere**, including specs/ADRs. No direct-to-main. See `policies/git.md`.
-- **Verifier wave** (`local-ci` + `reviewer` + `charter-checker` + `qa-engineer`, in parallel, all with `isolation: "worktree"`; `exercir-charter-checker` joins on `domains/exercir/` PRs) on every non-trivial PR. See `workflows/verifier-wave.md`.
+- **Review floor (2026-06-13): no PR merges unreviewed.** Every PR gets at least a single `/code-review` pass (one agent, low effort); **non-trivial** PRs get the full **verifier wave** (`local-ci` + `reviewer` + `charter-checker` + `qa-engineer`, in parallel, all with `isolation: "worktree"`; `exercir-charter-checker` joins on `domains/exercir/` PRs) on top. The SDLC twin showed ~93% of PRs were merging with zero agent review; the floor closes that. See `workflows/verifier-wave.md`.
 - **Designer-first** for risky changes — new ports, kernel primitives, cross-cutting concerns. See `workflows/designer-first.md`.
 - **Story trackers** as coarse GitHub issues, not local handoff files. See `workflows/story-tracker.md`.
 - **Feed the SDLC twin on PRs (any repo)** — give `pack-devloop` the signal it can't get from `gh`, by convention in the PR body + a per-PR ritual:
@@ -76,7 +76,7 @@ The old prototype directories under `D:/development/projects/braighter/` and `/e
 
     | Tier | Anchor |
     |---|---|
-    | `light` | single pass, no verifier wave |
+    | `light` | single pass + one `/code-review` pass (the **review floor** — every PR gets ≥1 adversarial review); no full wave |
     | `standard` | verifier wave (reviewer + qa-engineer + charter-checker) |
     | `deep` | wave + designer-first spec **and/or** ≥2 review rounds |
 
