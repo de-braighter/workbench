@@ -281,5 +281,5 @@ and worker it transitively spawns to enforce, unchanged:
 - An external OS daemon for 24/7 cross-session running (v2 — the Agent-loop session already
   covers the unattended case within one session's context budget; a fresh superconductor resumes
   by re-partitioning from `foundry_status`).
-- The **warm worktree pool** (design §C.4, item B / slice 2.5) composes ORTHOGONALLY — once it
-  lands, conductors lease pool slots for their workers; the superconductor needs no change.
+- The **warm worktree pool** (design §C.4, item B / slice 2.5) is shipped (item B) —
+  conductors' workers lease pool slots; the superconductor needs no change.
