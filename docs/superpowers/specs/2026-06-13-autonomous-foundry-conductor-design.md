@@ -168,18 +168,22 @@ observability only, not required for correctness.)
 
 ### C.4 Warm worktree pool (throughput) — founder-requested
 
-> **Implemented (2026-06-13, item B / slice 2.5).** Shipped as a tested module —
-> `domains/foundry/src/wt-pool.ts` (pure `resetPlan`/`poolPaths`/`nextFreeSlot` +
-> injected-`run` `ensureSlot`/`leaseSlot`, the reset-on-lease risk surface covered by a
-> real-git integration test proving `node_modules` survives) + a thin
+> **Implemented (2026-06-13, item B / slice 2.5) — MODULE + worker MECHANISM; auto-engagement
+> is slice-3.** Shipped as a tested module — `domains/foundry/src/wt-pool.ts` (pure
+> `resetPlan`/`poolPaths` + injected-`run` `ensureSlot`/`leaseSlot`, the reset-on-lease risk
+> surface covered by a real-git integration test proving `node_modules` survives) + a thin
 > `domains/foundry/src/wt-pool-cli.ts` (`npm run -s wt-pool -- lease <repoRoot> <branch>
-> <slotIndex> [baseRef]`). The `foundry-worker` ISOLATE phase leases a slot, falling back
-> to a cold `git worktree add` on any non-zero exit (**lease-or-cold-add** — the pool is
-> throughput-only, never a correctness dependency). The lease is **single-coordinator**
-> (assigning a slot to each fanned-out worker IS the lease); the multi-coordinator per-slot
-> lease stays slice-3. `ensureSlot` **validates a slot is its own worktree root before
-> reuse** — this prevents a `reset --hard` / `clean -fdx` escaping to the parent clone (the
-> wave-caught hazard).
+> <slotIndex> [baseRef]`, absolute repoRoot → absolute slot path). The `foundry-worker` ISOLATE
+> phase carries the lease MECHANISM: **if the launch prompt provides a `<slotIndex>`** it leases
+> that slot, otherwise (the default) it cold-adds — **lease-or-cold-add**, the pool is
+> throughput-only, never a correctness dependency. `ensureSlot` **validates a slot is its own
+> worktree root before reuse** — this prevents a `reset --hard` / `clean -fdx` escaping to the
+> parent clone (the wave-caught hazard, healed + regression-tested). **Still slice-3:** the
+> conductor/superconductor fan-out does NOT yet thread a per-worker `<slotIndex>` into the
+> dispatch prompt, so autonomous workers cold-add by default; auto-engagement waits for the
+> **multi-coordinator per-slot lease** (a naive worker-index→slot mapping collides under the
+> superconductor — two conductors on one repo both lease slot-0). The single-coordinator lease
+> (slot `i` ↔ worker `i`) is correct only under exactly one conductor per repo.
 
 The dominant per-item cost is **`install` in a cold worktree** (a fresh `git worktree add`
 has no `node_modules`): pnpm isolated-store linking + Windows MAX_PATH `.npmrc` + `prisma
