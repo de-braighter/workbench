@@ -180,15 +180,11 @@ loop (until context-critical OR idle-stop):
        bounded idle backoff (poll foundry_next a few more times, brief sleep between)
        if still empty: INVOKE PIPELINE-FILLER (Component E — see "## Pipeline-filler" below):
 
-         BOUNDED FILLER — anti-livelock rules:
-           (a) REPO SUPPRESSION: green-desk (Tier 2) is suppressed for a repo within the
-               current cycle if no merge has changed that repo since the last Tier 2 sweep.
-               A repo only gets re-swept after a merge lands in it. This prevents infinite
-               re-sweeping of already-clean repos.
-           (b) PER-CYCLE BUDGET: the filler carries a per-cycle work-item cap (default 10
-               items per cycle). Once the cap is hit, the filler yields and the loop
-               continues dispatch/merge normally; the next IDLE CHECK issues more items if
-               still needed. This prevents unbounded token burn on pure debt.
+         BOUNDED FILLER — anti-livelock: the `/green-desk` skill (Tier 2) OWNS the bounds
+           — git-HEAD repo-suppression (a clean/unchanged repo is never re-swept), the
+           per-cycle item cap (default 10), and the no-new-progress stop. The filler simply
+           invokes the skill and continues if items appear within budget; it NEVER
+           re-implements the mechanism here. Tiers 1 + 3 carry no debt-loop risk.
 
          TIER 1 (auto): for each greenlit product with unbuilt epics, run /build-path
                         to emit next work items → re-poll foundry_next; if new items: continue loop
@@ -506,8 +502,8 @@ filler MUST NEVER widen its mandate to a non-greenlit product.
 ### Tier 2 — Green-desk maintenance (AUTO — within standing mandate)
 Invoke the **`/green-desk` skill** (Component D — implemented): it scans every active repo
 across every debt dimension, drops false-positives via the audit ledger, and emits disjoint
-path-area cleanup items (`green-desk-<repo>/debt-<area>`) under a synthetic
-`green-desk-<repo>` T0 product. Driving repos to a clean desk is part of the standing build
+path-area cleanup items (`green-desk-<repo-slug>/debt-<area>`) under a synthetic
+`green-desk-<repo-slug>` T0 product. Driving repos to a clean desk is part of the standing build
 mandate. The skill owns the anti-livelock mechanism (git-HEAD repo-suppression + per-cycle
 cap + no-new-progress stop); this filler simply invokes it and continues if items appear
 within budget. **No founder gate.**
@@ -540,8 +536,8 @@ fills the queue, and the conductor resumes from Tier 1.
   Clean stop message: "Conductor idle — no unbuilt epics, no repo debt, no greenlit
   proposals. Re-launch after a masterplan input or greenlight."
 
-Reuses existing skills: `/build-path` (Tier 1), the Component-D green-desk debt-path
-generator (Tier 2), and the `product-strategist` agent (Tier 3).
+Reuses existing skills: `/build-path` (Tier 1), the `/green-desk` debt-path
+generator (Component D — Tier 2), and the `product-strategist` agent (Tier 3).
 
 ## Deferred to the next increment (named)
 

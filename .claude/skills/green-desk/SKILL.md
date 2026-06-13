@@ -72,23 +72,42 @@ the best-possible value on every dimension (spec §D.1):
 
 ## Procedure
 
-1. **Resolve targets.** `--all` → `foundry_status` products → distinct `repo`s
-   (**skip the `green-desk-*` synthetic products themselves** — never sweep the
-   sweep). A named repo → just that one. Map the foundry `repo` string to a
+1. **Resolve targets.** `--all` → enumerate the cluster repos **from the
+   filesystem**: every `domains/<name>/` + `layers/<name>/` directory + the
+   workbench root (these are the foundry `repo` strings `de-braighter/<name>`
+   and `de-braighter/workbench`). **Do NOT read targets from `foundry_status`**
+   — its board (`status.ts`) prints `productKey [riskTier] prio= stage=` but
+   **no `repo`**, so it cannot enumerate the repo set. A named repo → just that
+   one. The **`<repo-slug>`** used in every product key + itemId is the repo's
+   short name: `de-braighter/<name>` → `<name>` (`de-braighter/exercir` →
+   `exercir`); `de-braighter/workbench` → `workbench`. Map a `repo` to its
    filesystem path: `de-braighter/<name>` → `domains/<name>/` or
    `layers/<name>/` (whichever exists); `de-braighter/workbench` → the cluster
-   root.
+   root. (You may intersect with `foundry_status` product KEYS to prioritise
+   repos with active foundry work, but the repo SET comes from the filesystem.)
 2. **Repo-suppression check (per repo).** Read
    `docs/foundry/green-desk/ledger/<repo-slug>.json`. Compute
-   `HEAD = git rev-parse origin/main` for that repo. If
-   `ledger.lastSweptCommit === HEAD` → **SKIP** this repo (nothing merged since
-   the last sweep — the same green-desk state would be re-emitted). `--force`
-   bypasses. This is the conductor's "suppressed per repo until a merge changes
-   it", made machine-checkable by git rather than by a foundry event.
-3. **No-new-progress guard.** If `ledger.consecutiveNoProgress >= 2` AND HEAD
-   still equals the commit at which it stalled → **STOP for this repo** and
-   surface "stuck debt" (the remaining offenses likely need FP-ledger entries or
-   a founder decision — they are not closing). Do **not** loop. This is the
+   `HEAD = git rev-parse origin/main` for that repo. **SKIP** this repo (emit
+   nothing) when EITHER:
+   - `ledger.lastSweptCommit === HEAD` **and** `ledger.pushPending` is not set —
+     nothing merged since the last sweep, so the same state would re-emit; or
+   - the previous sweep's `ledger.emittedItems` are still **in flight** — any of
+     them is still `queued`/`claimed`/`built` (not yet `done`) per
+     `foundry_status`. Re-sweeping before the prior cleanup lands would falsely
+     read as no-progress (step 8); wait for them to resolve.
+
+   `--force` bypasses both skips. **If `ledger.pushPending` is set** (a prior
+   sweep scanned but could not reach the foundry), do NOT suppress on an
+   unchanged HEAD — retry the emit. This is the conductor's "suppressed per repo
+   until a merge changes it", made machine-checkable by git rather than by a
+   foundry event.
+3. **No-new-progress guard.** If `ledger.consecutiveNoProgress >= 2` →
+   **STOP for this repo** and surface "stuck debt": across ≥2 genuine re-sweeps
+   the offense count did not drop (the remaining offenses likely need FP-ledger
+   entries or a founder decision — they are not closing). Do **not** emit; do
+   **not** loop. The counter is incremented in step 8 on each *genuine* re-sweep
+   (step 2 admits a re-sweep only when HEAD moved AND the prior items resolved),
+   so this guard is **reachable independent of HEAD**. This is the
    no-new-progress stop the conductor relies on.
 4. **Scan all dimensions** off a clean `origin/main` checkout/worktree:
    - lint — the repo's audit set (`npm run lint` / the repo's lint target);
@@ -129,9 +148,11 @@ the best-possible value on every dimension (spec §D.1):
    (or fold both under one item). Naturally distinct top-level dirs
    (`libs/a` vs `libs/b`) pass trivially; a parent/child pair (`libs` vs
    `libs/a`) does NOT — never emit both.
-8. **Compute the no-progress signal.** Compare this scan's total real-offense
-   count to `ledger.lastOffenseCount`. If the previous sweep emitted items and
-   the count did **not** drop → increment `consecutiveNoProgress`; else reset to 0.
+8. **Compute the no-progress signal.** This runs only on a *genuine re-sweep*
+   (step 2 admitted it: HEAD moved AND the prior sweep's items resolved).
+   Compare this scan's total real-offense count to `ledger.lastOffenseCount`. If
+   the previous sweep emitted items and the count did **not** drop → increment
+   `consecutiveNoProgress` (step 3 stops the repo at `>= 2`); else reset to 0.
 9. **Register + push.** The synthetic product (rule 1 — carries THE repo):
 
    ```
@@ -149,23 +170,28 @@ the best-possible value on every dimension (spec §D.1):
    ```
 
    Registration is idempotent (write-once via the MCP surface) — for an
-   already-registered green-desk product the product block is ignored. Check
-   `foundry_status` FIRST and re-push only NEW itemIds (`queue_push` rejects an
-   already-queued itemId). Each item:
+   already-registered green-desk product the product block is ignored. Each item:
 
    ```
    {
-     itemId: 'green-desk-<repo-slug>/debt-<area>',
+     itemId: 'green-desk-<repo-slug>/debt-<area>-<sha7>',   // sha7 = first 7 of the swept HEAD
      title: '<dimensions> in <area> — <N> offenses (e.g. lint×4, knip×2, smell×1);
-              fix at <a few exact locations>',   // self-contained for a cold worker
+              drive each named dimension to 0 at <a few exact locations>',  // self-contained acceptance bar for a cold worker
      scope: { repo: 'de-braighter/<name>', pathPrefix: '<area>' },
-     qualityObligations: [ <the repo's floor obligations>, 'green-desk-target' ],
-     dependsOn: ['green-desk-<repo-slug>/debt-root']   // ONLY if it touches root
+     qualityObligations: [ <the repo's floor obligations> ],
+     dependsOn: ['green-desk-<repo-slug>/debt-root-<sha7>']   // ONLY if it touches root
    }
    ```
 
-   **Cap at the per-cycle item cap (default 10)**; yield the rest to the next
-   cycle (the next sweep emits them once HEAD moves or `--force` is passed).
+   **The `-<sha7>` suffix makes every sweep's itemIds unique**, so a re-push is
+   never an already-queued collision (a prior cycle's items keep their own sha,
+   and a same-HEAD double-emit is already blocked by the step-2 suppression).
+   The dedup is therefore **structural**, not a `foundry_status` pre-check — the
+   board exposes per-product item *counts*, never itemIds. The title names the
+   acceptance bar itself ("drive each named dimension to 0"), so no separate
+   obligation token is needed. **Cap at the per-cycle item cap (default 10)**;
+   yield the rest to the next cycle (the next sweep emits them once HEAD moves or
+   `--force` is passed).
 10. **Record the sweep** in `docs/foundry/green-desk/ledger/<repo-slug>.json`:
 
     ```json
@@ -175,11 +201,16 @@ the best-possible value on every dimension (spec §D.1):
       "lastSweptAt": "<ISO timestamp>",
       "lastOffenseCount": <int>,
       "consecutiveNoProgress": <int>,
+      "pushPending": <bool>,
       "dimensions": { "lint": <n>, "knip": <n>, "...": <n> },
-      "emittedItems": ["green-desk-<repo-slug>/debt-<area>", "..."],
+      "emittedItems": ["green-desk-<repo-slug>/debt-<area>-<sha7>", "..."],
       "green": <bool>
     }
     ```
+
+    `pushPending` is `true` only when a scan could not reach the foundry (the
+    items were not emitted); step 2 does not suppress while it is set. Clear it
+    once the push succeeds.
 
     These keys match the schema documented in
     `docs/foundry/green-desk/README.md`. The ledger is git-tracked so suppression
@@ -190,16 +221,24 @@ the best-possible value on every dimension (spec §D.1):
 ## Worker routing
 
 A `debt-<area>` item is a **normal foundry T0 item**. The standard foundry-worker
-protocol claims it (atomic claim → worktree isolation → execute → wave → land →
-release). In Phase-3 EXECUTE the worker routes through:
+protocol owns it end-to-end — atomic claim → worktree isolation → execute → wave →
+land → release, **including the branch, the PR, and the merge**. In Phase-3
+EXECUTE the worker fixes the offenses the item's title names, **directly under
+the quality floor**, with the **diff confined to the area `pathPrefix`**:
 
-- `/tech-debt` for the scopes it covers (dead-code → knip; token-cleanup → tokens);
-- **direct fixes** for the rest: lint `--fix`, `tsc` errors, Sonar smells,
-  cognitive-complexity via `/clean-decompose-optimizer`;
+- lint `--fix`, `tsc` errors, Sonar smells, dead exports/files (knip),
+  cognitive-complexity (via `/clean-decompose-optimizer`), TODO/FIXME resolution.
+- `/tech-debt`'s **detection/fix LOGIC** is a *reference* for the scopes it
+  covers (dead-code → knip; token-cleanup → tokens) — borrow its technique, but
+  do **NOT** run its branch/commit/PR mechanics: `/tech-debt` cuts its own
+  branch and `git add -A`s the whole tree, which would break the foundry
+  worktree branch and scope confinement. Stay on `feat/<slug>`; `git add` only
+  paths under the area `pathPrefix`. `/tech-debt` also expects a per-repo
+  `.claude/sdlc.json` that may be absent — so it is **optional convenience,
+  never a hard dependency**; the item's self-contained title (exact dimensions +
+  locations) is the authority a cold worker fixes from.
 
-all under the **quality floor**, with the **diff confined to the area
-`pathPrefix`**. A T0 green wave → squash-merge → twin ritual. (The worker reads
-the exact dimensions + locations to fix from the item's self-contained title.)
+A T0 green wave → squash-merge → twin ritual.
 
 ## FP suppression (the audit ledger)
 
@@ -223,9 +262,9 @@ Three mechanisms, all owned here (the conductor points at them, never duplicates
   unchanged) repo is never re-swept.
 - **Per-cycle cap** (step 9, default 10) — bounds token burn on pure debt; the
   overflow yields to the next cycle.
-- **No-new-progress stop** (steps 3 + 8) — after 2 consecutive sweeps with no
-  offense reduction at an unchanged HEAD, the repo's debt is surfaced as "stuck"
-  rather than looped.
+- **No-new-progress stop** (steps 3 + 8) — after 2 consecutive *genuine
+  re-sweeps* (HEAD moved + prior items resolved) with no offense reduction, the
+  repo's debt is surfaced as "stuck" rather than looped.
 
 Together: a clean repo is never re-swept, the cap prevents unbounded burn, and
 stuck debt surfaces instead of spinning.
@@ -243,10 +282,14 @@ stuck debt surfaces instead of spinning.
 ## Failure stances
 
 - **Foundry MCP unavailable** → scan and write the ledger anyway (it's
-  diagnostic); flag the push as **pending**; never simulate a push.
-- **`queue_push` rejects an itemId as already queued** → diff against
-  `foundry_status`; push only the new items (a prior cycle's items are still in
-  flight — that is expected, not an error).
+  diagnostic), but set `pushPending: true` (step 2 does not suppress on an
+  unchanged HEAD while it is set), so the un-pushed items are emitted on the next
+  reachable attempt. Clear `pushPending` once the push succeeds. Never simulate a
+  push.
+- **`queue_push` rejects an itemId as already queued** → with the `-<sha7>`
+  suffix this should not occur across sweeps; if it does (e.g. a re-run at the
+  same HEAD that slipped past suppression), diff against the ledger's
+  `emittedItems` and push only the missing items — never re-push an id in flight.
 - **A repo has no Sonar / mutation wired** → scan the dimensions that ARE wired;
   note the unscanned dimensions in the report. Do **not** fabricate a `0` for an
   unscanned dimension (that would falsely report green).

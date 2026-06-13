@@ -26,9 +26,10 @@ stuck debt (no progress at an unchanged HEAD → surface, don't loop).
 | `lastSweptCommit` | string | `git rev-parse origin/main` at the last sweep. **Suppression key** — if it equals the current HEAD, the repo is skipped (nothing merged since). |
 | `lastSweptAt` | string (ISO) | Timestamp of the last sweep. |
 | `lastOffenseCount` | int | Total real-offense count (after FP-drop) at the last sweep. The **no-progress** comparison baseline. |
-| `consecutiveNoProgress` | int | Count of consecutive sweeps that emitted items without reducing the offense count. At `>= 2` with an unchanged HEAD, the repo is **stopped** as stuck debt (step 3). |
+| `consecutiveNoProgress` | int | Count of consecutive *genuine re-sweeps* (HEAD moved + prior items resolved) that emitted items without reducing the offense count. At `>= 2` the repo is **stopped** as stuck debt (step 3) — reachable independent of HEAD. |
+| `pushPending` | bool | `true` only when a scan could not reach the foundry (the items were not emitted). While set, step 2 does **not** suppress on an unchanged HEAD, so the retry emits. Cleared on a successful push. |
 | `dimensions` | object | Per-dimension offense counts, e.g. `{ "lint": 4, "knip": 2 }` — for the report + auditing. |
-| `emittedItems` | string[] | The itemIds emitted by the last sweep (`green-desk-<repo-slug>/debt-<area>`). |
+| `emittedItems` | string[] | The itemIds emitted by the last sweep (`green-desk-<repo-slug>/debt-<area>-<sha7>`, `<sha7>` = first 7 of the swept HEAD — makes each sweep's ids unique). |
 | `green` | bool | True when the last sweep found 0 real debt (coverage ≥ 80%, mutation ≥ floor). |
 
 The keys here are the exact schema written by the skill (Task 1 step 10) and

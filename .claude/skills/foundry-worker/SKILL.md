@@ -127,10 +127,13 @@ Route by situation — never invent a new build style:
 | No plan, non-trivial | superpowers:brainstorming → superpowers:writing-plans → subagent-driven-development |
 | Trivial, well-scoped fix | superpowers:test-driven-development directly |
 | Risky change (new ports, kernel primitives, cross-cutting) or **any T2 item** | designer-first (`workflows/designer-first.md`) FIRST — mandatory at T2 |
-| Green-desk cleanup item (`green-desk-<repo>/debt-<area>`) | route via `/tech-debt` for matching scopes (dead-code, token-cleanup) + direct fixes for the rest (lint `--fix`, `tsc` errors, Sonar smells, cognitive-complexity via `/clean-decompose-optimizer`) under the quality floor; diff confined to the area `pathPrefix` |
+| Green-desk cleanup item (`green-desk-<repo-slug>/debt-<area>-<sha7>`) | fix the offenses the title names DIRECTLY under the quality floor (lint `--fix`, `tsc` errors, Sonar smells, dead exports via knip, cognitive-complexity via `/clean-decompose-optimizer`, TODO/FIXME); diff confined to the area `pathPrefix`. `/tech-debt`'s detection/fix LOGIC is an optional reference for the scopes it covers — but NOT its branch/commit/PR mechanics (it cuts its own branch + `git add -A`, breaking the foundry worktree + scope confinement) |
 
 A green-desk item's title names the exact dimensions + locations to fix — the
-worker reads it for the work; do not widen the diff beyond the area `pathPrefix`.
+worker reads it for the work and stays on the foundry `feat/<slug>` branch; do
+not widen the diff beyond the area `pathPrefix`, and `git add` only paths under
+it. `/tech-debt` expects a per-repo `.claude/sdlc.json` that may be absent, so it
+is optional convenience, never a hard dependency.
 
 **Reserved ADR numbers:** if the claimed item's `itemId` is `<key>/ADR-<n>`,
 the number is already in the itemId — consume it directly; do NOT read or

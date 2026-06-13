@@ -397,8 +397,9 @@ A repo is **green** when a fresh scan shows the best-possible value on every dim
 ### D.2 The debt-path generator (analogous to build-path)
 For a target repo, scan all dimensions (the quality-floor gates + Sonar + the devloop twin's
 unresolved-findings backlog + a TODO grep) and emit **disjoint-scoped cleanup work items**
-(`<repo>/debt-<area>`) to the foundry queue — pathPrefix'd by area so the conductor
-parallelizes them. Each item names its dimension(s) + offending locations.
+(`green-desk-<repo-slug>/debt-<area>-<sha7>`, under a synthetic `green-desk-<repo-slug>` T0
+product) to the foundry queue — pathPrefix'd by area so the conductor parallelizes them. Each
+item names its dimension(s) + offending locations. *(Implemented — see the §D "Implemented" note.)*
 
 ### D.3 Dispatch + loop-until-green
 The conductor fans out cleanup workers (same wave-loop); each routes through the existing
@@ -446,11 +447,11 @@ descending to Tier 2 or 3.
 
 ### E.2 Tier 2 — Green-desk maintenance (AUTO — within standing mandate)
 
-Invoke the **green-desk sweep (Component D)**: scan all active repos across every debt
-dimension (lint, knip, `tsc` errors, Sonar bugs / smells / duplications, coverage below
-80%, open verifier nits, TODO markers) and emit disjoint-scoped cleanup items
-(`<repo>/debt-<area>`) to the foundry queue. Driving existing repos to a clean desk is part
-of the standing build mandate — no new authorization is needed.
+Invoke the **`/green-desk` skill (Component D — implemented)**: scan all active repos across
+every debt dimension (lint, knip, `tsc` errors, Sonar bugs / smells / duplications, coverage
+below 80%, open verifier nits, TODO markers) and emit disjoint-scoped cleanup items
+(`green-desk-<repo-slug>/debt-<area>-<sha7>`) to the foundry queue. Driving existing repos to
+a clean desk is part of the standing build mandate — no new authorization is needed.
 
 **Gate: none.** Green-desk maintenance is within the mandate granted when the conductor was
 registered.
