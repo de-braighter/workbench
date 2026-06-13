@@ -180,15 +180,11 @@ loop (until context-critical OR idle-stop):
        bounded idle backoff (poll foundry_next a few more times, brief sleep between)
        if still empty: INVOKE PIPELINE-FILLER (Component E — see "## Pipeline-filler" below):
 
-         BOUNDED FILLER — anti-livelock rules:
-           (a) REPO SUPPRESSION: green-desk (Tier 2) is suppressed for a repo within the
-               current cycle if no merge has changed that repo since the last Tier 2 sweep.
-               A repo only gets re-swept after a merge lands in it. This prevents infinite
-               re-sweeping of already-clean repos.
-           (b) PER-CYCLE BUDGET: the filler carries a per-cycle work-item cap (default 10
-               items per cycle). Once the cap is hit, the filler yields and the loop
-               continues dispatch/merge normally; the next IDLE CHECK issues more items if
-               still needed. This prevents unbounded token burn on pure debt.
+         BOUNDED FILLER — anti-livelock: the `/green-desk` skill (Tier 2) OWNS the bounds
+           — git-HEAD repo-suppression (a clean/unchanged repo is never re-swept), the
+           per-cycle item cap (default 10), and the no-new-progress stop. The filler simply
+           invokes the skill and continues if items appear within budget; it NEVER
+           re-implements the mechanism here. Tiers 1 + 3 carry no debt-loop risk.
 
          TIER 1 (auto): for each greenlit product with unbuilt epics, run /build-path
                         to emit next work items → re-poll foundry_next; if new items: continue loop
@@ -196,9 +192,11 @@ loop (until context-critical OR idle-stop):
                           foundry_gate_status { productKey: <product> }
                           → find a gate with gateType:'greenlight' AND decision:'approved'.
                         A filler MUST NEVER widen its own mandate to a non-greenlit product.
-         TIER 2 (auto): invoke green-desk sweep (Component D) → emit debt cleanup items;
-                        suppressed per repo as described above;
-                        if new items within budget: continue loop
+         TIER 2 (auto): invoke the /green-desk skill (Component D — implemented) with --all
+                        → emit debt cleanup items. The skill OWNS the anti-livelock mechanism
+                        internally — git-HEAD repo-suppression (lastSweptCommit vs origin/main),
+                        the per-cycle item cap, and the no-new-progress stop; do NOT re-implement
+                        any of it here. If it emits new items within budget: continue loop
          TIER 3 (founder-gated): run product-strategist agent to surface 2–3 ranked proposals
                         → SURFACE proposals to founder → STOP-FOR-FOUNDER (never auto-build)
                         "Conductor awaiting a masterplan input — proposals surfaced above."
@@ -502,15 +500,20 @@ filler MUST NEVER widen its mandate to a non-greenlit product.
 → If new items appear: continue the main loop immediately.
 
 ### Tier 2 — Green-desk maintenance (AUTO — within standing mandate)
-Invoke the **green-desk sweep (Component D)**: scan all active repos for debt (lint, knip,
-coverage, Sonar smells/bugs/duplications, TODO markers, open verifier nits) and emit
-disjoint-scoped cleanup items to the foundry queue. Driving repos to a clean desk is part
-of the standing build mandate. **No founder gate.**
+Invoke the **`/green-desk` skill** (Component D — implemented): it scans every active repo
+across every debt dimension, drops false-positives via the audit ledger, and emits disjoint
+path-area cleanup items (`green-desk-<repo-slug>/debt-<area>`) under a synthetic
+`green-desk-<repo-slug>` T0 product. Driving repos to a clean desk is part of the standing build
+mandate. The skill owns the anti-livelock mechanism (git-HEAD repo-suppression + per-cycle
+cap + no-new-progress stop); this filler simply invokes it and continues if items appear
+within budget. **No founder gate.**
 
-**Anti-livelock rule:** Tier 2 is suppressed for a specific repo within a cycle if no
-merge has changed that repo since the last Tier 2 sweep of it. A repo is only re-swept
-after a merge lands in it. A per-cycle work-item cap (default 10 items) further bounds
-token consumption; the filler yields when the cap is hit and continues on the next IDLE CHECK.
+**Anti-livelock rule (mechanism now lives in the skill):** Tier 2 is suppressed for a
+specific repo within a cycle if no merge has changed that repo since the last sweep of it —
+`/green-desk` derives this from `git rev-parse origin/main` vs the `lastSweptCommit` in its
+per-repo ledger (no foundry event; ADR-176). A per-cycle work-item cap (default 10 items)
+and a no-new-progress stop further bound it; the filler yields when the cap is hit and
+continues on the next IDLE CHECK.
 
 → If cleanup items appear (within cap): continue the main loop immediately.
 
@@ -533,8 +536,8 @@ fills the queue, and the conductor resumes from Tier 1.
   Clean stop message: "Conductor idle — no unbuilt epics, no repo debt, no greenlit
   proposals. Re-launch after a masterplan input or greenlight."
 
-Reuses existing skills: `/build-path` (Tier 1), the Component-D green-desk debt-path
-generator (Tier 2), and the `product-strategist` agent (Tier 3).
+Reuses existing skills: `/build-path` (Tier 1), the `/green-desk` debt-path
+generator (Component D — Tier 2), and the `product-strategist` agent (Tier 3).
 
 ## Deferred to the next increment (named)
 

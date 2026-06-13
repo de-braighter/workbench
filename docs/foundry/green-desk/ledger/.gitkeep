@@ -1,0 +1,3 @@
+# This directory holds the per-repo sweep ledgers (ledger/<repo-slug>.json),
+# written by the /green-desk skill at sweep time. Schema: see ../README.md.
+# This .gitkeep keeps the directory tracked before the first sweep writes into it.
