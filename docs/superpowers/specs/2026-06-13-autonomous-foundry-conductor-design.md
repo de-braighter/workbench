@@ -362,6 +362,25 @@ A *second work source* for the conductor, alongside `/build-path`: a **periodic 
 drives every repo to a "fully green desk"** — zero outstanding debt on every dimension, with
 test coverage the sole "higher-is-better" exception. (Founder-requested, 2026-06-13.)
 
+> **Implemented (2026-06-13, item C).** Shipped as the **`/green-desk` skill**
+> (`.claude/skills/green-desk/SKILL.md`) + the ledger layout
+> (`docs/foundry/green-desk/README.md`). Resolved decisions, each forced by a verified
+> foundry-kernel fact:
+> - **Synthetic `green-desk-<repo-slug>` product per swept repo** — forced by `toNextItem`
+>   (`domains/foundry/src/state.ts`) reading `repo`/`riskTier`/`priority` from the PRODUCT,
+>   not the item scope; a multi-repo product would mislabel every item's repo. Each carries
+>   T0 + low priority (200) so product work always outranks debt.
+> - **Path-area partition** (one `debt-<area>` item per area, fixing all dimensions there) —
+>   forced by `scopesDisjoint`: lint/knip/tsc over the same files are not path-disjoint, so a
+>   per-dimension partition would overlap. Partition is proven disjoint with the same test
+>   `/build-path` step 8 runs.
+> - **git-HEAD repo-suppression** — derived from `git rev-parse origin/main` vs a
+>   `lastSweptCommit` in a per-repo ledger file, keeping the foundry kernel ADR-176-minimal
+>   (repo-suppression has a single consumer → it adds no foundry event).
+> - **native-ignore + audit-ledger FP suppression** + the **no-new-progress stop** (§9.7).
+> The conductor's tier-2 filler (Component E.2) invokes the skill; the skill owns the
+> anti-livelock mechanism (the conductor wiring only points at it).
+
 ### D.1 The green-desk target
 A repo is **green** when a fresh scan shows the best-possible value on every dimension:
 - **Drive to 0:** lint (audit set), knip (dead code/exports), `tsc` type errors, Sonar
@@ -558,12 +577,20 @@ not by the launch restriction.
 6. **Warm pool reset robustness + warm-up** (§C.4) — the reset-on-lease must be proven
    pristine-preserving-`node_modules` (the corruption risk); first-fill of a slot still pays
    one cold install; multi-coordinator pool-sharing needs a per-slot lease (slice 3).
-7. **Green-desk FP-suppression ledger + stop condition** (§D) — where reviewed false-positive
-   suppressions live (per-tool ignore + a justification ledger so they're auditable, not
-   silent) and the loop's no-new-progress stop so it never chases unfixable noise.
-8. **Green-desk cadence/scope + mutation target** (§D.5/D.1) — the cadence, which repos are
-   in scope, and whether mutation gets a hard target (prefer X%) or stays at the tier floor
-   like today.
+7. **Green-desk FP-suppression ledger + stop condition** (§D) — **RESOLVED (2026-06-13,
+   item C).** Reviewed false-positive suppressions live as **native per-tool ignore + an
+   audit row** in `docs/foundry/green-desk/fp-ledger.md` (`| date | repo | tool | path | rule
+   | justification | reviewer |`) — never silent; `/green-desk` step 5 reads the ledger so a
+   suppressed offense is never re-emitted. The loop's stop condition is **no-new-progress**:
+   after 2 consecutive sweeps with no offense-count reduction at an unchanged `origin/main`
+   HEAD, the repo's debt is surfaced as "stuck" (needs an FP row or a founder decision)
+   rather than looped.
+8. **Green-desk cadence/scope + mutation target** (§D.5/D.1) — **RESOLVED (2026-06-13,
+   item C).** Cadence = the conductor's IDLE **tier-2** (primary, event-driven and
+   suppression-bounded) + on-demand `/green-desk <repo>` / `--all` + an optional scheduled
+   `CronCreate` wrapper. Scope = the repos of **all active foundry products** (the
+   `green-desk-*` synthetic products are skipped). Mutation stays **coverage-like at the tier
+   floor** (prefer higher), with **no separate hard target**.
 
 ## 10. Build slices (one spec → three slices)
 
@@ -580,10 +607,11 @@ not by the launch restriction.
   slice 2 if cold-install pain materially hurts first-draft usability.)
 - **Slice 3 (later) — refinements.** Orphan-reconcile op, gate-aware board reporting,
   coordinator-presence record, per-item TTL policy, multi-coordinator pool-lease.
-- **Slice 4 — Periodic green-desk sweep (Component D).** Debt-path generator (per-repo
-  multi-dimension scan → disjoint cleanup items) + the green-desk target check + `/tech-debt`
-  routing + loop-until-green + the FP-suppression ledger + the periodic trigger. Depends on
-  the conductor (slice 2); reuses the devloop twin + Sonar + the F5 quality floor.
+- **Slice 4 — Periodic green-desk sweep (Component D). DONE (2026-06-13, item C).** Shipped
+  the `/green-desk` debt-path generator (per-repo multi-dimension scan → disjoint path-area
+  cleanup items) + the green-desk target check + `/tech-debt` worker routing + loop-until-green
+  bounds + the FP-suppression ledger + the cadence wrapper. Reuses the devloop twin + Sonar +
+  the F5 quality floor. Depends on the conductor (slice 2).
 - **Slice 5 — Pipeline-filler (Component E).** Wire the three-tier filler into the
   autonomous conductor's IDLE CHECK (step d): Tier 1 `/build-path` continuation call per
   greenlit product; Tier 2 Component-D green-desk sweep invocation; Tier 3 `product-strategist`
