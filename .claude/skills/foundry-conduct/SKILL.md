@@ -483,6 +483,16 @@ throws if the scope was taken) · pin `model:` (model-inheritance death orphans 
 orphan cleanup on release · keep one `FOUNDRY_DATA_DIR` · treat a store-lock timeout as
 transient (bounded backoff), never delete `.lock`.
 
+A worker CAN lease a warm pool slot (`<repo>/.claude/wt-pool/slot-<i>`, pool size = the per-repo
+worker cap) instead of a cold `git worktree add` — reset-on-lease keeps `node_modules` warm
+(see `domains/foundry` `wt-pool`). The pool is throughput-only; a lease failure falls back to a
+cold worktree-add, so it adds no correctness dependency. **The mechanism is wired in
+`foundry-worker` ISOLATE, but this conductor does NOT yet thread a per-worker `<slotIndex>` into
+its dispatch prompt** — so today's fanned-out workers cold-add by default. Safe auto-engagement
+(threading the index) is the **slice-3 per-slot lease**: a naive worker-index→slot mapping is
+unsafe under the superconductor (two conductors on one repo collide on slot-0), so it waits for
+the real per-slot lease.
+
 ## Pipeline-filler (Component E — never idle)
 
 When the autonomous conductor finds the pipeline empty (nothing claimable AND nothing
@@ -548,7 +558,7 @@ generator (Component D — Tier 2), and the `product-strategist` agent (Tier 3).
 
 In-**Workflow** review stage + auto-merge T0/T1 as a **sibling pipeline stage** (pipeline:
 build → wave → merge; slice 2.1 — distinct from autonomous mode which already self-waves inside
-each worker subagent); the warm worktree pool (design §C.4, slice 2.5); a lightweight
+each worker subagent); a lightweight
 `ConductorRegistered` presence record; the external-daemon substrate for 24/7 unattended running
 (design v2 — autonomous Agent-loop mode already covers the unattended case within a single
 session's context budget).

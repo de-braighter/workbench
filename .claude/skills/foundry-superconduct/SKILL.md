@@ -281,5 +281,10 @@ and worker it transitively spawns to enforce, unchanged:
 - An external OS daemon for 24/7 cross-session running (v2 — the Agent-loop session already
   covers the unattended case within one session's context budget; a fresh superconductor resumes
   by re-partitioning from `foundry_status`).
-- The **warm worktree pool** (design §C.4, item B / slice 2.5) composes ORTHOGONALLY — once it
-  lands, conductors lease pool slots for their workers; the superconductor needs no change.
+
+The **warm worktree pool** (design §C.4, item B / slice 2.5) is **shipped** (tested module +
+the `foundry-worker` lease mechanism) and composes orthogonally — the superconductor itself
+needs no change. **Auto-engagement is slice-3:** a naive worker-index→slot mapping collides
+under the superconductor (two conductors on one repo both lease slot-0), so threading a
+per-worker `<slotIndex>` through the fan-out waits for the multi-coordinator per-slot lease;
+until then the conductors' workers cold-add.

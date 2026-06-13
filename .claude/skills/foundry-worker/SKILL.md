@@ -105,6 +105,40 @@ cd .claude/worktrees/<slug>
 npm install   # or pnpm install — lockfile decides; a fresh worktree starts without node_modules
 ```
 
+**Warm pool (throughput; correctness never depends on it).** **If your dispatch/launch prompt
+carries a `<slotIndex>`** (a non-negative int), lease that warm slot instead of the cold
+`git worktree add` above. **No `<slotIndex>` → use the cold recipe (the default).** Pass an
+**absolute** repoRoot so the returned slot path is absolute and `cd`-able from any frame:
+
+```bash
+REPO_ABS=$(cd <repo-local-path> && pwd)   # ABSOLUTE — the CLI returns join(REPO_ABS, .claude/wt-pool/slot-N), absolute
+# exclude the pool dir in the TARGET repo (domains/foundry already gitignores it; OTHER repos need this):
+grep -q '\.claude/wt-pool/' "$REPO_ABS/.gitignore" "$REPO_ABS/.git/info/exclude" 2>/dev/null \
+  || echo '.claude/wt-pool/' >> "$REPO_ABS/.git/info/exclude"
+SLOT=$(cd domains/foundry && npm run -s wt-pool -- lease "$REPO_ABS" feat/<slug> <slotIndex> origin/main)
+SLOT="${SLOT//\\//}"   # normalize win32 backslashes for POSIX cd
+if [ -n "$SLOT" ] && cd "$SLOT" 2>/dev/null; then
+  : # leased: pristine tree + warm node_modules, already on feat/<slug>
+else
+  : # lease failed/empty → FALL BACK to the cold `git worktree add` recipe above
+fi
+```
+
+**On any non-zero exit / empty `$SLOT`, fall back to the cold `git worktree add` recipe above**
+— the pool is a throughput layer, NEVER a correctness dependency; the guarded `cd` (`[ -n "$SLOT" ]`)
+ensures a failed lease never leaves you building in the wrong cwd. The CLI rejects a non-integer
+index (→ non-zero exit → cold fallback), so a missing/garbled index just forfeits the warm
+speedup, never corrupts.
+
+> **Where `<slotIndex>` comes from (single-coordinator lease):** assigning slot `i` to the `i`-th
+> fanned-out worker (`0…cap-1`, pool size = the per-repo worker cap) IS the lease — safe only under
+> **exactly one conductor per repo**. The current conductor/superconductor fan-out does NOT yet
+> thread a per-worker `<slotIndex>` into the dispatch prompt (so today's autonomous workers cold-add
+> by default — safe, just no speedup). Auto-engaging the pool — threading the index through the
+> fan-out — needs the **slice-3 per-slot lease**, because a naive worker-index→slot mapping collides
+> under the superconductor (two conductors on one repo both lease slot-0). Until then, the lease
+> MECHANISM here engages only when a launch prompt explicitly carries an index.
+
 - A leftover worktree/branch at the slug is usually from an EXPIRED claim — but
   distinct itemIds CAN collide on one slug, so never assume. Check
   `foundry_status` first: any OTHER session's active claim referencing that

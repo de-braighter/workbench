@@ -167,6 +167,24 @@ parallel capacity, no new coordination needed. (Optional v2: a lightweight
 observability only, not required for correctness.)
 
 ### C.4 Warm worktree pool (throughput) — founder-requested
+
+> **Implemented (2026-06-13, item B / slice 2.5) — MODULE + worker MECHANISM; auto-engagement
+> is slice-3.** Shipped as a tested module — `domains/foundry/src/wt-pool.ts` (pure
+> `resetPlan`/`poolPaths` + injected-`run` `ensureSlot`/`leaseSlot`, the reset-on-lease risk
+> surface covered by a real-git integration test proving `node_modules` survives) + a thin
+> `domains/foundry/src/wt-pool-cli.ts` (`npm run -s wt-pool -- lease <repoRoot> <branch>
+> <slotIndex> [baseRef]`, absolute repoRoot → absolute slot path). The `foundry-worker` ISOLATE
+> phase carries the lease MECHANISM: **if the launch prompt provides a `<slotIndex>`** it leases
+> that slot, otherwise (the default) it cold-adds — **lease-or-cold-add**, the pool is
+> throughput-only, never a correctness dependency. `ensureSlot` **validates a slot is its own
+> worktree root before reuse** — this prevents a `reset --hard` / `clean -fdx` escaping to the
+> parent clone (the wave-caught hazard, healed + regression-tested). **Still slice-3:** the
+> conductor/superconductor fan-out does NOT yet thread a per-worker `<slotIndex>` into the
+> dispatch prompt, so autonomous workers cold-add by default; auto-engagement waits for the
+> **multi-coordinator per-slot lease** (a naive worker-index→slot mapping collides under the
+> superconductor — two conductors on one repo both lease slot-0). The single-coordinator lease
+> (slot `i` ↔ worker `i`) is correct only under exactly one conductor per repo.
+
 The dominant per-item cost is **`install` in a cold worktree** (a fresh `git worktree add`
 has no `node_modules`): pnpm isolated-store linking + Windows MAX_PATH `.npmrc` + `prisma
 generate` + postinstalls. A **per-repo warm pool** amortizes it:
@@ -377,8 +395,10 @@ level fanning out the next.
 orchestration primitive changes. **Path:** slice 2 = Workflow leaf-unit (shipped); the superconductor
 + `Agent`-loop conductor is **shipped (item D, 2026-06-13 — see the "Implemented" note above)**:
 the superconductor reuses the **autonomous** conductor (itself an `Agent`-loop), one per product
-lane. The remaining deferred throughput layer is the **warm worktree pool** (§C.4 / slice 2.5,
-item B), which composes orthogonally.
+lane. The **warm worktree pool** (§C.4 / slice 2.5, item B) is **shipped (2026-06-13)** as a
+tested module + the `foundry-worker` lease mechanism and composes orthogonally — workers cold-add
+today and lease only when a launch prompt carries a `<slotIndex>`; auto-engagement (threading the
+index through the fan-out) is slice-3 (see the §C.4 "Implemented" note).
 
 ## Component D — Periodic green-desk sweep (maintenance workstream)
 
@@ -599,9 +619,12 @@ not by the launch restriction.
 4. **Coordinator-presence observability** — optional `ConductorRegistered` record (§C.3).
 5. **Multi-ADR items** — current model is 1 item ↔ 1 ADR; an epic touching several ADRs
    decomposes into multiple ADR-authoring items (no `number[]` needed).
-6. **Warm pool reset robustness + warm-up** (§C.4) — the reset-on-lease must be proven
-   pristine-preserving-`node_modules` (the corruption risk); first-fill of a slot still pays
-   one cold install; multi-coordinator pool-sharing needs a per-slot lease (slice 3).
+6. **Warm pool reset robustness + warm-up** (§C.4) — **RESOLVED (item B).** Reset-on-lease is
+   proven pristine-preserving-`node_modules` by the real-git integration test (`domains/foundry`
+   `test/wt-pool.test.ts`), and `ensureSlot` validates a slot is its own worktree root before
+   reuse (a corrupt slot would otherwise let the reset escape to the parent clone — the
+   wave-caught hazard, now healed + regression-tested). First-fill of a slot still pays one cold
+   install (inherent). **Still open:** multi-coordinator pool-sharing needs a per-slot lease (slice 3).
 7. **Green-desk FP-suppression ledger + stop condition** (§D) — **RESOLVED (2026-06-13,
    item C).** Reviewed false-positive suppressions live as **native per-tool ignore + an
    audit row** in `docs/foundry/green-desk/fp-ledger.md` (`| date | repo | tool | path | rule
@@ -631,9 +654,13 @@ not by the launch restriction.
 - **Slice 2 — The conductor (Component C) + drop T2-launch-only.** `/foundry-conduct` skill +
   the Workflow script (fresh worktree per worker); concurrency guards; skill eligibility
   edits.
-- **Slice 2.5 — Warm worktree pool (§C.4).** Per-repo warm pool with bulletproof
-  reset-on-lease. Throughput layer; build once the conductor v1 proves out. (Promote into
-  slice 2 if cold-install pain materially hurts first-draft usability.)
+- **Slice 2.5 — Warm worktree pool (§C.4). MODULE + MECHANISM DONE (2026-06-13, item B);
+  auto-engagement slice-3.** Per-repo warm pool with bulletproof reset-on-lease, shipped as the
+  tested `domains/foundry/src/wt-pool.ts` module (+ `wt-pool-cli.ts`); `foundry-worker` ISOLATE
+  carries the lease MECHANISM (leases if its prompt has a `<slotIndex>`, else cold-adds —
+  lease-or-cold-add). The conductor/superconductor fan-out does NOT yet thread the index, so
+  auto-engagement (single-coordinator lease; multi-coordinator per-slot lease) stays slice-3.
+  Throughput layer; correctness never depends on it.
 - **Slice 3 (later) — refinements.** Orphan-reconcile op, gate-aware board reporting,
   coordinator-presence record, per-item TTL policy, multi-coordinator pool-lease.
 - **Slice 4 — Periodic green-desk sweep (Component D). DONE (2026-06-13, item C).** Shipped
@@ -654,7 +681,7 @@ not by the launch restriction.
 - No new WorkItem fields for ADRs (the aggregate + itemId convention suffice).
 - No heavyweight coordinator registry in v1 (the skill invocation is the registration).
 - No external OS daemon in v1 (Workflow substrate; daemon is the v2 unattended path).
-- No warm worktree pool in v1 (fresh worktree per worker; pool is the slice-2.5 throughput
-  layer — correctness never depends on it).
+- No warm worktree pool in v1 (fresh worktree per worker). The pool shipped as the
+  slice-2.5 throughput layer (item B, 2026-06-13) — correctness never depends on it.
 - The conductor does **not** re-scope items or re-derive disjointness — that is build-path's
   job; the conductor trusts `foundry_next` and the fail-closed `scopesDisjoint` backstop.
