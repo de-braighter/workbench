@@ -23,7 +23,7 @@ it asynchronously drives every repo back to a fully-green desk between product w
 Two facts about the foundry kernel force this skill's shape. Both are verified
 source, not convention:
 
-1. **`toNextItem` (`domains/foundry/src/state.ts`) reads `repo`, `riskTier`, and
+1. **`toNextItem` (`domains/foundry/src/ops.ts`) reads `repo`, `riskTier`, and
    `priority` from the PRODUCT, not the item scope.** A single green-desk product
    spanning many repos would mislabel every item's `repo` to `foundry_next` and
    to the worker that claims it. → **one synthetic `green-desk-<repo-slug>`
@@ -108,7 +108,9 @@ the best-possible value on every dimension (spec §D.1):
    dimension.
 5. **Drop false positives.** Read `docs/foundry/green-desk/fp-ledger.md`; drop
    any offense matching a suppression row (by `tool` + `path` + `rule`). These
-   are not real debt and must never be re-emitted.
+   are not real debt and must never be re-emitted. (The ledger ships with only a
+   header row; if it is ever absent — e.g. removed — treat it as empty, no
+   suppressions, and continue.)
 6. **Green check.** If, after the FP-drop, every dimension is at target (0 real
    debt + coverage ≥ 80% + mutation ≥ floor) → the repo is **GREEN**: record the
    sweep (`green: true`, reset `consecutiveNoProgress` to 0), emit NOTHING,
@@ -139,7 +141,7 @@ the best-possible value on every dimension (spec §D.1):
        name: 'Green-desk — <repo>',
        repo: 'de-braighter/<name>',
        riskTier: 'T0',
-       priority: 200,        // low — product work always outranks debt
+       priority: 200,        // HIGHER number = LOWER precedence (claimableItems sorts ascending); 200 keeps debt behind default-100 product work
        stage: 'maintenance'
      },
      items: [ ...debt items... ]

@@ -49,6 +49,8 @@ never silent**:
 
 `/green-desk` step 5 reads this table and drops any matching offense (by `tool` +
 `path` + `rule`) before partitioning — so a suppressed FP is **never re-emitted**.
+It ships with only the header row (so a cold first sweep always finds the file);
+workers append verified suppressions below it.
 
 | Column | Meaning |
 | --- | --- |
@@ -66,6 +68,6 @@ Row form: `| date | repo | tool | path | rule | justification | reviewer |`.
 
 `ledger/` fills at **sweep time** — the per-repo JSON files are written by
 `/green-desk` when it sweeps a repo, not by this PR. A `.gitkeep` keeps the empty
-directory in git so the first sweep has a tracked home to write into. (Only this
-README + the `.gitkeep` are part of the skill PR; the ledger DATA files appear as
-sweeps run.)
+directory in git so the first sweep has a tracked home to write into. (This README,
+the header-only `fp-ledger.md`, and the `.gitkeep` are part of the skill PR; the
+per-repo ledger DATA files appear as sweeps run.)

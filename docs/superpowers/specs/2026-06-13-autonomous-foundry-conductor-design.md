@@ -367,7 +367,7 @@ test coverage the sole "higher-is-better" exception. (Founder-requested, 2026-06
 > (`docs/foundry/green-desk/README.md`). Resolved decisions, each forced by a verified
 > foundry-kernel fact:
 > - **Synthetic `green-desk-<repo-slug>` product per swept repo** — forced by `toNextItem`
->   (`domains/foundry/src/state.ts`) reading `repo`/`riskTier`/`priority` from the PRODUCT,
+>   (`domains/foundry/src/ops.ts`) reading `repo`/`riskTier`/`priority` from the PRODUCT,
 >   not the item scope; a multi-repo product would mislabel every item's repo. Each carries
 >   T0 + low priority (200) so product work always outranks debt.
 > - **Path-area partition** (one `debt-<area>` item per area, fixing all dimensions there) —
