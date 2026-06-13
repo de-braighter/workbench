@@ -105,16 +105,23 @@ cd .claude/worktrees/<slug>
 npm install   # or pnpm install — lockfile decides; a fresh worktree starts without node_modules
 ```
 
-**Warm pool (throughput; correctness never depends on it).** **If your dispatch/launch prompt
-carries a `<slotIndex>`** (a non-negative int), lease that warm slot instead of the cold
-`git worktree add` above. **No `<slotIndex>` → use the cold recipe (the default).** Pass an
-**absolute** repoRoot so the returned slot path is absolute and `cd`-able from any frame:
+**Warm pool (throughput; correctness never depends on it; AUTO-ENGAGED via self-lease).**
+After you CLAIM (Phase 1 — you now hold a `claimId`), lease your own warm slot. The foundry
+allocates your slot **index** under the same store-lock that arbitrates `claim()`, so the index
+is collision-free across ALL coordinators (N conductors, every superconductor lane, or a lone
+item-/pool-mode worker) **by construction** — call the MCP tool:
+
+> `foundry_lease_slot { claimId: <your claimId> }`  →  `{ slotIndex, repo, claimId }`
+
+Then reset-on-lease that warm slot (preserves `node_modules`) instead of the cold `git worktree
+add` above. Pass an **absolute** repoRoot so the returned slot path is absolute and `cd`-able:
 
 ```bash
 REPO_ABS=$(cd <repo-local-path> && pwd)   # ABSOLUTE — the CLI returns join(REPO_ABS, .claude/wt-pool/slot-N), absolute
 # exclude the pool dir in the TARGET repo (domains/foundry already gitignores it; OTHER repos need this):
 grep -q '\.claude/wt-pool/' "$REPO_ABS/.gitignore" "$REPO_ABS/.git/info/exclude" 2>/dev/null \
   || echo '.claude/wt-pool/' >> "$REPO_ABS/.git/info/exclude"
+# <slotIndex> = the integer foundry_lease_slot returned above:
 SLOT=$(cd domains/foundry && npm run -s wt-pool -- lease "$REPO_ABS" feat/<slug> <slotIndex> origin/main)
 SLOT="${SLOT//\\//}"   # normalize win32 backslashes for POSIX cd
 if [ -n "$SLOT" ] && cd "$SLOT" 2>/dev/null; then
@@ -124,20 +131,23 @@ else
 fi
 ```
 
-**On any non-zero exit / empty `$SLOT`, fall back to the cold `git worktree add` recipe above**
-— the pool is a throughput layer, NEVER a correctness dependency; the guarded `cd` (`[ -n "$SLOT" ]`)
-ensures a failed lease never leaves you building in the wrong cwd. The CLI rejects a non-integer
-index (→ non-zero exit → cold fallback), so a missing/garbled index just forfeits the warm
-speedup, never corrupts.
+**On ANY failure — `foundry_lease_slot` rejects (unknown/ended/superseded claim), the CLI exits
+non-zero, or `$SLOT` is empty — fall back to the cold `git worktree add` recipe above.** The pool
+is a throughput layer, NEVER a correctness dependency; the guarded `cd` (`[ -n "$SLOT" ]`) ensures
+a failed lease never leaves you building in the wrong cwd. If `foundry_lease_slot` rejects with
+"claim expired — heartbeat to revive first", `foundry_heartbeat { claimId }` then re-lease (or cold-add).
 
-> **Where `<slotIndex>` comes from (single-coordinator lease):** assigning slot `i` to the `i`-th
-> fanned-out worker (`0…cap-1`, pool size = the per-repo worker cap) IS the lease — safe only under
-> **exactly one conductor per repo**. The current conductor/superconductor fan-out does NOT yet
-> thread a per-worker `<slotIndex>` into the dispatch prompt (so today's autonomous workers cold-add
-> by default — safe, just no speedup). Auto-engaging the pool — threading the index through the
-> fan-out — needs the **slice-3 per-slot lease**, because a naive worker-index→slot mapping collides
-> under the superconductor (two conductors on one repo both lease slot-0). Until then, the lease
-> MECHANISM here engages only when a launch prompt explicitly carries an index.
+**A warm slot is NOT torn down on release** — the pool reuses it (the next lease resets it to a
+pristine tree). Only a *cold* `git worktree add` at `.claude/worktrees/<slug>` gets removed in
+Phase 5 cleanup; a leased `.claude/wt-pool/slot-N` is left in place for the next worker.
+
+> **Why self-lease (multi-coordinator per-slot lease — slice 3, shipped foundry#6):** the worker
+> allocating its OWN index via `foundry_lease_slot` (the lease is bound to your `claimId` and frees
+> when the claim releases / hands off / TTL-expires) is collision-safe across N coordinators because
+> the foundry's single store-lock serializes every allocation — the same arbiter that makes `claim()`
+> safe. This **replaces** the earlier "the conductor threads a `<slotIndex>` into the dispatch prompt"
+> idea, which collided under the superconductor (two conductors on one repo would both lease slot-0).
+> There is nothing for a conductor to thread: every fanned-out worker self-leases a distinct slot.
 
 - A leftover worktree/branch at the slug is usually from an EXPIRED claim — but
   distinct itemIds CAN collide on one slug, so never assume. Check

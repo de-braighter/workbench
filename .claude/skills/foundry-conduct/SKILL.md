@@ -388,7 +388,7 @@ Item: ${it.itemId} · Repo: de-braighter/${it.repo.replace(/^de-braighter\\//, '
 Title: ${it.title || it.itemId}
 
 1. CLAIM: mint sess-<ts>-<4hex>; foundry_claim { itemId: "${it.itemId}", sessionId, worktree: "<repo>/.claude/worktrees/<slug>", branch: "feat/<slug>" }. If rejected as already-claimed/scope-overlap, that is an EXPECTED race with a sibling worker/coordinator — return { itemId, outcome: "skipped-race" } and STOP (never work unclaimed).
-2. ISOLATE: git worktree add the claimed path off origin/main; NEVER git-op in the shared root clone; set NX_DAEMON=false; install deps in the worktree.
+2. ISOLATE (per the skill, AUTO-engaging the warm pool): after CLAIM, self-lease your slot index — foundry_lease_slot { claimId } → reset-on-lease the warm slot (preserves node_modules); on ANY lease failure fall back to a cold \`git worktree add\` off origin/main. NEVER git-op in the shared root clone; set NX_DAEMON=false; install deps if cold. Distinct workers get distinct slots by the store-lock — no conductor-side slot math.
 3. EXECUTE: route via existing skills per tier (designer-first FIRST for T2 — and if your itemId is `<key>/ADR-<n>`, CONSUME that number directly, do NOT read next-free-adr). Honor qualityObligations.
 4. QUALITY: green 'ci:local' in the worktree; confine the diff to the scope pathPrefix; push the branch; open the PR (Producer:/Effort:/Effect: lines). Heartbeat foundry_heartbeat at phase boundaries.
 5. DO NOT MERGE. Release foundry_release { claimId, outcome: "built", prRef: "<owner>/<repo>#<pr>", note: "built; awaiting conductor/founder review+merge" + (T2 ? "; ship gate required" : "") } and report.
@@ -483,15 +483,17 @@ throws if the scope was taken) · pin `model:` (model-inheritance death orphans 
 orphan cleanup on release · keep one `FOUNDRY_DATA_DIR` · treat a store-lock timeout as
 transient (bounded backoff), never delete `.lock`.
 
-A worker CAN lease a warm pool slot (`<repo>/.claude/wt-pool/slot-<i>`, pool size = the per-repo
-worker cap) instead of a cold `git worktree add` — reset-on-lease keeps `node_modules` warm
-(see `domains/foundry` `wt-pool`). The pool is throughput-only; a lease failure falls back to a
-cold worktree-add, so it adds no correctness dependency. **The mechanism is wired in
-`foundry-worker` ISOLATE, but this conductor does NOT yet thread a per-worker `<slotIndex>` into
-its dispatch prompt** — so today's fanned-out workers cold-add by default. Safe auto-engagement
-(threading the index) is the **slice-3 per-slot lease**: a naive worker-index→slot mapping is
-unsafe under the superconductor (two conductors on one repo collide on slot-0), so it waits for
-the real per-slot lease.
+Every worker leases a warm pool slot (`<repo>/.claude/wt-pool/slot-<i>`) instead of a cold
+`git worktree add` — reset-on-lease keeps `node_modules` warm (see `domains/foundry` `wt-pool`).
+The pool is throughput-only; a lease failure falls back to a cold worktree-add, so it adds no
+correctness dependency. **Auto-engaged (slice-3 per-slot lease, shipped foundry#6):** the worker
+SELF-LEASES its slot index via `foundry_lease_slot { claimId }` (in `foundry-worker` ISOLATE) —
+the foundry allocates the lowest free index under the SAME store-lock that arbitrates `claim()`,
+so every fanned-out worker gets a DISTINCT slot **by construction**, collision-free across N
+conductors and superconductor lanes. There is nothing for the conductor to thread: the old
+"thread a `<slotIndex>` into the dispatch prompt" idea (which collided under the superconductor —
+two conductors on one repo both leasing slot-0) is replaced by the worker self-lease. A slot is
+bound to the worker's claim and frees when the claim releases / hands off / TTL-expires.
 
 ## Pipeline-filler (Component E — never idle)
 

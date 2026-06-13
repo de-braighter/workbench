@@ -168,22 +168,23 @@ observability only, not required for correctness.)
 
 ### C.4 Warm worktree pool (throughput) — founder-requested
 
-> **Implemented (2026-06-13, item B / slice 2.5) — MODULE + worker MECHANISM; auto-engagement
-> is slice-3.** Shipped as a tested module — `domains/foundry/src/wt-pool.ts` (pure
+> **Implemented (2026-06-13, item B / slice 2.5 — MODULE + worker MECHANISM; 2026-06-14, slice 3
+> — AUTO-ENGAGED via the per-slot lease, foundry#6).** Shipped as a tested module — `domains/foundry/src/wt-pool.ts` (pure
 > `resetPlan`/`poolPaths` + injected-`run` `ensureSlot`/`leaseSlot`, the reset-on-lease risk
 > surface covered by a real-git integration test proving `node_modules` survives) + a thin
 > `domains/foundry/src/wt-pool-cli.ts` (`npm run -s wt-pool -- lease <repoRoot> <branch>
 > <slotIndex> [baseRef]`, absolute repoRoot → absolute slot path). The `foundry-worker` ISOLATE
-> phase carries the lease MECHANISM: **if the launch prompt provides a `<slotIndex>`** it leases
-> that slot, otherwise (the default) it cold-adds — **lease-or-cold-add**, the pool is
-> throughput-only, never a correctness dependency. `ensureSlot` **validates a slot is its own
+> phase carries the lease step: **the worker SELF-LEASES its slot index** via the
+> `foundry_lease_slot { claimId }` MCP op, then resets-on-lease that warm slot — **lease-or-cold-add**,
+> the pool is throughput-only, never a correctness dependency. `ensureSlot` **validates a slot is its own
 > worktree root before reuse** — this prevents a `reset --hard` / `clean -fdx` escaping to the
-> parent clone (the wave-caught hazard, healed + regression-tested). **Still slice-3:** the
-> conductor/superconductor fan-out does NOT yet thread a per-worker `<slotIndex>` into the
-> dispatch prompt, so autonomous workers cold-add by default; auto-engagement waits for the
-> **multi-coordinator per-slot lease** (a naive worker-index→slot mapping collides under the
-> superconductor — two conductors on one repo both lease slot-0). The single-coordinator lease
-> (slot `i` ↔ worker `i`) is correct only under exactly one conductor per repo.
+> parent clone (the wave-caught hazard, healed + regression-tested). **Auto-engaged (multi-coordinator
+> per-slot lease, shipped foundry#6):** the foundry allocates the lowest free slot index per repo under
+> the SAME store-lock that arbitrates `claim()`, so every fanned-out worker gets a DISTINCT slot **by
+> construction**, collision-free across N conductors / superconductor lanes. This replaces the abandoned
+> "conductor threads a `<slotIndex>`" idea (a naive worker-index→slot map collided under the superconductor
+> — two conductors on one repo both lease slot-0). The lease is claim-bound and frees when the claim
+> releases / hands off / TTL-expires; there is nothing for a coordinator to thread.
 
 The dominant per-item cost is **`install` in a cold worktree** (a fresh `git worktree add`
 has no `node_modules`): pnpm isolated-store linking + Windows MAX_PATH `.npmrc` + `prisma
@@ -191,8 +192,10 @@ generate` + postinstalls. A **per-repo warm pool** amortizes it:
 
 - The conductor maintains **N warm worktrees per active repo** at stable paths
   `<repo>/.claude/wt-pool/slot-<i>`, each with `node_modules` populated. **Pool size per
-  repo = the conductor's per-repo concurrency cap**, so *assigning a slot to each
-  fanned-out worker IS the lease* — no separate lease primitive (single-coordinator case).
+  repo = the conductor's per-repo concurrency cap**. Each worker leases the lowest free index
+  via the `foundry_lease_slot` per-slot lease primitive (shipped foundry#6) — collision-free
+  across N coordinators by the store-lock (the original "slot `i` ↔ worker `i`" assignment was
+  single-coordinator-only; the per-slot lease generalizes it).
 - **Slots persist on disk across sessions** → a later conductor session inherits the warm
   pool ("reused over multiple sessions sequentially").
 - **Reset-on-lease is the one risk surface** (must be the most-tested code): preserve
@@ -395,10 +398,10 @@ level fanning out the next.
 orchestration primitive changes. **Path:** slice 2 = Workflow leaf-unit (shipped); the superconductor
 + `Agent`-loop conductor is **shipped (item D, 2026-06-13 — see the "Implemented" note above)**:
 the superconductor reuses the **autonomous** conductor (itself an `Agent`-loop), one per product
-lane. The **warm worktree pool** (§C.4 / slice 2.5, item B) is **shipped (2026-06-13)** as a
-tested module + the `foundry-worker` lease mechanism and composes orthogonally — workers cold-add
-today and lease only when a launch prompt carries a `<slotIndex>`; auto-engagement (threading the
-index through the fan-out) is slice-3 (see the §C.4 "Implemented" note).
+lane. The **warm worktree pool** (§C.4 / slice 2.5, item B) is **shipped + auto-engaged
+(2026-06-14, slice 3, foundry#6)** — a tested module + the worker **self-lease** (`foundry_lease_slot`
+allocates the slot index under the store-lock), so every fanned-out worker gets a distinct slot by
+construction across N conductors/lanes; the hierarchy threads no index (see the §C.4 "Implemented" note).
 
 ## Component D — Periodic green-desk sweep (maintenance workstream)
 
@@ -624,7 +627,10 @@ not by the launch restriction.
    `test/wt-pool.test.ts`), and `ensureSlot` validates a slot is its own worktree root before
    reuse (a corrupt slot would otherwise let the reset escape to the parent clone — the
    wave-caught hazard, now healed + regression-tested). First-fill of a slot still pays one cold
-   install (inherent). **Still open:** multi-coordinator pool-sharing needs a per-slot lease (slice 3).
+   install (inherent). **RESOLVED (slice 3, foundry#6):** multi-coordinator pool-sharing now rides
+   the `foundry_lease_slot` per-slot lease — the worker self-leases the lowest free index under the
+   store-lock (claim-bound, freed on release/handoff/TTL-expiry), so distinct workers get distinct
+   slots across N coordinators by construction. Auto-engaged in `foundry-worker` ISOLATE.
 7. **Green-desk FP-suppression ledger + stop condition** (§D) — **RESOLVED (2026-06-13,
    item C).** Reviewed false-positive suppressions live as **native per-tool ignore + an
    audit row** in `docs/foundry/green-desk/fp-ledger.md` (`| date | repo | tool | path | rule
@@ -655,14 +661,17 @@ not by the launch restriction.
   the Workflow script (fresh worktree per worker); concurrency guards; skill eligibility
   edits.
 - **Slice 2.5 — Warm worktree pool (§C.4). MODULE + MECHANISM DONE (2026-06-13, item B);
-  auto-engagement slice-3.** Per-repo warm pool with bulletproof reset-on-lease, shipped as the
-  tested `domains/foundry/src/wt-pool.ts` module (+ `wt-pool-cli.ts`); `foundry-worker` ISOLATE
-  carries the lease MECHANISM (leases if its prompt has a `<slotIndex>`, else cold-adds —
-  lease-or-cold-add). The conductor/superconductor fan-out does NOT yet thread the index, so
-  auto-engagement (single-coordinator lease; multi-coordinator per-slot lease) stays slice-3.
+  AUTO-ENGAGED (2026-06-14, slice 3, foundry#6).** Per-repo warm pool with bulletproof
+  reset-on-lease, shipped as the tested `domains/foundry/src/wt-pool.ts` module (+ `wt-pool-cli.ts`).
+  `foundry-worker` ISOLATE now **self-leases**: the worker calls `foundry_lease_slot { claimId }`
+  (the per-slot lease primitive) to allocate its slot index under the store-lock, then resets-on-lease
+  — lease-or-cold-add. Every fanned-out worker gets a DISTINCT slot by construction, collision-free
+  across N conductors / superconductor lanes; the conductor/superconductor thread NOTHING.
   Throughput layer; correctness never depends on it.
-- **Slice 3 (later) — refinements.** Orphan-reconcile op, gate-aware board reporting,
-  coordinator-presence record, per-item TTL policy, multi-coordinator pool-lease.
+- **Slice 3 — refinements.** **DONE (2026-06-14, foundry#6):** multi-coordinator pool-lease
+  (the `foundry_lease_slot` per-slot lease + worker self-lease, auto-engaging the pool).
+  **Pending (this slice):** orphan-reconcile op, gate-aware board reporting, coordinator-presence
+  record, per-item TTL policy.
 - **Slice 4 — Periodic green-desk sweep (Component D). DONE (2026-06-13, item C).** Shipped
   the `/green-desk` debt-path generator (per-repo multi-dimension scan → disjoint path-area
   cleanup items) + the green-desk target check + `/tech-debt` worker routing + loop-until-green
