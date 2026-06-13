@@ -328,6 +328,27 @@ no leader-election. A built-but-unmerged PR is never re-built.
 
 ## Component C′ — The superconductor tier (fan-out capability matrix)
 
+> **Implemented (2026-06-13, item D).** Shipped as the **`/foundry-superconduct` skill**
+> (`.claude/skills/foundry-superconduct/SKILL.md`) — an **Agent-loop session** (the fan-out
+> matrix below forbids a Workflow: a hierarchy needs three levels of fan-out, and a Workflow
+> `agent()` node is a leaf). Resolved decisions:
+> - **Lanes partitioned by product** — one `/foundry-conduct`-autonomous conductor subagent per
+>   `productKey` (each greenlit product + each synthetic `green-desk-<repo-slug>` debt product is
+>   a lane); cross-product items are disjoint by repo/scope, intra-product disjointness +
+>   `dependsOn` is build-path's contract.
+> - **Lean context** — the superconductor holds only per-conductor **summaries**
+>   (`{ productKey, built, merged, awaitingGate, idle, stopReason }`), never per-item / per-worker
+>   detail.
+> - **Pipeline-filler runs ONCE at the top** (not per-conductor) so `product-strategist` runs
+>   once; the conductor lanes never invoke the filler.
+> - **Inviolable boundaries are enforced at the conductor leaves and NEVER relaxed by the
+>   superconductor** — it reuses the `/foundry-conduct` merge rule rather than re-deriving it (T2
+>   never auto-merges without an item-bound `approved` ship gate matched by `payloadRef`; new
+>   products always STOP-FOR-FOUNDER). The superconductor is pure orchestration — it never claims,
+>   merges, or requests/approves gates.
+> - **Multi-superconductor safety is free** from the single foundry store-lock; v1 assumes one
+>   superconductor.
+
 Empirically verified 2026-06-13:
 
 | Execution context | Can fan out sub-agents? |
@@ -354,7 +375,10 @@ level fanning out the next.
 + resumable — a single-frontier drain. The **superconductor tier wants the `Agent`-loop substrate**
 (recursive, model-driven, no journaling). The slice-2 scout→fan-out *logic* ports directly; only the
 orchestration primitive changes. **Path:** slice 2 = Workflow leaf-unit (shipped); the superconductor
-+ `Agent`-loop conductor is a v2 tier when scale-out across many products is the bottleneck.
++ `Agent`-loop conductor is **shipped (item D, 2026-06-13 — see the "Implemented" note above)**:
+the superconductor reuses the **autonomous** conductor (itself an `Agent`-loop), one per product
+lane. The remaining deferred throughput layer is the **warm worktree pool** (§C.4 / slice 2.5,
+item B), which composes orthogonally.
 
 ## Component D — Periodic green-desk sweep (maintenance workstream)
 
