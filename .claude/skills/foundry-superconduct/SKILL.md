@@ -1,6 +1,6 @@
 ---
 name: foundry-superconduct
-description: Foundry SUPERCONDUCTOR — the TOP tier of the foundry orchestration hierarchy (superconductor → conductors → workers → wave-agents). Register THIS session as the superconductor and it drains the WHOLE foundry across every product in parallel by dispatching ONE /foundry-conduct-autonomous conductor subagent per product/lane; each conductor dispatches workers, each worker runs its own verifier wave. Run as an Agent-loop session (NOT a Workflow — only the recursive Agent tool can express superconductor → conductors → workers; a Workflow agent() node is a leaf that cannot fan out). The superconductor is PURE ORCHESTRATION — it never claims (workers do), never merges (conductors do), never requests or approves gates (workers request, the founder decides, conductors merge after approval). It partitions the claimable frontier into lanes by product, holds only per-conductor SUMMARIES (lean context at every tier), and runs the GLOBAL idle→pipeline-filler escalation ONCE at the top. Use when the founder says '/foundry-superconduct', 'superconduct the foundry', 'register me as a superconductor', 'drain the whole foundry', or 'fan out conductors across all products'. The founder's only inputs remain the masterplan (upstream, via /build-path), the gate decisions, and greenlight decisions for new-product proposals.
+description: Foundry SUPERCONDUCTOR — the TOP tier of the foundry orchestration hierarchy (superconductor → conductors → workers → wave-agents). Register THIS session as the superconductor and it drains the WHOLE foundry across every product in parallel by dispatching ONE /foundry-conduct (autonomous-mode) conductor subagent per product/lane; each conductor dispatches workers, each worker runs its own verifier wave. Run as an Agent-loop session (NOT a Workflow — only the recursive Agent tool can express superconductor → conductors → workers; a Workflow agent() node is a leaf that cannot fan out). The superconductor is PURE ORCHESTRATION — it never claims (workers do), never merges (conductors do), never requests or approves gates (workers request, the founder decides, conductors merge after approval). It partitions the claimable frontier into lanes by product, holds only per-conductor SUMMARIES (lean context at every tier), and runs the GLOBAL idle→pipeline-filler escalation ONCE at the top. Use when the founder says '/foundry-superconduct', 'superconduct the foundry', 'register me as a superconductor', 'drain the whole foundry', or 'fan out conductors across all products'. The founder's only inputs remain the masterplan (upstream, via /build-path), the gate decisions, and greenlight decisions for new-product proposals.
 tags: [foundry, superconductor, orchestration, autonomous]
 ---
 
@@ -121,9 +121,12 @@ loop (until ALL lanes idle OR context-critical):
   a. POLL: foundry_status + foundry_next(limit 50) — advisory, lock-free reads.
 
   b. PARTITION into lanes by product: group the claimable frontier + active products by
-     productKey. Each distinct product (including each green-desk-<repo-slug> debt product)
-     is one lane. Cross-product items are disjoint by repo/scope; intra-product disjointness
-     + dependsOn is build-path's contract — trust it + the fail-closed scopesDisjoint backstop.
+     productKey. **`productKey` is a field on each `foundry_next` item** (`ops.ts` `toNextItem`
+     returns it) — equivalently the itemId prefix before the first `/` (`<key>/E<n>`,
+     `<key>/ADR-<n>`, `green-desk-<repo-slug>/debt-…`). Each distinct product (including each
+     green-desk-<repo-slug> debt product) is one lane. Cross-product items are disjoint by
+     repo/scope; intra-product disjointness + dependsOn is build-path's contract — trust it +
+     the fail-closed scopesDisjoint backstop.
 
   c. DISPATCH one conductor subagent per lane (cap = maxConductors, default 4; excess lanes
      wait for the next pass). Track which lanes you dispatched THIS pass (transient,
@@ -135,9 +138,15 @@ loop (until ALL lanes idle OR context-critical):
          model: <pinned>,                       // pin — inheritance death orphans a whole lane
          prompt: conductorPrompt(productKey)     // see "## The conductor-subagent prompt"
        })
-     Conductors run CONCURRENTLY: min(N, maxConductors) lanes × M workers each concurrent
-     (the cap bounds the parallel lanes; excess lanes run on later passes). Each returns ONE
-     lane summary.
+     Conductors run CONCURRENTLY: min(N, maxConductors) lanes × M workers-per-lane concurrent.
+     **GLOBAL WORKER BUDGET (resource bound, not correctness):** the box runs up to
+     `maxConductors × maxWorkers` worktrees + `ci:local`/nx builds at once — keep the product
+     `≈ a sane single-box budget` (default 4×4≈16, NOT 4×8) so concurrent nx daemons don't
+     thrash (the nx EBUSY / `.lock` contention class). The store-lock keeps correctness at any
+     count; the cap just keeps the machine alive. A **gate-parked lane** (only remaining work =
+     a T2 PR awaiting a founder gate) re-dispatches each pass and returns idle — correct (no
+     double-merge; store-lock arbitrates), but not free: a wasted conductor dispatch per pass,
+     bounded by the founder-gate latency. Each returns ONE lane summary.
 
   d. COLLECT summaries (barrier or rolling): hold ONLY
        { productKey, built, merged, awaitingGate, idle, stopReason }
@@ -149,8 +158,12 @@ loop (until ALL lanes idle OR context-critical):
      next foundry_status. Re-partition + re-dispatch. Stop a lane that reported idle with nothing
      new; keep dispatching lanes that still have claimable or awaiting-merge work.
 
-  f. GLOBAL IDLE → pipeline-filler (ONCE at the top, NEVER per-conductor): when ALL lanes report
-     idle (no claimable item, no awaiting-merge PR, in EVERY lane), invoke the pipeline-filler
+  f. GLOBAL IDLE → pipeline-filler (ONCE at the top, NEVER per-conductor): GLOBAL IDLE fires
+     ONLY when **every partitioned lane has been dispatched at least once in the current drain
+     epoch AND returned `idle:true`** (no claimable item, no awaiting-merge PR). A lane deferred
+     by the `maxConductors` cap is **pending, not idle** — it must be dispatched on a later pass
+     before GLOBAL IDLE can fire (else the filler, incl. Tier-3 STOP-FOR-FOUNDER, could fire
+     while cap-deferred lanes still hold work). When that holds, invoke the pipeline-filler
      ladder ONCE (the same Component-E ladder /foundry-conduct documents, hoisted to the top):
        TIER 1 (auto): for each greenlit product with unbuilt epics, run /build-path to emit the
                       next work items. Greenlit predicate (machine-checkable):
@@ -169,7 +182,8 @@ loop (until ALL lanes idle OR context-critical):
         proposals. Re-launch after a masterplan input or greenlight."
 
   g. CONTEXT CHECK (after each complete pass): near context-critical → STOP; report all lane
-     summaries + every pending founder gate (lane, itemId, gate type, prRef). Stop reason:
+     summaries + every pending founder gate (lane, itemId, gate type, gateId, prRef — the
+     founder decides via `foundry_gate_decide { gateId }`). Stop reason:
      "context-critical — foundry state is durable; re-launch a fresh superconductor to resume
       (it re-partitions from foundry_status; no handoff needed)." A fresh superconductor
       re-partitions from foundry_status and continues. Context-critical is the BACKSTOP; true
@@ -185,7 +199,9 @@ verbatim — it does NOT re-derive it:
 ```
 You are a foundry CONDUCTOR subagent dispatched by the superconductor, in AUTONOMOUS mode,
 SCOPED to product `<productKey>`. Follow the workbench `/foundry-conduct` skill's
-autonomous-mode loop END-TO-END — but operate ONLY within this one lane:
+autonomous-mode loop's claim→build→wave→merge cycle — **EXCEPT its IDLE-CHECK pipeline-filler
+step (d): the superconductor owns the GLOBAL filler; on lane-idle you return `idle:true`
+instead of invoking any filler tier.** Operate ONLY within this one lane:
 
   - Dispatch worker subagents ONLY for items whose product is `<productKey>`.
   - Merge ONLY this product's PRs; read ONLY this product's gates
@@ -222,7 +238,7 @@ RETURN a structured lane summary (and NOTHING heavier):
     productKey:   "<productKey>",
     built:        ["<itemId>", …],                                  // built to a PR this run
     merged:       ["<itemId>", …],                                  // merged this run
-    awaitingGate: [{ itemId, gate: "ship"|"adr", prRef }, …],       // built, gate pending
+    awaitingGate: [{ itemId, gate: "ship"|"adr", gateId, prRef }, …], // built, gate pending; gateId = founder decides via foundry_gate_decide
     idle:         <bool>,                                           // lane has no claimable + nothing awaiting merge
     stopReason:   "idle" | "context-critical" | "<other>"
   }

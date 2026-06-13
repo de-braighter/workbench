@@ -63,6 +63,11 @@ Three modes form a safety ladder — start at `preview`, graduate to `build`, th
 5. Report: the wave plan (preview), the built PR refs + surfaced gates (build), or the
    merged-set + pending gates + stop reason (autonomous). Then STOP — a non-autonomous
    coordinator ends when the frontier is drained or only gate-blocked items remain.
+   **When this autonomous-mode session is dispatched as a lane conductor by a superconductor
+   (`/foundry-superconduct`), its terminal report is a structured lane summary —
+   `{ productKey, built: [itemId…], merged: [itemId…], awaitingGate: [{ itemId, gate: 'ship'|'adr', gateId, prRef }…], idle: bool, stopReason }` —
+   so the superconductor holds only per-conductor summaries (lean context). Run free-standing,
+   the same fields render as a human-readable report.**
 
 ## Autonomous mode (the full loop — Agent-loop, session-run)
 
