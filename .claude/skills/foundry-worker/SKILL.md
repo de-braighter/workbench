@@ -134,8 +134,9 @@ fi
 **On ANY failure — `foundry_lease_slot` rejects (unknown/ended/superseded claim), the CLI exits
 non-zero, or `$SLOT` is empty — fall back to the cold `git worktree add` recipe above.** The pool
 is a throughput layer, NEVER a correctness dependency; the guarded `cd` (`[ -n "$SLOT" ]`) ensures
-a failed lease never leaves you building in the wrong cwd. If `foundry_lease_slot` rejects with
-"claim expired — heartbeat to revive first", `foundry_heartbeat { claimId }` then re-lease (or cold-add).
+a failed lease never leaves you building in the wrong cwd. If `foundry_lease_slot` rejects because
+your claim has expired (the error names "expired — heartbeat to revive"), `foundry_heartbeat { claimId }`
+to revive, then re-lease (or cold-add).
 
 **A warm slot is NOT torn down on release** — the pool reuses it (the next lease resets it to a
 pristine tree). Only a *cold* `git worktree add` at `.claude/worktrees/<slug>` gets removed in
@@ -147,7 +148,9 @@ Phase 5 cleanup; a leased `.claude/wt-pool/slot-N` is left in place for the next
 > the foundry's single store-lock serializes every allocation — the same arbiter that makes `claim()`
 > safe. This **replaces** the earlier "the conductor threads a `<slotIndex>` into the dispatch prompt"
 > idea, which collided under the superconductor (two conductors on one repo would both lease slot-0).
-> There is nothing for a conductor to thread: every fanned-out worker self-leases a distinct slot.
+> There is nothing for a conductor to thread: every fanned-out worker self-leases a distinct slot
+> **within its repo** (allocation is per-repo, so workers on different repos may share an index —
+> harmless, the physical `<repo>/.claude/wt-pool/slot-N` paths differ).
 
 - A leftover worktree/branch at the slug is usually from an EXPIRED claim — but
   distinct itemIds CAN collide on one slug, so never assume. Check
@@ -242,9 +245,11 @@ reservation aggregate is a slice-3 follow-up.)
    `npm run dev -- backfill <owner>/<repo>` (full form, like `post-findings`)
    then `npm run dev -- reconcile`;
    `npm run ritual:post-merge` covers reviews + resolve-findings.
-3. Cleanup from the repo root: `git worktree remove .claude/worktrees/<slug>`
-   (it should be clean after a merge — investigate before reaching for
-   `--force`), delete the merged branch.
+3. Cleanup from the repo root — **only if you cold-added**: `git worktree remove
+   .claude/worktrees/<slug>` (it should be clean after a merge — investigate
+   before reaching for `--force`), delete the merged branch. **If you leased a
+   warm slot (`.claude/wt-pool/slot-N`), leave it in place** — the pool reuses it
+   and the next lease resets it to a pristine tree; do NOT remove it.
 
 ## Phase 6 — RELEASE
 
