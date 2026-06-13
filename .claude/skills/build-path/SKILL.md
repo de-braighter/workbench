@@ -91,10 +91,31 @@ is disjoint from every ACTIVE claim. Design consequences:
    UI text is i18n'd (working-language convention): each surface's strings
    live in a page-scoped i18n file INSIDE its pathPrefix; the shell item owns
    the i18n loader wiring and any shared/common keys.
-5. **ADR needs.** List the ADRs the path requires. T0: expected none
-   (pack-native; an apparent kernel need is a charter design smell to escalate,
-   not to build). T1: the ADR set goes to Gate 2. T2: additionally mark
-   affected items `designer-first` and note the per-ADR founder gates (spec §3).
+5. **ADR needs.** For each ADR the path requires:
+   1. Read the target repo's current `next-free-adr` from its ADR registry
+      (`layers/specs/adr/README.md` for cross-cutting/kernel ADRs; a domain
+      repo's equivalent for domain-local ADRs) — this is the **floor** and is
+      REQUIRED: `foundry_reserve_adr` rejects a missing floor.
+   2. Call `foundry_reserve_adr { itemId: '<key>/ADR-<n>', repo: '<adr-repo>',
+      floor: <floor> }` to obtain the allocated number. The tool serializes
+      under the shared store-lock — two parallel build-path runs cannot grab the
+      same number.
+   3. Emit a dedicated **ADR-authoring work item** with `itemId: '<key>/ADR-<n>'`
+      scoped to the ADR file path in that repo (`{ repo: '<adr-repo>',
+      pathPrefix: 'adr/adr-<n>-' }`). This item is disjoint from all
+      product-code items by *different repo* (rule 1 of the disjointness
+      algorithm), or, when co-located in the same repo — e.g. a kernel ADR +
+      substrate code both in `layers/specs` — a non-nested `adr/` prefix;
+      see step 8.
+   4. Add `'<key>/ADR-<n>'` to the code item's `dependsOn` array for every
+      code item that cites that ADR — the MINIMAL set (only items that actually
+      need the ADR spec before they can be built). Over-broad `dependsOn`
+      serializes the fan-out unnecessarily.
+
+   T0: expected none (pack-native; an apparent kernel need is a charter design
+   smell to escalate, not to build). T1: the ADR set and authoring items go to
+   Gate 2. T2: additionally mark affected items `designer-first` and note the
+   per-ADR founder gates (spec §3).
 6. **Quality battery config.** Derive from the tier row + charter quality
    plan: which deterministic gates run for this product (lint audit set, knip,
    coverage-delta, mutation tier, non-superuser DB tests, a11y battery) and
@@ -114,6 +135,13 @@ is disjoint from every ACTIVE claim. Design consequences:
    verify every `dependsOn` id appears in the item list (or is already queued
    for this product) — queue_push accepts dangling ids silently, and a dangling
    dependency bricks its item forever (its deps can never be satisfied).
+
+   ADR-authoring items (`<key>/ADR-<n>`) in the specs repo are `different repo`
+   from product-repo code items → trivially disjoint by rule 1 (no pair-table
+   entry needed). The dangling-`dependsOn` check must confirm that every
+   `<key>/ADR-<n>` referenced in a code item's `dependsOn` appears in the item
+   list (either newly emitted in step 5 or already queued) — a dangling ADR
+   dependency is caught here, not silently at push time.
 9. **Write the doc** `docs/foundry/<key>/build-path.md`:
 
    ```markdown
