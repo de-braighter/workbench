@@ -613,9 +613,12 @@ not by the launch restriction.
 4. **Coordinator-presence observability** — optional `ConductorRegistered` record (§C.3).
 5. **Multi-ADR items** — current model is 1 item ↔ 1 ADR; an epic touching several ADRs
    decomposes into multiple ADR-authoring items (no `number[]` needed).
-6. **Warm pool reset robustness + warm-up** (§C.4) — the reset-on-lease must be proven
-   pristine-preserving-`node_modules` (the corruption risk); first-fill of a slot still pays
-   one cold install; multi-coordinator pool-sharing needs a per-slot lease (slice 3).
+6. **Warm pool reset robustness + warm-up** (§C.4) — **RESOLVED (item B).** Reset-on-lease is
+   proven pristine-preserving-`node_modules` by the real-git integration test (`domains/foundry`
+   `test/wt-pool.test.ts`), and `ensureSlot` validates a slot is its own worktree root before
+   reuse (a corrupt slot would otherwise let the reset escape to the parent clone — the
+   wave-caught hazard, now healed + regression-tested). First-fill of a slot still pays one cold
+   install (inherent). **Still open:** multi-coordinator pool-sharing needs a per-slot lease (slice 3).
 7. **Green-desk FP-suppression ledger + stop condition** (§D) — **RESOLVED (2026-06-13,
    item C).** Reviewed false-positive suppressions live as **native per-tool ignore + an
    audit row** in `docs/foundry/green-desk/fp-ledger.md` (`| date | repo | tool | path | rule

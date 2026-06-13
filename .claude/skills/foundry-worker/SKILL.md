@@ -119,7 +119,11 @@ cd "$SLOT"   # pristine + warm node_modules, already on feat/<slug>
 On success `cd $SLOT` (the slot lives at `<repo>/.claude/wt-pool/slot-<i>` — pristine tree,
 warm `node_modules`, already on `feat/<slug>`). **On non-zero exit, fall back to the cold
 `git worktree add` recipe above** — the pool is a throughput layer, NEVER a correctness
-dependency. Keep the cold recipe as the default/fallback.
+dependency. Keep the cold recipe as the default/fallback. The conductor assigns each
+fanned-out worker its `<slotIndex>` (`0…cap-1`, pool size = the per-repo worker cap, the
+single-coordinator lease); a worker launched WITHOUT an assigned index omits this lease block
+and uses the cold recipe (the CLI rejects a non-integer index → non-zero exit → cold fallback,
+so a missing index just forfeits the warm speedup, never corrupts).
 
 - A leftover worktree/branch at the slug is usually from an EXPIRED claim — but
   distinct itemIds CAN collide on one slug, so never assume. Check
