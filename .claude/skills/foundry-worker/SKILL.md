@@ -1,6 +1,6 @@
 ---
 name: foundry-worker
-description: "Foundry worker-session boot protocol — atomically claim ONE work item, isolate in a git worktree, execute via existing skills, pass tier-gated quality, land the PR with the twin ritual, release the claim. Use when a pasted session prompt names a foundry work item, when asked to work an item from the foundry queue, or in POOL MODE (via the foundry-pool skill) where the session self-serves the top pool-eligible claimable item (never T2 / founder-launch-only)."
+description: "Foundry worker-session boot protocol — atomically claim ONE work item, isolate in a git worktree, execute via existing skills, pass tier-gated quality, land the PR with the twin ritual, release the claim. Use when a pasted session prompt names a foundry work item, when asked to work an item from the foundry queue, or in POOL MODE (via the foundry-pool skill) where the session self-serves the top pool-eligible claimable item."
 tags: [foundry, session-protocol, autonomous]
 ---
 
@@ -36,18 +36,17 @@ existing arsenal and adds only collision safety + tier-gated quality.
      pick a different one unless the founder said so.
    - **Pool mode** — launched via the `foundry-pool` skill, or asked to "work
      the next foundry item" with no itemId: `foundry_next` (**limit 50** — the
-     wide window is load-bearing: the queue sorts priority-ascending, so
-     stacked top-priority T2 items would otherwise hide eligible items further
-     down; "all ineligible" may only be concluded after seeing the full
-     claimable list) and take the TOP **pool-eligible** item. Candidates are
-     re-fetched on each Phase-1 retry — the extras are context, not
-     alternatives to browse by preference.
-     **Pool eligibility:** skip any candidate whose `riskTier` is **T2** (T2 is
-     founder-launch-only by default — `foundry_next` returns `riskTier` per
-     item) and any candidate whose `qualityObligations` include
-     `founder-launch-only`. Skipping an ineligible candidate does not consume a
-     claim attempt. ALL fetched candidates ineligible → report them
-     ("awaiting founder-launched sessions") and stop.
+     wide window is load-bearing: the queue sorts priority-ascending, so a run
+     of high-priority items must not hide claimable items further down; "nothing
+     claimable" may only be concluded after seeing the full list) and take the
+     TOP **pool-eligible** item. Candidates are re-fetched on each Phase-1
+     retry — the extras are context, not alternatives to browse by preference.
+     **Pool eligibility:** skip candidates whose dependencies are not yet `done`
+     (the server enforces this anyway, but skip eagerly to avoid wasted claim
+     attempts). T2 items are eligible — T2 control is at the gates, not the
+     launch (the conductor + `foundry_reserve_adr` ADR-number coordination make
+     parallel T2 build work collision-safe). Queue empty or all candidates
+     structurally blocked → report `foundry_status` and stop.
 3. Derive, before claiming:
    - **slug** — itemId lowercased, every non-`[a-z0-9]` run → `-`
      (`agri/E1.1` → `agri-e1-1`)
@@ -129,6 +128,15 @@ Route by situation — never invent a new build style:
 | Trivial, well-scoped fix | superpowers:test-driven-development directly |
 | Risky change (new ports, kernel primitives, cross-cutting) or **any T2 item** | designer-first (`workflows/designer-first.md`) FIRST — mandatory at T2 |
 
+**Reserved ADR numbers:** if the claimed item's `itemId` is `<key>/ADR-<n>`,
+the number is already in the itemId — consume it directly; do NOT read or
+allocate from `next-free-adr`. The designer-first step uses **that exact number**
+for the ADR file and PR title. The PR title is generated from the itemId
+(`ADR-<n> … (<productKey> <itemId>)`), which is what prevents item-attribution
+drift (the O-4→"O-2" mislabel cannot recur when the title comes from the itemId,
+not from the worker's freehand choice). (A `foundry_status`/read surface for the
+reservation aggregate is a slice-3 follow-up.)
+
 - Honor the item's `qualityObligations` (they parameterize the floor, e.g. `mutation>=60`).
 - Discover you must touch files outside the scope → spec §7 stance: the OLDER
   claim proceeds; YOU hand back — `foundry_handoff { claimId, note: <what overlaps> }`,
@@ -200,7 +208,7 @@ Then STOP. Final report: item, PR, wave verdicts, ritual confirmations, claim re
 | Situation | Action |
 | --- | --- |
 | Foundry MCP unavailable / store corrupt | No claim → no work. Stop, report. |
-| Claim rejected | Item mode: stop, report which conflict. Pool mode: re-fetch `foundry_next`, claim the new pool-eligible top (≤3 attempts total); all-ineligible → report + stop. |
+| Claim rejected | Item mode: stop, report which conflict. Pool mode: re-fetch `foundry_next`, claim the new pool-eligible top (≤3 attempts total); queue empty or all structurally blocked → report `foundry_status` + stop. |
 | Worktree creation fails | `foundry_release(blocked)` + note. |
 | Scope overlap discovered mid-build | Older claim proceeds; newer `foundry_handoff` + stop. |
 | Quality floor red | `foundry_release(blocked)` with the failure attached. |
