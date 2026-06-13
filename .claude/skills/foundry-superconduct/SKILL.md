@@ -282,9 +282,12 @@ and worker it transitively spawns to enforce, unchanged:
   covers the unattended case within one session's context budget; a fresh superconductor resumes
   by re-partitioning from `foundry_status`).
 
-The **warm worktree pool** (design §C.4, item B / slice 2.5) is **shipped** (tested module +
-the `foundry-worker` lease mechanism) and composes orthogonally — the superconductor itself
-needs no change. **Auto-engagement is slice-3:** a naive worker-index→slot mapping collides
-under the superconductor (two conductors on one repo both lease slot-0), so threading a
-per-worker `<slotIndex>` through the fan-out waits for the multi-coordinator per-slot lease;
-until then the conductors' workers cold-add.
+The **warm worktree pool** (design §C.4, item B / slice 2.5) is **shipped and auto-engaged** and
+composes orthogonally — the superconductor itself needs **zero change**. **Auto-engagement
+(slice-3 per-slot lease, shipped foundry#6):** each worker SELF-LEASES its slot index via
+`foundry_lease_slot { claimId }` (in `foundry-worker` ISOLATE); the foundry allocates the lowest
+free index under its single store-lock, so every worker across every lane and every conductor
+gets a DISTINCT slot **by construction** — the multi-coordinator collision (two conductors on one
+repo both leasing slot-0, which a naive worker-index→slot map would cause) is impossible. The
+hierarchy threads NO `<slotIndex>`: the store-lock arbitrates slot allocation globally, exactly as
+it arbitrates `claim()`.
