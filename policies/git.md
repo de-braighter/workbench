@@ -32,6 +32,8 @@ works in the shared clone").
 
 ## Verifier wave
 
+**Review floor (founder decision 2026-06-13): no PR merges without at least one adversarial review pass.** Every PR — including pure-doc, single-line, rename, and comment-only changes — gets at minimum a single `/code-review` pass (one agent, low effort, high-confidence findings) before merge. The SDLC twin showed ~93% of PRs were merging with zero agent review; the floor closes that gap without taxing trivia with the full wave. Non-trivial PRs get the **full wave** on top:
+
 Every non-trivial PR (new endpoint, schema migration, multi-component UI feature, cross-pack contract change) gets the verifier wave **in parallel** before merging (four agents always; `exercir-charter-checker` joins on `domains/exercir/` PRs):
 
 - `local-ci` — build + test + lint + PHI scan
