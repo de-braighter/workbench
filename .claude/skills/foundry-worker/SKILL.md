@@ -105,6 +105,22 @@ cd .claude/worktrees/<slug>
 npm install   # or pnpm install — lockfile decides; a fresh worktree starts without node_modules
 ```
 
+**Warm pool (throughput; correctness never depends on it).** If the conductor maintains a
+warm pool, lease a slot instead of the cold `git worktree add` above:
+
+```bash
+# add the pool dir to .git/info/exclude (idempotent), like .claude/worktrees/ — domains/foundry
+# already gitignores .claude/wt-pool/, so this only matters for OTHER repos:
+grep -q '\.claude/wt-pool/' .gitignore .git/info/exclude 2>/dev/null || echo '.claude/wt-pool/' >> .git/info/exclude
+SLOT=$(cd domains/foundry && npm run -s wt-pool -- lease <repo-local-path> feat/<slug> <slotIndex> origin/main)
+cd "$SLOT"   # pristine + warm node_modules, already on feat/<slug>
+```
+
+On success `cd $SLOT` (the slot lives at `<repo>/.claude/wt-pool/slot-<i>` — pristine tree,
+warm `node_modules`, already on `feat/<slug>`). **On non-zero exit, fall back to the cold
+`git worktree add` recipe above** — the pool is a throughput layer, NEVER a correctness
+dependency. Keep the cold recipe as the default/fallback.
+
 - A leftover worktree/branch at the slug is usually from an EXPIRED claim — but
   distinct itemIds CAN collide on one slug, so never assume. Check
   `foundry_status` first: any OTHER session's active claim referencing that
