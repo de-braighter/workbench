@@ -227,22 +227,29 @@ loop (until context-critical OR idle-stop):
   a. POLL: foundry_status + foundry_next(limit 50) — lock-free, advisory
 
   b. MERGE PASS — for each PR in awaiting-merge set (including RECOVERY PASS entries):
-       CHECK GATE (fail-closed): call foundry_gate_status { productKey: <item's productKey> }
+       CHECK GATE (fail-closed — item-bound):
+         call foundry_gate_status { productKey: <item's productKey> }
          Find the gate(s) the item requires: 'ship' (T2 mandatory); 'adr' (new port/primitive).
-         A gate is APPROVED iff its returned record has decision === 'approved'.
-         FAIL CLOSED: any required gate that is pending, rejected, or absent → NOT approved
-         → DO NOT MERGE. foundry_status shows only pending gates; absence from pending ≠
-         proof of approval. foundry_gate_status is the authoritative source.
+         A gate is APPROVED for THIS ITEM iff its returned record has decision === 'approved'
+         AND its payloadRef references THIS item (contains the itemId or the prRef).
+         FAIL CLOSED: any required gate that is pending, rejected, absent, or whose
+         payloadRef does NOT reference this item → NOT approved → DO NOT MERGE.
+         INVARIANT: a sibling item's approved gate NEVER authorizes merging this item —
+         match by payloadRef FIRST, then check decision.
+         foundry_status shows only pending gates; absence from pending ≠ proof of approval.
+         foundry_gate_status is the authoritative source.
        if waveVerdict == 'green' AND foundry_gate_status shows every required gate approved
-          (or T0/T1 = no gate):
+          with payloadRef matching THIS item (or T0/T1 = no gate):
          gh pr merge --admin (squash)
          → VERIFY MERGED: gh pr view <pr> --json state must equal MERGED before proceeding
          → twin ritual (drain → backfill → reconcile)
          → foundry_record_merge { itemId, prRef }   ← terminalizes built → done
          → worktree cleanup (after VERIFIED-merged)
-       if T2 gate not approved (foundry_gate_status decision ≠ 'approved'): leave in set; re-check next pass
+       if T2 gate not approved (foundry_gate_status decision ≠ 'approved' OR no gate with
+          matching payloadRef): leave in set; re-check next pass.
        INVARIANT: T2 is NEVER merged without foundry_gate_status showing decision:'approved'
-                  for its 'ship' gate (+ 'adr' gate if new port/kernel primitive).
+                  for a gate whose payloadRef references THIS item's 'ship' gate (+ 'adr'
+                  gate if new port/kernel primitive). A sibling item's approval is NOT sufficient.
                   Cleanup NEVER runs before gh pr view confirms state === MERGED.
 
   c. DISPATCH PASS — for each claimable item NOT in awaiting-merge set (cap = maxWorkers):
@@ -251,8 +258,10 @@ loop (until context-critical OR idle-stop):
                → OWN verifier wave (reviewer + qa-engineer + charter-checker,
                   + exercir-charter-checker if repo=domains/exercir)
                → post-findings → open PR
-               → T2: WORKER issues foundry_gate_request{ship}
-                     (+ {adr} if new port/kernel primitive) — WORKER OWNS THIS
+               → T2: WORKER issues
+                     foundry_gate_request{ productKey, gateType:'ship', payloadRef:'<itemId>|<prRef>' }
+                     (+ second call with gateType:'adr' if new port/kernel primitive)
+                     — WORKER OWNS THIS; payloadRef binds the gate to THIS item
                      release built (prRef persisted natively)
                → T0/T1: release built (prRef persisted natively)
                → RETURN { itemId, prRef, waveVerdict, blockingCount, gate, outcome } })
@@ -260,9 +269,10 @@ loop (until context-critical OR idle-stop):
        NOTE: conductor NEVER issues gate requests — it only reads log + merges after approval
 
   d. IDLE CHECK: if nothing dispatched AND awaiting-merge empty → bounded backoff → filler:
-       TIER 1 (greenlit-predicate): foundry:GateDecided.v1{ gateType:'greenlight',
-         decision:'approved' } for that product in the log. Filler MUST NOT act on
-         non-greenlit products.
+       TIER 1 (greenlit-predicate): call foundry_gate_status { productKey: <product> }
+         → find a gate with gateType:'greenlight' AND decision:'approved'.
+         Filler MUST NOT act on non-greenlit products. Do NOT grep the event log —
+         foundry_gate_status is the authoritative gate-decision source.
        TIER 2 (bounded): suppressed per repo until a merge changes it; per-cycle cap (10
          items default). Green-desk cannot livelock — a clean repo is never re-swept.
        TIER 3 (founder-gated): product-strategist surfaces proposals → STOP-FOR-FOUNDER.
@@ -277,10 +287,12 @@ loop (until context-critical OR idle-stop):
 #### The merge rule (inviolable boundary)
 
 Merge fires if and only if **both** hold: (i) **review is done** = `waveVerdict = 'green'`
-(zero blocking/critical findings from the worker's own wave); (ii) **gate check passes** =
-`foundry_gate_status { productKey }` returns `decision: 'approved'` for every gate the item
-requires. FAIL CLOSED: any required gate that is `pending`, `rejected`, or absent → not
-approved → DO NOT MERGE.
+(zero blocking/critical findings from the worker's own wave); (ii) **gate check passes
+(item-bound)** = `foundry_gate_status { productKey }` returns `decision: 'approved'` for
+every gate the item requires AND whose `payloadRef` references THIS item. FAIL CLOSED: any
+required gate that is `pending`, `rejected`, absent, or whose `payloadRef` does not reference
+this item → not approved → DO NOT MERGE. A sibling item's approved gate NEVER authorizes
+merging this item.
 
 After a successful merge:
 - **Verify** — `gh pr view <pr> --json state` must return `MERGED` before any cleanup.
@@ -290,12 +302,15 @@ After a successful merge:
 
 - **T0 / T1**: no per-item founder gate → merge on green wave alone.
 - **T2**: mandatory `ship` gate; mandatory `adr` gate when a new port/kernel primitive is
-  introduced. The **WORKER** issues `foundry_gate_request{ship}` (+ `{adr}`) at build time
-  and releases `built` (prRef persisted natively); the **CONDUCTOR** calls
-  `foundry_gate_status` for approval and performs the merge, then calls `foundry_record_merge`
-  to terminalize. **The conductor NEVER merges a T2 PR without `foundry_gate_status` showing
-  `decision:'approved'`; it also NEVER issues gate requests itself.** Gates are non-blocking
-  across products.
+  introduced. The **WORKER** issues
+  `foundry_gate_request { productKey, gateType: 'ship', payloadRef: '<itemId> | <prRef>' }`
+  (+ a second call with `gateType: 'adr'`) at build time and releases `built` (prRef persisted
+  natively); the **CONDUCTOR** calls `foundry_gate_status`, matches the gate by `payloadRef`
+  to THIS item, and performs the merge only when every required item-bound gate is `approved`,
+  then calls `foundry_record_merge` to terminalize. **The conductor NEVER merges a T2 PR
+  without `foundry_gate_status` showing `decision:'approved'` for a gate whose `payloadRef`
+  references THIS item; it also NEVER issues gate requests itself.** A sibling item's approved
+  gate is NOT sufficient. Gates are non-blocking across products.
 
 #### Context-critical stop and stateless restart (TRUE — proven by the RECOVERY PASS)
 
@@ -398,10 +413,12 @@ for any ADR-needing items, and `dependsOn` edges so the conductor fans out safel
 within the existing greenlight — the product was approved when the conductor started building
 it; `/build-path` only emits NEW itemIds and is idempotent on existing items.
 
-**Greenlit predicate (machine-checkable):** A product is greenlit when the foundry log
-contains `foundry:GateDecided.v1{ gateType: 'greenlight', decision: 'approved' }` for that
-product (or the product's charter status is `approved`). A filler MUST NEVER widen its
-mandate to a non-greenlit product.
+**Greenlit predicate (machine-checkable):** A product is greenlit when
+`foundry_gate_status { productKey: <product> }` returns a gate with
+`gateType: 'greenlight'` AND `decision: 'approved'` (or the product's charter status is
+`approved`). Use `foundry_gate_status` — NOT an event-log grep. All gate-decision checks
+(ship / adr / greenlight) use `foundry_gate_status`; no event-log grep remains for gate
+decisions. A filler MUST NEVER widen its mandate to a non-greenlit product.
 
 **Gate: none.** The product is already greenlit.
 
@@ -514,7 +531,12 @@ not by the launch restriction.
 
 **Resolved (shipped foundry#4 — 2026-06-13):**
 - ~~`foundry_gate_status` MCP read op~~ — **DONE.** The conductor now calls
-  `foundry_gate_status { productKey }` directly; the event-log grep workaround is retired.
+  `foundry_gate_status { productKey }` directly for ALL gate decisions (ship, adr, and
+  greenlight). No event-log grep for gate decisions remains anywhere. Gate lookup is
+  **item-bound via `payloadRef`**: the worker stamps `payloadRef: '<itemId>|<prRef>'` in
+  `foundry_gate_request`, and the conductor matches gates by `payloadRef` before treating
+  them approved — a sibling item's approved gate cannot authorize merging this item (fail-OPEN
+  closed).
 - ~~`built` release outcome persisting `prRef` in the foundry log~~ — **DONE.** Workers
   release `foundry_release { outcome: 'built', prRef }` natively; the RECOVERY PASS reads
   the `BUILT (awaiting merge)` section of `foundry_status` directly (exact, no reconstruction).
