@@ -58,7 +58,7 @@ New `Template` model + `kids_football.template` table mirroring the drill table 
 - Use-cases (`Result<T,E>`, mirroring the **drill quartet** — `List` / `Create` / `Update` / `Delete`, **no `Get`**): `ListTemplates`, `CreateTemplate`, `UpdateTemplate`, `DeleteTemplate`. The builder loads a single template via the store (`store.templates().find(id)` → `loadTemplates()` fallback), exactly like the drill editor — so there is **no `GetTemplate` use-case and no `GET :id` endpoint** (`repository.findById` exists only as the internal primitive the update/delete services use). Save invariant at the use-case: `name` non-empty + `items.length ≥ 1` (`invalid-input` otherwise); update validates the merged candidate; not-found → `template-not-found`.
 - **Cascade wiring:** `DeleteDrillService` gains a `TemplateRepository` dependency and calls `removeDrillReferences(drillId)` after the drill delete succeeds. Non-atomic across repos (drill repo + template repo) — pinned in a doc comment exactly like the slice-2 cascades. The seam doc-comment is updated (event arm still deferred to slice 6).
 - `templates.controller.ts` (mirrors `drills.controller.ts` exactly): `GET` list, `POST`, `PATCH :id`, `DELETE :id` with `@RequiresPermission(templateRead/templateWrite)` (no `GET :id`); e2e proves the 403 matrix (teamManager/facilities denied) + the cross-club invisibility + the cascade (delete a referenced drill → its items vanish from templates). Response shapes: list = `Template[]`, create/update = plain `Template` (the per-endpoint-shape lesson).
-- Stub-club demo seed: seed a couple of starter templates for both stub clubs at bootstrap (in-memory only), composed from the seeded starter drills, so the list demos populated — mirroring `seedDemoDrills` (slice 4 D-2).
+- **No stub-club template seed** (decision 3) — unlike slice-4 drills (which needed a populated library to demo the coach home), an empty template list is the honest first-run state and has a designed empty-state card. This decouples template seeding from the minted drill ids (avoiding a fragile seed-ordering dependency); the browser run-through builds a template to exercise the full flow.
 
 ### 4.4 UI (`pack-kids-football-ui`)
 
@@ -93,7 +93,8 @@ DELETE /kids-football/drills/:id
 
 ## 7. Scope / YAGNI
 
-- **In:** the template vertical (contracts → migration/RLS → repo×2 → use-cases → controller → client → 2 UI pages), the drill→template cascade (template-item arm), the folded `club @@index` drop, stub-club demo seed.
+- **In:** the template vertical (contracts → migration/RLS → repo×2 → use-cases → controller → client → 2 UI pages), the drill→template cascade (template-item arm), the folded `club @@index` drop.
+- **Not seeded:** no stub-club starter templates (decision 3) — the empty-state card is the first-run experience.
 - **Out (deferred):** scheduling a template onto a slot → event (slice 6, incl. the event arm of the cascade + the teamManager template-read-for-calendar question); F1 event-log writes (exercir#245 posture carried forward — doc-comment, not wired); remaining #251/#255 nits beyond the folded index; i18n bundles beyond the existing `kf-i18n` pattern for the new strings; drag-and-drop reorder (▲▼ buttons only, prototype parity — a11y-friendly).
 
 ## 8. Risks / notes
