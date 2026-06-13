@@ -395,8 +395,10 @@ level fanning out the next.
 orchestration primitive changes. **Path:** slice 2 = Workflow leaf-unit (shipped); the superconductor
 + `Agent`-loop conductor is **shipped (item D, 2026-06-13 — see the "Implemented" note above)**:
 the superconductor reuses the **autonomous** conductor (itself an `Agent`-loop), one per product
-lane. The **warm worktree pool** (§C.4 / slice 2.5, item B) is **shipped (2026-06-13)** and
-composes orthogonally — conductors' workers lease pool slots, lease-or-cold-add.
+lane. The **warm worktree pool** (§C.4 / slice 2.5, item B) is **shipped (2026-06-13)** as a
+tested module + the `foundry-worker` lease mechanism and composes orthogonally — workers cold-add
+today and lease only when a launch prompt carries a `<slotIndex>`; auto-engagement (threading the
+index through the fan-out) is slice-3 (see the §C.4 "Implemented" note).
 
 ## Component D — Periodic green-desk sweep (maintenance workstream)
 
@@ -652,10 +654,12 @@ not by the launch restriction.
 - **Slice 2 — The conductor (Component C) + drop T2-launch-only.** `/foundry-conduct` skill +
   the Workflow script (fresh worktree per worker); concurrency guards; skill eligibility
   edits.
-- **Slice 2.5 — Warm worktree pool (§C.4). DONE (2026-06-13, item B).** Per-repo warm pool
-  with bulletproof reset-on-lease, shipped as the tested `domains/foundry/src/wt-pool.ts`
-  module (+ `wt-pool-cli.ts`); `foundry-worker` ISOLATE leases a slot, lease-or-cold-add
-  fallback. Single-coordinator lease (multi-coordinator per-slot lease stays slice-3).
+- **Slice 2.5 — Warm worktree pool (§C.4). MODULE + MECHANISM DONE (2026-06-13, item B);
+  auto-engagement slice-3.** Per-repo warm pool with bulletproof reset-on-lease, shipped as the
+  tested `domains/foundry/src/wt-pool.ts` module (+ `wt-pool-cli.ts`); `foundry-worker` ISOLATE
+  carries the lease MECHANISM (leases if its prompt has a `<slotIndex>`, else cold-adds —
+  lease-or-cold-add). The conductor/superconductor fan-out does NOT yet thread the index, so
+  auto-engagement (single-coordinator lease; multi-coordinator per-slot lease) stays slice-3.
   Throughput layer; correctness never depends on it.
 - **Slice 3 (later) — refinements.** Orphan-reconcile op, gate-aware board reporting,
   coordinator-presence record, per-item TTL policy, multi-coordinator pool-lease.
