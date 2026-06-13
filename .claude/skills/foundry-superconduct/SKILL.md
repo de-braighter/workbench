@@ -126,15 +126,18 @@ loop (until ALL lanes idle OR context-critical):
      + dependsOn is build-path's contract — trust it + the fail-closed scopesDisjoint backstop.
 
   c. DISPATCH one conductor subagent per lane (cap = maxConductors, default 4; excess lanes
-     wait for the next pass). Skip a lane that already has a live conductor running this pass.
-     For each lane:
+     wait for the next pass). Track which lanes you dispatched THIS pass (transient,
+     in-context — NOT durable state) and do not double-dispatch the same lane within one
+     pass; across passes, a redundant conductor is harmless (the store-lock arbitrates — a
+     lost claim re-fetches). For each lane:
        Agent({
          subagent_type: <general-purpose>,
          model: <pinned>,                       // pin — inheritance death orphans a whole lane
          prompt: conductorPrompt(productKey)     // see "## The conductor-subagent prompt"
        })
-     Conductors run CONCURRENTLY (N lanes × M workers each = N×M concurrent builds). Each
-     returns ONE lane summary.
+     Conductors run CONCURRENTLY: min(N, maxConductors) lanes × M workers each concurrent
+     (the cap bounds the parallel lanes; excess lanes run on later passes). Each returns ONE
+     lane summary.
 
   d. COLLECT summaries (barrier or rolling): hold ONLY
        { productKey, built, merged, awaitingGate, idle, stopReason }
