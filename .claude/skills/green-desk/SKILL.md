@@ -73,12 +73,17 @@ the best-possible value on every dimension (spec §D.1):
 ## Procedure
 
 1. **Resolve targets.** `--all` → enumerate the cluster repos **from the
-   filesystem**: every `domains/<name>/` + `layers/<name>/` directory + the
-   workbench root (these are the foundry `repo` strings `de-braighter/<name>`
-   and `de-braighter/workbench`). **Do NOT read targets from `foundry_status`**
-   — its board (`status.ts`) prints `productKey [riskTier] prio= stage=` but
-   **no `repo`**, so it cannot enumerate the repo set. A named repo → just that
-   one. The **`<repo-slug>`** used in every product key + itemId is the repo's
+   filesystem**, but only the **real clone roots**: a `domains/<name>/` or
+   `layers/<name>/` directory (or the workbench root) is a target iff it contains
+   a **`.git` _directory_** AND its `origin` remote is a `de-braighter/*` repo
+   (`git -C <dir> remote get-url origin`). This **excludes** the orphaned
+   worktree/scratch siblings that litter the cluster (`domains/<name>-wt-*`,
+   `layers/<name>-wt-*`, `*-ws*`, `*-prepush-wt`, etc.): a git **worktree** has a
+   `.git` _file_ (not a directory) and a scratch dir has no `.git` at all, so
+   both are skipped. The resulting `repo` strings are `de-braighter/<name>` and
+   `de-braighter/workbench`. **Do NOT read targets from `foundry_status`** — its
+   board (`status.ts`) prints `productKey [riskTier] prio= stage=` but **no
+   `repo`**, so it cannot enumerate the repo set. A named repo → just that one. The **`<repo-slug>`** used in every product key + itemId is the repo's
    short name: `de-braighter/<name>` → `<name>` (`de-braighter/exercir` →
    `exercir`); `de-braighter/workbench` → `workbench`. Map a `repo` to its
    filesystem path: `de-braighter/<name>` → `domains/<name>/` or
@@ -91,10 +96,11 @@ the best-possible value on every dimension (spec §D.1):
    nothing) when EITHER:
    - `ledger.lastSweptCommit === HEAD` **and** `ledger.pushPending` is not set —
      nothing merged since the last sweep, so the same state would re-emit; or
-   - the previous sweep's `ledger.emittedItems` are still **in flight** — any of
-     them is still `queued`/`claimed`/`built` (not yet `done`) per
-     `foundry_status`. Re-sweeping before the prior cleanup lands would falsely
-     read as no-progress (step 8); wait for them to resolve.
+   - the previous sweep's emitted items are still **in flight** — the repo's
+     `green-desk-<repo-slug>` product still shows a non-`done` count
+     (queued + claimed + built > 0) on the `foundry_status` board. Re-sweeping
+     before the prior cleanup lands would falsely read as no-progress (step 8);
+     wait for them to resolve.
 
    `--force` bypasses both skips. **If `ledger.pushPending` is set** (a prior
    sweep scanned but could not reach the foundry), do NOT suppress on an
@@ -187,7 +193,8 @@ the best-possible value on every dimension (spec §D.1):
    never an already-queued collision (a prior cycle's items keep their own sha,
    and a same-HEAD double-emit is already blocked by the step-2 suppression).
    The dedup is therefore **structural**, not a `foundry_status` pre-check — the
-   board exposes per-product item *counts*, never itemIds. The title names the
+   board shows per-product item *counts* plus only the top-N claimable/active/built
+   itemIds, never a product's full queued itemId set. The title names the
    acceptance bar itself ("drive each named dimension to 0"), so no separate
    obligation token is needed. **Cap at the per-cycle item cap (default 10)**;
    yield the rest to the next cycle (the next sweep emits them once HEAD moves or

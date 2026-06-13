@@ -583,15 +583,19 @@ not by the launch restriction.
    audit row** in `docs/foundry/green-desk/fp-ledger.md` (`| date | repo | tool | path | rule
    | justification | reviewer |`) — never silent; `/green-desk` step 5 reads the ledger so a
    suppressed offense is never re-emitted. The loop's stop condition is **no-new-progress**:
-   after 2 consecutive sweeps with no offense-count reduction at an unchanged `origin/main`
-   HEAD, the repo's debt is surfaced as "stuck" (needs an FP row or a founder decision)
-   rather than looped.
+   after 2 consecutive **genuine re-sweeps** — each admitted only when `origin/main` HEAD has
+   **moved** AND the prior sweep's emitted items have resolved — show no offense-count
+   reduction, the repo's debt is surfaced as "stuck" (needs an FP row or a founder decision)
+   rather than looped. (The counter trips independent of HEAD, so the stop is reachable; the
+   earlier "unchanged-HEAD" framing was self-contradictory and is corrected here.)
 8. **Green-desk cadence/scope + mutation target** (§D.5/D.1) — **RESOLVED (2026-06-13,
    item C).** Cadence = the conductor's IDLE **tier-2** (primary, event-driven and
    suppression-bounded) + on-demand `/green-desk <repo>` / `--all` + an optional scheduled
-   `CronCreate` wrapper. Scope = the repos of **all active foundry products** (the
-   `green-desk-*` synthetic products are skipped). Mutation stays **coverage-like at the tier
-   floor** (prefer higher), with **no separate hard target**.
+   `CronCreate` wrapper. Scope (`--all`) = the cluster repos enumerated **from the
+   filesystem** — real clone roots only (a `.git` _directory_ with a `de-braighter/*`
+   origin), which skips orphaned worktree/scratch siblings; **not** read from `foundry_status`
+   (its board has no `repo`). Mutation stays **coverage-like at the tier floor** (prefer
+   higher), with **no separate hard target**.
 
 ## 10. Build slices (one spec → three slices)
 
