@@ -1,6 +1,6 @@
 ---
 name: foundry-conduct
-description: Foundry CONDUCTOR — register a session as a coordinator that drives the queue autonomously. It polls foundry_next, fans out self-serving worker subagents over the disjoint claimable frontier in waves (parallel, lean main context via the Workflow tool), and surfaces founder gates. Use when the founder says '/foundry-conduct', 'register me as a coordinator', 'conduct the foundry', or 'drain/build the queue'. The founder's only inputs are the masterplan (upstream, via /build-path) and the gate decisions — everything between is automatic. Two modes: PREVIEW (default, safe — show the fan-out plan, dispatch nothing) and BUILD (fan out workers that build items to PRs).
+description: Foundry CONDUCTOR — register a session as a coordinator that drives the queue autonomously and never idles. It polls foundry_next, fans out self-serving worker subagents over the disjoint claimable frontier, surfaces founder gates, and — when the frontier empties — invokes the pipeline-filler (Component E) to replenish work: continuation via /build-path (auto), green-desk sweep (auto), and new-product proposals via product-strategist (founder-greenlight-gated). Three modes: PREVIEW (default, safe — show the fan-out plan, dispatch nothing); BUILD (fan out workers that build items to PRs, no auto-merge); AUTONOMOUS (full loop — workers build + run their own verifier waves, conductor auto-merges when review is done + all founder gates are green, stops when all 3 filler tiers exhausted OR context-critical; T2 NEVER merges without a GateDecided{approved} log record). Use when the founder says '/foundry-conduct', 'register me as a coordinator', 'conduct the foundry', or 'drain/build the queue'. The founder's only inputs are the masterplan (upstream, via /build-path), the gate decisions, and greenlight decisions for new-product proposals.
 ---
 
 # Foundry Conductor
@@ -20,7 +20,10 @@ gates**. The conductor owns everything in between.
   lock-free) and *dispatches* workers. Every claim/write happens inside a worker subagent
   under `foundry_claim` (the store-lock arbitrates; the conductor needs zero collision logic).
 - **The conductor NEVER auto-merges a T2 item.** Workers build T2 to its PR and release
-  `blocked` (pending the founder gate); the conductor surfaces the gate. T2 ships only on a founder gate.
+  `blocked` (pending the founder gate); the **WORKER** issues `foundry_gate_request{ship}`
+  (+ `{adr}` if a new port/kernel primitive) at build time. The **CONDUCTOR** discovers
+  gate decisions via the foundry event log and merges only after approval. T2 ships only
+  on a founder gate.
 - **One item per worker subagent.** Fresh context per item is a quality feature. Pool capacity
   = the conductor's fan-out width, bounded by the disjoint claimable frontier.
 - **Multi-coordinator safe.** Several sessions may each register as a coordinator; the foundry
@@ -29,28 +32,275 @@ gates**. The conductor owns everything in between.
 
 ## Modes
 
+Three modes form a safety ladder — start at `preview`, graduate to `build`, then `autonomous`:
+
 - **`preview`** (DEFAULT — safe, dispatches NOTHING): scout `foundry_next`, compute + report
   the wave plan (which mutually-disjoint items, how many workers, what's gate-blocked), then
   stop. Use this first to see what the coordinator *would* do.
 - **`build`**: fan out one worker subagent per disjoint claimable item; each builds the item to
   a PR (claim → worktree → build → `ci:local` → push → open PR → release
-  `blocked` (pending review+merge)) and surfaces the PR ref. **v1 does NOT auto-merge** — the verifier
+  `blocked` (pending review+merge)) and surfaces the PR ref. **Does NOT auto-merge** — the verifier
   wave + merge (and every T2 ship gate) stay with the founder/orchestrator. After a wave it
   re-polls (newly-unblocked items surface as deps release `done`) up to `maxWaves`, stopping on
-  an unchanged frontier (no-progress) or an empty frontier.
+  an unchanged frontier (no-progress) or an empty frontier. Run via the **Workflow tool**.
+- **`autonomous`** (the full loop — auto-merge when review is done + gates are green; stops at
+  context-critical): fan out workers that build AND run their own verifier waves; the conductor
+  then auto-merges any PR whose wave passed with zero blocking findings AND all required founder
+  gates are green. Runs **continuously** until context-critical or the frontier is idle. **T2
+  NEVER merges without an approved founder gate.** See "## Autonomous mode" below. Run as an
+  **Agent-loop session** (NOT via the Workflow tool — see the substrate rationale in that section).
 
 ## Protocol
 
 1. Mint a coordinator id once: `cond-<yyyyMMdd-HHmmss>-<4hex>` (reuse in logs).
 2. Sanity: `foundry_status` (board view).
-3. Run the conductor **Workflow** below via the Workflow tool, passing
-   `args: { mode, maxWaves, maxWorkers }`. Default `mode: 'preview'`. The founder graduates to
-   `mode: 'build'` once the preview looks right.
-4. Report: the wave plan (preview) or the built PR refs + any surfaced gates (build). Then STOP
-   — a coordinator session ends when the frontier is drained or only gate-blocked items remain;
-   it never polls idly.
+3. **For `preview` or `build` mode:** run the conductor **Workflow** below via the Workflow
+   tool, passing `args: { mode, maxWaves, maxWorkers }`. Default `mode: 'preview'`. The founder
+   graduates to `mode: 'build'` once the preview looks right.
+4. **For `autonomous` mode:** run the **Agent-loop** directly in this session — do NOT use the
+   Workflow tool. See "## Autonomous mode" below for the full loop.
+5. Report: the wave plan (preview), the built PR refs + surfaced gates (build), or the
+   merged-set + pending gates + stop reason (autonomous). Then STOP — a non-autonomous
+   coordinator ends when the frontier is drained or only gate-blocked items remain.
 
-## The conductor Workflow (run via the Workflow tool)
+## Autonomous mode (the full loop — Agent-loop, session-run)
+
+### Substrate
+
+Autonomous mode is run **BY THE SESSION** as an `Agent`-loop — NOT via the Workflow tool.
+Three reasons make this mandatory:
+
+1. **Workers must run their own verifier waves.** A Workflow `agent()` node is a leaf (no
+   `Agent`/`Task` spawn primitive in its toolset — verified 2026-06-13). Regular `Agent`-tool
+   subagents DO carry the `Agent` tool and CAN fan out child agents, so workers dispatched via
+   `Agent(...)` can run their own `reviewer + qa-engineer + charter-checker` wave. In a
+   Workflow, this is structurally impossible.
+2. **Async founder-gate wait.** The conductor must poll and wait for `foundry_gate_decide`
+   outcomes (which arrive out-of-band, hours later) — a Workflow cannot suspend across turns.
+3. **Runs until context-critical.** The loop continues for N passes over an evolving frontier
+   and must detect and react to its own context budget — a session can introspect this; a
+   Workflow cannot.
+
+The `preview` and `build` modes stay Workflow-based (bounded, deterministic, journaled,
+resumable). Autonomous is Session-based (continuous, auto-merge, async-gate-aware,
+workers-self-wave).
+
+### The loop (pseudo-protocol)
+
+```
+ON STARTUP and on every fresh conductor launch:
+
+  RECOVERY PASS — rebuild the awaiting-merge set from durable sources:
+    gh pr list --state open for each active repo
+    → match open PRs on feat/<slug> branches (slug encodes the itemId)
+    → for each matched PR: add { itemId, prRef, waveVerdict, gate } to awaiting-merge set
+      (gate = 'ship' if item riskTier is T2; waveVerdict = 'unknown' if not yet returned)
+    This is the only pass that writes the awaiting-merge cache on startup.
+    A built-but-unmerged item IS recognized by its open PR; it is NEVER re-built.
+    (Follow-up: a 'built' release outcome that persists prRef into the foundry log would
+     make this derivation exact; until then, feat/<slug> branch matching is the heuristic.)
+
+loop (until context-critical OR idle-stop):
+
+  a. POLL: foundry_status + foundry_next(limit 50) — advisory, lock-free reads.
+
+  b. MERGE PASS — for every PR in the awaiting-merge set (tracked from prior dispatches
+     OR discovered by the RECOVERY PASS above):
+       check: did the worker's verifier wave return waveVerdict == 'green' (0 blocking)?
+              AND are all founder gates for this item 'approved'?
+
+       HOW TO CHECK GATE APPROVAL (fail-closed):
+         Read the foundry event log: domains/foundry/data/events.jsonl
+         A gate is APPROVED iff a foundry:GateDecided.v1 record exists for that
+         gate's gateId with decision: "approved".
+         ABSENT an explicit "approved" record → the gate is NOT approved → DO NOT MERGE.
+         foundry_status lists only *pending* gates; a gate's absence from pending means
+         decided OR never-requested — NOT proof of approval. The log read is authoritative.
+         (A clean foundry_gate_status MCP read op is a follow-up; until then the conductor
+          reads the log, fail-closed.)
+
+       if BOTH (wave green AND gate log has GateDecided{approved}):
+         gh pr merge --admin (squash)
+         → twin ritual: drain <repo#pr> → backfill → reconcile
+         → foundry_release { claimId, outcome: 'done' }
+         → worktree cleanup (git worktree remove + branch -D after PR LANDED)
+         → remove from awaiting-merge set
+       if T2 with gate pending or undecided (no GateDecided{approved} in log):
+         leave in set; re-check next pass.
+       INVARIANT: NEVER merge a T2 item without a foundry:GateDecided.v1{ decision:'approved' }
+                  record in the log for its 'ship' gate
+                  (+ 'adr' gate if a new port/kernel primitive is introduced).
+
+  c. DISPATCH PASS — poll foundry_next for claimable items; for each (cap = maxWorkers):
+       if already in awaiting-merge set: skip (still live)
+       Agent({
+         subagent_type: <worker>,
+         model: <pinned>,          // pin model — inheritance death orphans a claim
+         isolation: 'worktree',
+         prompt: <autonomousWorkerPrompt(item)>
+                 // The full foundry-worker protocol IN FULL (see "## Autonomous mode worker prompt"
+                 // below for the complete prompt string):
+                 //   claim → worktree → build → ci:local
+                 //   → ITS OWN verifier wave
+                 //     (reviewer + qa-engineer + charter-checker
+                 //      as sibling Agent subagents inside the worker)
+                 //   → post-findings → open PR
+                 //   → T2: WORKER issues foundry_gate_request{ship}
+                 //         (+ {adr} if new port/kernel primitive) — WORKER OWNS THIS STEP
+                 //         release blocked(pending gate)
+                 //   → T0/T1: release blocked(pending conductor merge)
+                 //   → RETURN { itemId, prRef,
+                 //              waveVerdict: 'green'|'findings',
+                 //              blockingCount: number,
+                 //              gate: 'ship'|'adr'|'none',
+                 //              outcome: 'built-pr'|'skipped-race'|'blocked'|'error' }
+                 // NOTE: the CONDUCTOR never issues gate requests — it only reads gate
+                 // decisions from the log and performs the merge after approval.
+       })
+       on return: add { itemId, prRef, waveVerdict, blockingCount, gate } to awaiting-merge set
+
+  d. IDLE CHECK — if nothing was dispatched AND awaiting-merge set is empty:
+       bounded idle backoff (poll foundry_next a few more times, brief sleep between)
+       if still empty: INVOKE PIPELINE-FILLER (Component E — see "## Pipeline-filler" below):
+
+         BOUNDED FILLER — anti-livelock rules:
+           (a) REPO SUPPRESSION: green-desk (Tier 2) is suppressed for a repo within the
+               current cycle if no merge has changed that repo since the last Tier 2 sweep.
+               A repo only gets re-swept after a merge lands in it. This prevents infinite
+               re-sweeping of already-clean repos.
+           (b) PER-CYCLE BUDGET: the filler carries a per-cycle work-item cap (default 10
+               items per cycle). Once the cap is hit, the filler yields and the loop
+               continues dispatch/merge normally; the next IDLE CHECK issues more items if
+               still needed. This prevents unbounded token burn on pure debt.
+
+         TIER 1 (auto): for each greenlit product (Gate 1 = GateDecided{decision:'greenlight',
+                        approved} in the foundry log) with unbuilt epics, run /build-path
+                        to emit next work items → re-poll foundry_next; if new items: continue loop
+                        A greenlit product is: foundry:GateDecided.v1{ gateType:'greenlight',
+                        decision:'approved' } for that product in the foundry log.
+                        A filler MUST NEVER widen its own mandate to a non-greenlit product.
+         TIER 2 (auto): invoke green-desk sweep (Component D) → emit debt cleanup items;
+                        suppressed per repo as described above;
+                        if new items within budget: continue loop
+         TIER 3 (founder-gated): run product-strategist agent to surface 2–3 ranked proposals
+                        → SURFACE proposals to founder → STOP-FOR-FOUNDER (never auto-build)
+                        "Conductor awaiting a masterplan input — proposals surfaced above."
+       TRUE IDLE (real, reachable termination): all three tiers produced NO NEW WORK in
+         a complete pass (no new items from Tier 1, no unsuppressed debt from Tier 2, Tier 3
+         gated). STOP CLEANLY with message:
+         "Conductor idle — no unbuilt epics, no repo debt, no greenlit proposals.
+          Re-launch a coordinator after a masterplan input or greenlight."
+       Context-critical stop is the BACKSTOP, not the only stop. True idle fires first.
+
+  e. CONTEXT CHECK — after each complete pass, assess own context budget:
+       if near context-critical: STOP immediately; report:
+         - awaiting-merge set (itemId, prRef, waveVerdict, gate status for each)
+         - any pending founder gates (itemId, gate type, prRef)
+         - stop reason: "context-critical — foundry state is durable; re-launch a fresh
+           conductor to resume (it re-polls foundry_next; no handoff needed)"
+       A FRESH CONDUCTOR continues seamlessly — the foundry event log is the only
+       authority; the conductor holds zero durable state of its own.
+```
+
+### The merge rule (inviolable boundary)
+
+The conductor merges a PR if and only if **BOTH** conditions hold:
+
+1. **Review is done** — the worker's verifier wave returned `waveVerdict = 'green'`
+   (zero blocking findings; `nit`/`note` are non-blocking).
+2. **All gates are green** — every founder gate the item requires has a
+   `foundry:GateDecided.v1{ decision: 'approved' }` record in the foundry event log for
+   that gate's `gateId`. **FAIL CLOSED: absent an explicit `approved` record in the log,
+   the gate is NOT approved — DO NOT MERGE.** `foundry_status` lists only *pending* gates;
+   a gate's absence from the pending list means decided OR never-requested — NOT proof of
+   approval. The log read is the authoritative source.
+   (A clean `foundry_gate_status` MCP read op is a follow-up; until then the conductor
+    reads the log, fail-closed.)
+
+**T0 / T1** items carry no per-item founder gate → merge on a green wave alone.
+
+**T2** items REQUIRE the founder `ship` gate (mandatory) plus the `adr` gate whenever
+the item introduces a new port or kernel primitive. The **WORKER** issues
+`foundry_gate_request{ship}` (and `{adr}` where applicable) at build time and releases
+`blocked`; the **CONDUCTOR** discovers the gate decision by reading the log and performs
+the merge after a `GateDecided{approved}` record appears. **A T2 PR is NEVER merged
+without a `foundry:GateDecided.v1{ decision:'approved' }` record in the log for its
+`ship` gate (+ `adr` gate if a new port/kernel primitive is introduced).** This is the
+founder's inviolable control point; the conductor only automates the mechanical merge that
+follows it.
+
+Gates are **non-blocking across products** — a parked T2 gate never stalls other lanes;
+the conductor keeps fanning out and merging eligible items in parallel.
+
+### Context-critical stop and stateless restart (TRUE — proven by the RECOVERY PASS)
+
+The conductor holds **NO durable state** — its durable state is rediscovered from two
+sources on every startup via the RECOVERY PASS:
+  (a) The **foundry event log** (`domains/foundry/data/events.jsonl`) — claims, releases,
+      gate decisions, heartbeats.
+  (b) **GitHub open PRs** (`gh pr list --state open`) — built-awaiting-merge items, via
+      feat/<slug> branch matching.
+
+Both sources are durable; the in-context awaiting-merge set is just a cache the RECOVERY
+PASS rebuilds. This makes stateless restart **true** in practice, not just in theory:
+
+When context nears critical, the conductor stops cleanly and reports its surface state.
+A fresh conductor (or a superconductor) runs the RECOVERY PASS on startup, rebuilds the
+awaiting-merge set, and continues exactly where the previous conductor left off — no
+coordinator handoff, no state serialization, no leader-election. A built-but-unmerged PR
+is NEVER re-built (the RECOVERY PASS finds it and routes it to the MERGE PASS).
+
+"Store generators, derive graphs" applied to the conductor itself: the conductor IS a
+generator, not a graph.
+
+### Autonomous mode worker prompt
+
+The full autonomous worker prompt string (= the build-mode `workerPrompt` + the
+autonomous addendum below, concatenated). The addendum is:
+
+```
+AUTONOMOUS MODE — additional instructions AFTER ci:local passes:
+
+1. RUN YOUR OWN VERIFIER WAVE:
+   Dispatch reviewer, qa-engineer, and charter-checker as sibling Agent subagents
+   (+ exercir-charter-checker if repo = domains/exercir).
+   All four run IN PARALLEL under Agent({ isolation: 'worktree' }).
+   Collect all verdicts.
+   blockingCount = count of findings with severity 'blocking' or 'critical'.
+   waveVerdict = blockingCount === 0 ? 'green' : 'findings'
+
+2. POST FINDINGS:
+   Write all verifier findings to a temp JSON array
+   [{ verifier, severity, path?, line?, text }]
+   Run: npm run dev -- post-findings <repo#pr> findings.json
+   Do this even if waveVerdict = 'green' (empty array is fine and idempotent).
+
+3. GATE REQUEST (T2 ONLY — WORKER OWNS THIS STEP):
+   If riskTier === 'T2': call foundry_gate_request{ gateType: 'ship', itemId, prRef }
+   If the item also introduces a new port or kernel primitive: call
+     foundry_gate_request{ gateType: 'adr', itemId, prRef }
+   The CONDUCTOR will read the foundry log for GateDecided{approved} — do NOT merge.
+
+4. RELEASE:
+   T2: foundry_release { claimId, outcome: 'blocked',
+         note: 'built; gate requested; awaiting founder gate approval' }
+   T0/T1: foundry_release { claimId, outcome: 'blocked',
+           note: 'built; wave complete; awaiting conductor merge' }
+
+5. RETURN (structured):
+   {
+     itemId: "<itemId>",
+     prRef:  "<owner>/<repo>#<pr>",
+     waveVerdict: 'green' | 'findings',
+     blockingCount: <number>,
+     gate: 'ship' | 'adr' | 'none',
+     outcome: 'built-pr' | 'skipped-race' | 'blocked' | 'error'
+   }
+
+DO NOT MERGE — the conductor merges after gate approval + wave green.
+```
+
+## The conductor Workflow (run via the Workflow tool — preview + build modes only)
 
 ```js
 export const meta = {
@@ -147,23 +397,45 @@ return { mode, waves: maxWaves, built, gatesAwaitingFounder: gates, all: allResu
 
 - **T2-launch-only is DROPPED** — workers self-serve / are dispatched T2 *build* work; control
   moved to the gates (see foundry-worker + foundry-pool eligibility).
-- **Gates stay inviolable.** v1 surfaces every built PR for review+merge. The next increment
-  (slice 2.1) adds an in-Workflow review stage (wave agents as a later pipeline stage) +
-  auto-merge for T0/T1 on a green wave; **T2 always pauses at its `ship` gate** and is never
-  auto-merged. Gates are non-blocking across products — a parked gate never stalls other lanes.
+- **Gates stay inviolable.**
+  - **`build` mode (BUILD-MODE-ONLY):** v1 surfaces every built PR for review+merge out-of-band.
+    The next increment (slice 2.1) adds an in-Workflow review stage (wave agents as a later
+    pipeline stage) + auto-merge for T0/T1 on a green wave.
+  - **`autonomous` mode:** workers run their own verifier waves; the conductor auto-merges T0/T1
+    on `waveVerdict='green'` and merges T2 only after a `GateDecided{approved}` log record.
+  - **T2 always pauses at its `ship` gate** and is NEVER auto-merged in any mode.
+    Gates are non-blocking across products — a parked gate never stalls other lanes.
 
-## Why workers don't run their own wave (a Workflow constraint — verified 2026-06-13)
+## Why workers don't run their own wave — and when they do (substrate matrix)
 
-A Workflow `agent()` node is a **leaf**: its toolset carries no `Agent`/`Task` spawn primitive
-(verified empirically — a Workflow agent has Bash/Edit/Read/Skill/ToolSearch/Write/… but no
-subagent-spawn tool), so a worker **cannot dispatch its own verifier-wave sub-agents**. Therefore
-review is NEVER an in-worker wave — it is a **sibling pipeline stage** the conductor Workflow runs
-itself: `pipeline(items, buildWorker, reviewWave, mergeOrGate)` (buildWorker and the wave-agents
-are sibling leaf nodes at the top level). v1 keeps review/merge out-of-band (workers build to a PR;
-the founder/orchestrator reviews + merges). The slice-2.1 increment adds the review stage as a
-sibling pipeline stage — never inside a worker. *(Regular `Agent`-tool subagents CAN fan out — so
-if self-waving workers were ever required, the conductor would instead be a regular `Agent`-loop
-session, not a Workflow. That is the trade-off behind the Workflow substrate choice, now grounded.)*
+This depends on which conductor mode is active:
+
+**In `preview` / `build` modes (Workflow substrate):** A Workflow `agent()` node is a **leaf**
+— its toolset carries no `Agent`/`Task` spawn primitive (verified empirically 2026-06-13:
+a Workflow agent has Bash/Edit/Read/Skill/ToolSearch/Write/… but no subagent-spawn tool).
+Therefore a Workflow worker **cannot** dispatch its own verifier-wave sub-agents. Review is
+a **sibling pipeline stage** the conductor Workflow runs itself:
+`pipeline(items, buildWorker, reviewWave, mergeOrGate)` — buildWorker and the wave-agents are
+sibling leaf nodes at the top level. In `build` mode v1, review/merge stay out-of-band
+(workers build to a PR; the founder/orchestrator reviews + merges). The slice-2.1 increment
+adds the review stage as a sibling Workflow pipeline stage — never inside a worker node.
+
+**In `autonomous` mode (Agent-loop substrate):** Workers ARE regular `Agent`-tool subagents,
+dispatched via `Agent({ ... })` in the session loop — **not** via the Workflow `agent()` primitive.
+Regular `Agent` subagents carry the `Agent` tool and CAN fan out children. Therefore autonomous
+workers **DO run their own verifier wave** (reviewer + qa-engineer + charter-checker as sibling
+`Agent` sub-calls inside the worker). This self-wave is the prerequisite for the conductor's
+merge rule: the conductor merges on `waveVerdict = 'green'` returned by the worker, not on
+a separate sibling pass.
+
+**The capability matrix (empirically verified 2026-06-13):**
+
+| Execution context | Can fan out sub-agents? | Wave inside worker? |
+|---|---|---|
+| Regular `Agent`-tool subagent | **YES** — `Agent` tool is in its toolset | **YES** (autonomous workers) |
+| Workflow `agent()` node | **NO** — leaf; no spawn primitive | **NO** (preview/build workers) |
+
+This is the substrate trade-off that makes autonomous mode an Agent-loop, not a Workflow.
 
 ## Concurrency guards (every worker subagent enforces — from the design §C.2)
 
@@ -173,8 +445,66 @@ throws if the scope was taken) · pin `model:` (model-inheritance death orphans 
 orphan cleanup on release · keep one `FOUNDRY_DATA_DIR` · treat a store-lock timeout as
 transient (bounded backoff), never delete `.lock`.
 
+## Pipeline-filler (Component E — never idle)
+
+When the autonomous conductor finds the pipeline empty (nothing claimable AND nothing
+awaiting merge), it does **not** stop — it invokes the pipeline-filler to replenish work.
+The filler runs a **priority ladder** that respects the founder's "drop inputs · decide
+gates" boundary:
+
+### Tier 1 — Continuation (AUTO — no new gate required)
+For each already-**greenlit** product whose charter has unbuilt epics, run `/build-path`
+to decompose and emit the next work items into the foundry queue (including ADR-reservation
+via Component A). This is within the existing greenlight: the product was already approved;
+`/build-path` only emits NEW itemIds (idempotent on existing items). **No founder gate.**
+
+**Greenlit predicate (machine-checkable):** A product is greenlit when the foundry log
+contains a `foundry:GateDecided.v1{ gateType: 'greenlight', decision: 'approved' }` record
+for that product (or the product's charter status is `approved` in the charter file). A
+filler MUST NEVER widen its mandate to a non-greenlit product.
+
+→ If new items appear: continue the main loop immediately.
+
+### Tier 2 — Green-desk maintenance (AUTO — within standing mandate)
+Invoke the **green-desk sweep (Component D)**: scan all active repos for debt (lint, knip,
+coverage, Sonar smells/bugs/duplications, TODO markers, open verifier nits) and emit
+disjoint-scoped cleanup items to the foundry queue. Driving repos to a clean desk is part
+of the standing build mandate. **No founder gate.**
+
+**Anti-livelock rule:** Tier 2 is suppressed for a specific repo within a cycle if no
+merge has changed that repo since the last Tier 2 sweep of it. A repo is only re-swept
+after a merge lands in it. A per-cycle work-item cap (default 10 items) further bounds
+token consumption; the filler yields when the cap is hit and continues on the next IDLE CHECK.
+
+→ If cleanup items appear (within cap): continue the main loop immediately.
+
+### Tier 3 — New-product / new-feature proposals (FOUNDER-GREENLIGHT-GATED)
+Run the **`product-strategist` agent** to surface 2–3 ranked candidate next-features or
+new products from the masterplan, product-ideas backlog, and retros. These proposals **DO
+NOT auto-build.** They hit **Gate 1 (greenlight)**: the conductor SURFACES them to the
+founder and enters a **STOP-FOR-FOUNDER** state. It never auto-charters or auto-builds a
+new product. On a founder greenlight, the dossier→brief→charter→`/build-path` pipeline
+fills the queue, and the conductor resumes from Tier 1.
+
+### Gate boundary (inviolable)
+- **Tiers 1 and 2 are fully autonomous** — they operate within already-granted mandates
+  (greenlit products, standing green-desk obligation) and require zero founder interaction.
+- **Tier 3 ALWAYS requires a founder greenlight** — a new product or out-of-masterplan
+  feature is NEVER auto-built. The conductor surfaces, explains, and waits.
+- **True idle (real, reachable termination) when all three tiers are exhausted:** no
+  unbuilt epic on any greenlit product, no unsuppressed repo debt, and no founder-greenlit
+  proposal. Context-critical stop is the backstop — true idle fires first.
+  Clean stop message: "Conductor idle — no unbuilt epics, no repo debt, no greenlit
+  proposals. Re-launch after a masterplan input or greenlight."
+
+Reuses existing skills: `/build-path` (Tier 1), the Component-D green-desk debt-path
+generator (Tier 2), and the `product-strategist` agent (Tier 3).
+
 ## Deferred to the next increment (named)
 
-In-Workflow review stage + auto-merge T0/T1 (pipeline: build → wave → merge); the warm
-worktree pool (design §C.4, slice 2.5); a lightweight `ConductorRegistered` presence record;
-the external-daemon substrate for 24/7 unattended running (design v2).
+In-**Workflow** review stage + auto-merge T0/T1 as a **sibling pipeline stage** (pipeline:
+build → wave → merge; slice 2.1 — distinct from autonomous mode which already self-waves inside
+each worker subagent); the warm worktree pool (design §C.4, slice 2.5); a lightweight
+`ConductorRegistered` presence record; the external-daemon substrate for 24/7 unattended running
+(design v2 — autonomous Agent-loop mode already covers the unattended case within a single
+session's context budget).
