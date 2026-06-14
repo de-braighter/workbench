@@ -113,18 +113,26 @@ ON STARTUP and on every fresh conductor launch:
          built-release landed): add { itemId, prRef, waveVerdict: 'unknown', gate } to set.
     ORPHAN ADOPTION (stranded commit on a STALE claim — design §9.3): if foundry_status's
       STALE CLAIMS section lists an item that ALSO has an open feat/<slug> PR (a worker that
-      pushed its PR then died before releasing 'built'), call
-      foundry_reconcile_claim { itemId, prRef } — it releases the stale claim as 'built'
-      (adopting the stranded PR), so the item moves to BUILT and the MERGE PASS picks it up.
+      pushed its PR then died before releasing 'built', §9 open-question 3 / orphan-reconcile),
+      call foundry_reconcile_claim { itemId, prRef } (prRef from the open gh PR — the STALE
+      CLAIMS board does not print it) — it releases the stale claim as 'built' (adopting the
+      stranded PR), so the item moves to BUILT and the MERGE PASS picks it up.
       (reconcileClaim refuses if the last claim is still ACTIVE — never adopts over a live
-      worker; it acts only on a stale, unended claim.) Then add it to the awaiting-merge set.
+      worker; it acts only on a stale, unended claim.) Add it to the awaiting-merge set IF NOT
+      ALREADY PRESENT (the BACKSTOP may have matched the same PR) with waveVerdict: 'unknown'.
+      A reconciled orphan enters 'unknown' and MUST be RE-WAVED (run the verifier wave on its
+      PR, set waveVerdict from it) before the MERGE PASS can pass it — a never-waved orphan is
+      never merged.
     This is the only pass that writes the awaiting-merge cache on startup.
-    Stateless restart is TRUE: the awaiting-merge set is rebuilt from the foundry log's
-    built items (exact), with gh open PRs as backstop (defense-in-depth).
+    Stateless restart is TRUE: the awaiting-merge set (keyed by itemId) is rebuilt from the
+    foundry log's built items (exact), with gh open PRs as backstop (defense-in-depth).
 
 loop (until context-critical OR idle-stop):
 
   a. POLL: foundry_status + foundry_next(limit 50) — advisory, lock-free reads.
+     PRESENCE: foundry_coordinator_heartbeat { coordinatorId } (the id from the startup
+     REGISTER PRESENCE step) — emit it HERE every iteration so you stay on the ACTIVE
+     COORDINATORS board (a missed beat drops you after the 10-min presence window).
 
   b. MERGE PASS — for every PR in the awaiting-merge set (tracked from prior dispatches
      OR discovered by the RECOVERY PASS above):
@@ -157,12 +165,14 @@ loop (until context-critical OR idle-stop):
          → foundry_record_merge { itemId, prRef }   ← terminalizes built → done
          → worktree cleanup (git worktree remove + branch -D after VERIFIED-merged)
          → remove from awaiting-merge set
-       if foundry_gate_status shows decision === 'rejected' for THIS item's required gate
-          (matched by payloadRef): the founder DECLINED this build — it will never merge.
-          Do NOT keep re-checking. Terminally abandon it: foundry_retire_item
-          { itemId, reason: 'ship gate rejected by founder (<gateId>)' } (terminal, NO
-          re-queue), remove from the awaiting-merge set, then clean up the worktree (after
-          confirming the item shows 'retired' on the board). The open PR is left for the
+       if foundry_gate_status shows decision === 'rejected' for ANY of THIS item's required
+          gates (ship OR adr, matched by payloadRef): the founder DECLINED this build — it
+          will never merge. A rejection is TERMINAL even if the wave is still pending/red — do
+          NOT gate the retire on a green wave, and do NOT keep re-checking. Terminally abandon
+          it: foundry_retire_item { itemId, reason: '<gateType> gate rejected by founder
+          (<gateId>)' } (use the actually-rejected gate's type; terminal, NO re-queue), remove
+          from the awaiting-merge set, then clean up the worktree (after confirming the item
+          shows 'retired' on the board). The open PR is left for the
           founder to close/repurpose.
        if T2 with gate still PENDING / not-yet-decided (foundry_gate_status decision absent
           OR no gate with matching payloadRef yet): leave in set; re-check next pass.

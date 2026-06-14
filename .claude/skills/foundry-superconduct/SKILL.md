@@ -125,6 +125,9 @@ isolation.
 loop (until ALL lanes idle OR context-critical):
 
   a. POLL: foundry_status + foundry_next(limit 50) — advisory, lock-free reads.
+     PRESENCE: foundry_coordinator_heartbeat { coordinatorId } (from the Protocol step-1
+     register) every iteration, so the superconductor stays on the ACTIVE COORDINATORS board
+     (a missed beat drops it after the 10-min presence window).
 
   b. PARTITION into lanes by product: group the claimable frontier + active products by
      productKey. **`productKey` is a field on each `foundry_next` item** (`ops.ts` `toNextItem`
