@@ -1,0 +1,22 @@
+{
+  "repo": "de-braighter/devloop",
+  "lastSweptCommit": "ef469a8755a0a56e1102078fd01b25d4e6596a6d",
+  "lastSweptAt": "2026-06-14T05:00:00.000Z",
+  "lastOffenseCount": 39,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": {
+    "tsc": 0,
+    "debtMarkers": 0,
+    "knip": 39
+  },
+  "unscanned": ["lint", "mutation", "sonar"],
+  "emittedItems": [
+    "green-desk-devloop/debt-root-ef469a8",
+    "green-desk-devloop/debt-knowledge-graph-ef469a8",
+    "green-desk-devloop/debt-ingest-ef469a8",
+    "green-desk-devloop/debt-persist-ef469a8"
+  ],
+  "green": true,
+  "note": "First green-desk sweep + full loop-until-green (2026-06-14, founder 'go'). Swept HEAD ef469a8 found 39 knip offenses (11 dead value-exports + 28 unused-type-exports); tsc 0, markers 0. Partitioned into 4 path-disjoint items, drained via cleanup workers: debt-persist (devloop#75, un-export DEVLOOP_USER_ID), debt-root (devloop#76, knip.json ignoreExportsUsedInFile preset → 28 types suppressed), debt-knowledge-graph (devloop#77, 7 exports), debt-ingest (devloop#78, 9 exports). A residual round (devloop#79) handled the truncated-scan tail: knip entry (hooks/scripts entry-point FPs) + ignoreDependencies @prisma/client (FP) + 5 in-file value un-exports. devloop knip is now GREEN (exit 0) at e3c8dab. lint/mutation unwired + Sonar project-key unresolvable → unscanned, not fabricated-0."
+}
