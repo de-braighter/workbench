@@ -184,6 +184,8 @@ export default defineConfig({
 }
 ```
 
+> **Build must NOT compile the spec.** `design-system-css` was a CSS-only lib; adding a `*.spec.ts` that imports `vitest` will break the `@nx/js:tsc` `build` target unless specs are excluded. Mirror `design-system-core`: ensure the lib's **build** tsconfig (`tsconfig.lib.json` or the `build` target's tsconfig) has `"exclude": ["src/**/*.spec.ts", "vitest.config.ts"]` (and add `vitest`/`vite` types only to the test tsconfig, not the lib build). Verify `npx nx run design-system-css:build` stays green after adding the spec.
+
 - [ ] **Step 3: Write the lint spec.**
 
 ```ts
@@ -196,13 +198,19 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url)); // .../src/skins
 const tokensCss = readFileSync(join(here, '..', 'tokens.css'), 'utf8');
 
-/** Names declared in a top-level `:root { … }` block (NOT `[data-theme]`/`[data-skin]`). */
+/**
+ * Names declared in a `:root { … }` block. We deliberately do NOT anchor on a
+ * preceding `}`/string-start: the first `:root` block in tokens.css is preceded
+ * by the generated header *comment* (`*/`), so an anchor would miss it. The
+ * bare `:root\s*\{` already excludes `[data-theme="…"] {` (no `:root` substring)
+ * and `:root[data-skin='…'] {` (a `[` follows `:root`, not `\s*{`).
+ */
 function floorNames(css: string): Set<string> {
   const names = new Set<string>();
-  const re = /(^|})\s*:root\s*\{([^}]*)\}/g;
+  const re = /:root\s*\{([^}]*)\}/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(css))) {
-    for (const d of m[2].matchAll(/(--[a-z0-9-]+)\s*:/gi)) names.add(d[1]);
+    for (const d of m[1].matchAll(/(--[a-z0-9-]+)\s*:/gi)) names.add(d[1]);
   }
   return names;
 }
