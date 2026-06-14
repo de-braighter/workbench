@@ -91,8 +91,10 @@ consumes these verbatim). T0 baseline + domain-specific gates:
 
 - **`wave-standard`** — the standard verifier wave (`reviewer` + `qa-engineer` +
   `charter-checker`); auto-merge OK for individual items (T0 policy).
-- **`replay-determinism`** *(market-engine items)* — the bit-identical seeded-replay test is a
-  hard acceptance gate on every engine change; reproducibility is a *product feature* here.
+- **`replay-determinism`** *(the seeded-deterministic chain — `market-engine` + `ai-opponent`)*
+  — the bit-identical seeded-replay test is a hard acceptance gate on every change in that chain
+  (a non-deterministic AI breaks replay just as an engine change would); reproducibility is a
+  *product feature* here.
 - **`skill-dominance-gate>=65`** *(engine items, slice ≥ 2)* — a standing test: a strong policy
   beats a naive policy across many seeds with win-rate **≥ 65% at Standard** (and **> 50% at
   Party**). This is the *measurable* "not pure luck" guarantee from the random-kick design.
