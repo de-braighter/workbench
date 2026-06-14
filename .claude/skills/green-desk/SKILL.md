@@ -125,12 +125,27 @@ the best-possible value on every dimension (spec §D.1):
    - mutation — where wired;
    - debt markers — `grep -rn 'TODO\|FIXME\|HACK'`;
    - the twin's unresolved findings — `npm run dev -- findings <repo>` from
-     `domains/devloop`, **including `nit`/`note`**.
+     `domains/devloop`, **including `nit`/`note`** — **ADVISORY ONLY**: this
+     command is a per-verifier × severity + *precision* readout (a calibration
+     metric), **NOT a per-offense list with file paths**, and its counts are
+     CUMULATIVE across the repo's PRs — a finding recorded on a PR whose
+     should-fix was already fixed *in that PR* still shows here (fix-commit
+     linkage is best-effort; precision under-counts addressed findings). So
+     **never path-partition or emit a `debt-<area>` item from this dimension** —
+     it has no paths and would re-emit already-fixed work. Use it only as an
+     advisory signal: a verifier with many genuinely-unresolved findings
+     (open on current `origin/main`, not addressed-in-PR) flags "investigate" —
+     the worker inspects those findings and, if a concrete open offense with a
+     real path is confirmed, it surfaces under the path-bearing dimension that
+     owns it (lint/knip/tsc/Sonar/marker). Emittable area-scoped offenses come
+     ONLY from the path-bearing dimensions above.
 
-   Collect every offense as `{ dimension, path, detail }`. A repo with no
-   Sonar/mutation wired: scan the dimensions that ARE wired and note the
-   unscanned ones in the report — never fabricate a `0` for an unscanned
-   dimension.
+   Collect every PATH-BEARING offense as `{ dimension, path, detail }` (lint /
+   knip / tsc / Sonar / coverage / mutation / markers — the partitionable
+   dimensions). A repo with no Sonar/mutation/lint/knip wired: scan the
+   dimensions that ARE wired and **note the unscanned ones in the report —
+   never fabricate a `0`** for an unscanned dimension (an unwired tool is
+   "unscanned", not "green").
 5. **Drop false positives.** Read `docs/foundry/green-desk/fp-ledger.md`; drop
    any offense matching a suppression row (by `tool` + `path` + `rule`). These
    are not real debt and must never be re-emitted. (The ledger ships with only a
