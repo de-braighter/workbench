@@ -100,6 +100,12 @@ isolation.
 ## Protocol
 
 1. **Mint a superconductor id once:** `super-<yyyyMMdd-HHmmss>-<4hex>` (reuse in logs).
+   **Register presence** (observability, §C.3): `foundry_register_coordinator { kind: 'superconductor',
+   sessionId: <the super id> }` → keep the coordinatorId; `foundry_coordinator_heartbeat
+   { coordinatorId }` once per loop iteration so `foundry_status`'s ACTIVE COORDINATORS section
+   shows the superconductor + (separately) each conductor it dispatched. Presence is
+   observability-ONLY — never a correctness input (lane safety comes from the store-lock, not a
+   registry); never read `activeCoordinators` to make a dispatch/claim/merge decision.
 2. **RECOVERY PASS** (the superconductor holds NO durable state): call `foundry_status` → read
    the board (active products, `BUILT (awaiting merge)`, pending gates). The superconductor does
    NOT rebuild the awaiting-merge set — that set is owned **per-lane** by each conductor's OWN
@@ -119,6 +125,9 @@ isolation.
 loop (until ALL lanes idle OR context-critical):
 
   a. POLL: foundry_status + foundry_next(limit 50) — advisory, lock-free reads.
+     PRESENCE: foundry_coordinator_heartbeat { coordinatorId } (from the Protocol step-1
+     register) every iteration, so the superconductor stays on the ACTIVE COORDINATORS board
+     (a missed beat drops it after the 10-min presence window).
 
   b. PARTITION into lanes by product: group the claimable frontier + active products by
      productKey. **`productKey` is a field on each `foundry_next` item** (`ops.ts` `toNextItem`
