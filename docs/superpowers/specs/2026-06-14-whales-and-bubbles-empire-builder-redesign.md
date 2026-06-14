@@ -96,9 +96,11 @@ rivals' hidden bids. The measurable **skill-dominance gate** from the random-kic
 - Substrate plumbing — `SubstrateModule.forRoot`, RLS per game/owner, `kernel.event_log`,
   plan-tree, the derived-on-read net-worth pattern.
 - The **#214 board** — cities as nodes + sector skins.
-- The **market-engine math core** — seeded shocks, regime, sector levels; the deferred
-  **price-impact term becomes the development-driven inflation**, and the **pop is a
-  mean-reversion snap**.
+- The **market-engine math core** — the seeded shocks, regime, and **mean-reversion** survive
+  (the **pop is a mean-reversion snap** over the existing math). NOTE: the **price-impact term
+  was *deferred*, NOT built in the wedge** (E3 shipped with no price-impact); the redesign
+  *activates* it as the development-driven inflation — so that term is **new engine work** (see
+  Changes), not surviving code.
 - The deterministic resolve + **bit-identical replay gate**.
 - Zero kernel change (ADR-176) — all new representation is pack/engine + `metadata` JSONB.
 
@@ -106,6 +108,9 @@ rivals' hidden bids. The measurable **skill-dominance gate** from the random-kic
 - **Data model** — `Order/Holding` → `City / Ownership / Development / Bid` (+ `SectorMarket`,
   `EventCard`). Long-only buy/sell of units → claim/develop/sell of cities.
 - **api game loop** — submit-orders/resolve → submit-commit (bids+develop+sell)/resolve.
+- **Engine — new work** — the **development-driven inflation term** (aggregate per-sector
+  development → sector market level: the long-deferred price-impact mechanic) and the
+  **fragility → pop** check. New engine inputs, built across R2/R3 — not carried from the wedge.
 - **UI** — the allocation panel → a **city-map + bid/develop/sell panel + sector
   fragility/market gauges + the event reveal**.
 
