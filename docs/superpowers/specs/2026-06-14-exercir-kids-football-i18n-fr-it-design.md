@@ -32,12 +32,12 @@ The de+en Transloco i18n shipped in exercir#266 (`b33de39`) as a deliberate **dr
 All changes are in `libs/pack-kids-football-ui/src/lib` plus one host build-budget bump. No component logic changes except two `<option>`s in the shell.
 
 ### 4.1 Bundles
-- **`kf-i18n.fr.ts`** — `export const KF_MESSAGES_FR: Readonly<Record<string,string>> = { … }`, all 456 keys translated to natural French (Swiss-French register where it differs; standard French is fine for drafts). File-header banner: *machine-translated draft; de-CH + en authoritative (charter §2 D16)*.
-- **`kf-i18n.it.ts`** — `KF_MESSAGES_IT`, all 456 keys, natural Italian, same header banner.
+- **`kf-i18n.fr.ts`** — `export const KF_MESSAGES_FR: Readonly<Record<string,string>> = { … }`, all **458** keys translated to natural French (the 456 existing keys + the two new `kf.shell.lang.fr/.it` autonyms added to every bundle per §4.4; Swiss-French register where it differs, standard French is fine for drafts). File-header banner: *machine-translated draft; de-CH + en authoritative (charter §2 D16)*.
+- **`kf-i18n.it.ts`** — `KF_MESSAGES_IT`, all **458** keys, natural Italian, same header banner.
 - **Token fidelity (hard rule):** every `{n}`/`{name}`/`{h}`/`{color}`/`{label}`/`{x}`/… placeholder is preserved verbatim per key (the parity spec gates this).
 - **Status labels (the leak class):** `kf.player.att.present|absent|sick|holiday|school` MUST be translated (fr: *Présent·e / Absent·e / Malade / Vacances / École*; it: *Presente / Assente / Malato·a / Vacanza / Scuola*) — a miss re-leaks English exactly like the de raw-status bug, and the parity spec cannot catch it because the leak is the runtime enum value, not the bundle content. **Verify in-browser** (run-session + roster chips), not only via specs.
 - **Developmental tone (non-deficit):** mirror the German tone for `kf.player.dev.*` — e.g. `kf.player.dev.notYet` → fr "– Pas encore" / it "– Non ancora"; the practice caption ("a record of practice while present — not a skill rating") → a faithful, non-deficit fr/it rendering.
-- **Glossary (consistency across all 456 keys):**
+- **Glossary (consistency across all 458 keys):**
 
   | Concept | de (authoritative) | fr | it |
   |---|---|---|---|
