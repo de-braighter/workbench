@@ -103,8 +103,10 @@ consumes these verbatim). T0 baseline + domain-specific gates:
   the heavy T2 RLS-proof battery).
 - **Designer-first (internal discipline, not a founder gate)** — the `market-engine` (sector
   processes, price-impact, the margin-cascade fixed-point resolver, the §6 math) is the crown
-  jewel and the hardest engineering; its item should carry a designer-first spec + `deep`
-  effort even though T0 does not mandate a founder architecture gate.
+  jewel and the hardest engineering. The margin-cascade resolver itself lands in the
+  **slice-2+ engine item, not the wedge** (see Scope + What-NOT-to-build); the engine items
+  should carry a designer-first spec + `deep` effort even though T0 does not mandate a founder
+  architecture gate.
 
 ## Gate schedule
 
