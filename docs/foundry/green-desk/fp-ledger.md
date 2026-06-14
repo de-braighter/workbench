@@ -10,13 +10,19 @@ re-emitted. Add a row ONLY together with a native per-tool ignore, and only afte
 a reviewer verifies the offense is a true false positive.
 
 **Class-level seed rows** (repo `(all)`, `path` a pattern): the two canonical
-false-positive CLASSES from the F5 quality-floor runbook. Both are already
-suppressed at the tool-config level by the lint-kit `knipDomainPreset`
-(`ignoreExportsUsedInFile {interface,type}` + the prisma generate-dep handling),
-so on a repo that uses that preset they never surface. These rows DOCUMENT the
-classes so a sweep of a repo that does surface them (e.g. a hand-rolled knip
-config) recognises them as known FPs — suppress via the native knip preset/ignore
-and, for a concrete path, add a path-specific row beneath.
+false-positive CLASSES from the F5 quality-floor runbook. Their native suppression
+differs — verify per repo:
+- **declaration-emit-types** IS baked into the lint-kit `knipDomainPreset`
+  (`ignoreExportsUsedInFile {interface, type}`), so a repo using that preset never
+  surfaces it.
+- **prisma-generate-dep** is NOT in the preset — it requires a **per-repo** knip
+  `ignoreDependencies: ["@prisma/client"]` (F5 runbook), so it still surfaces on a
+  preset-using repo until that repo adds the ignore.
+
+These rows DOCUMENT the classes so a sweep that surfaces them recognises them as
+known FPs — suppress via the appropriate native ignore (preset for the first,
+per-repo `ignoreDependencies` for the second) and, for a concrete path, add a
+path-specific row beneath.
 
 | date | repo | tool | path | rule | justification | reviewer |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -137,8 +137,8 @@ the best-possible value on every dimension (spec §D.1):
      (open on current `origin/main`, not addressed-in-PR) flags "investigate" —
      the worker inspects those findings and, if a concrete open offense with a
      real path is confirmed, it surfaces under the path-bearing dimension that
-     owns it (lint/knip/tsc/Sonar/marker). Emittable area-scoped offenses come
-     ONLY from the path-bearing dimensions above.
+     owns it (lint / knip / tsc / Sonar / coverage / mutation / markers).
+     Emittable area-scoped offenses come ONLY from the path-bearing dimensions above.
 
    Collect every PATH-BEARING offense as `{ dimension, path, detail }` (lint /
    knip / tsc / Sonar / coverage / mutation / markers — the partitionable
