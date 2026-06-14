@@ -96,6 +96,12 @@ workers-self-wave).
 ```
 ON STARTUP and on every fresh conductor launch:
 
+  REGISTER PRESENCE (observability, §C.3): foundry_register_coordinator { kind: 'conductor',
+    sessionId } → keep the returned coordinatorId. Call foundry_coordinator_heartbeat
+    { coordinatorId } once per loop iteration so foundry_status's ACTIVE COORDINATORS section
+    shows you live. Presence is observability-ONLY — it is never a correctness input (the
+    store-lock arbitrates; never read activeCoordinators to make a claim/gate/merge decision).
+
   RECOVERY PASS — rebuild the awaiting-merge set from durable sources:
     PRIMARY: call foundry_status → read the 'BUILT (awaiting merge)' section.
       Each listed item carries { itemId, prRef } natively — no reconstruction needed.
@@ -105,6 +111,13 @@ ON STARTUP and on every fresh conductor launch:
       → match open PRs on feat/<slug> branches (slug encodes the itemId)
       → for each matched PR NOT already in the set (e.g. a PR opened before the
          built-release landed): add { itemId, prRef, waveVerdict: 'unknown', gate } to set.
+    ORPHAN ADOPTION (stranded commit on a STALE claim — design §9.3): if foundry_status's
+      STALE CLAIMS section lists an item that ALSO has an open feat/<slug> PR (a worker that
+      pushed its PR then died before releasing 'built'), call
+      foundry_reconcile_claim { itemId, prRef } — it releases the stale claim as 'built'
+      (adopting the stranded PR), so the item moves to BUILT and the MERGE PASS picks it up.
+      (reconcileClaim refuses if the last claim is still ACTIVE — never adopts over a live
+      worker; it acts only on a stale, unended claim.) Then add it to the awaiting-merge set.
     This is the only pass that writes the awaiting-merge cache on startup.
     Stateless restart is TRUE: the awaiting-merge set is rebuilt from the foundry log's
     built items (exact), with gh open PRs as backstop (defense-in-depth).
@@ -144,8 +157,15 @@ loop (until context-critical OR idle-stop):
          → foundry_record_merge { itemId, prRef }   ← terminalizes built → done
          → worktree cleanup (git worktree remove + branch -D after VERIFIED-merged)
          → remove from awaiting-merge set
-       if T2 with gate pending or not approved (foundry_gate_status decision ≠ 'approved'
-          OR no gate with matching payloadRef found): leave in set; re-check next pass.
+       if foundry_gate_status shows decision === 'rejected' for THIS item's required gate
+          (matched by payloadRef): the founder DECLINED this build — it will never merge.
+          Do NOT keep re-checking. Terminally abandon it: foundry_retire_item
+          { itemId, reason: 'ship gate rejected by founder (<gateId>)' } (terminal, NO
+          re-queue), remove from the awaiting-merge set, then clean up the worktree (after
+          confirming the item shows 'retired' on the board). The open PR is left for the
+          founder to close/repurpose.
+       if T2 with gate still PENDING / not-yet-decided (foundry_gate_status decision absent
+          OR no gate with matching payloadRef yet): leave in set; re-check next pass.
        INVARIANT: NEVER merge a T2 item without foundry_gate_status showing decision:'approved'
                   for its 'ship' gate (+ 'adr' gate if a new port/kernel primitive is
                   introduced) AND whose payloadRef references THIS item — a sibling item's
@@ -387,7 +407,7 @@ const workerPrompt = (it) => `You are a Foundry worker subagent dispatched by a 
 Item: ${it.itemId} · Repo: de-braighter/${it.repo.replace(/^de-braighter\\//, '')} · Scope: ${it.pathPrefix || it.repo} · riskTier: ${it.riskTier}
 Title: ${it.title || it.itemId}
 
-1. CLAIM: mint sess-<ts>-<4hex>; foundry_claim { itemId: "${it.itemId}", sessionId, worktree: "<repo>/.claude/worktrees/<slug>", branch: "feat/<slug>" }. If rejected as already-claimed/scope-overlap, that is an EXPECTED race with a sibling worker/coordinator — return { itemId, outcome: "skipped-race" } and STOP (never work unclaimed).
+1. CLAIM: mint sess-<ts>-<4hex>; foundry_claim { itemId: "${it.itemId}", sessionId, worktree: "<repo>/.claude/worktrees/<slug>", branch: "feat/<slug>", ttlMinutes: ${it.riskTier === 'T2' ? 360 : 180} } (D6: a finite, build-appropriate TTL by tier — longer for T2's designer-first builds, shorter for T0/T1 — so a dead worker frees the item, and you heartbeat well within it). If rejected as already-claimed/scope-overlap, that is an EXPECTED race with a sibling worker/coordinator — return { itemId, outcome: "skipped-race" } and STOP (never work unclaimed).
 2. ISOLATE (per the skill, AUTO-engaging the warm pool): after CLAIM, self-lease your slot index — foundry_lease_slot { claimId } → reset-on-lease the warm slot (preserves node_modules); on ANY lease failure fall back to a cold \`git worktree add\` off origin/main. NEVER git-op in the shared root clone; set NX_DAEMON=false; install deps if cold. Distinct workers get distinct slots by the store-lock — no conductor-side slot math.
 3. EXECUTE: route via existing skills per tier (designer-first FIRST for T2 — and if your itemId is `<key>/ADR-<n>`, CONSUME that number directly, do NOT read next-free-adr). Honor qualityObligations.
 4. QUALITY: green 'ci:local' in the worktree; confine the diff to the scope pathPrefix; push the branch; open the PR (Producer:/Effort:/Effect: lines). Heartbeat foundry_heartbeat at phase boundaries.
