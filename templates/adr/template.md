@@ -1,6 +1,6 @@
 ---
 title: "ADR-NNN — <short title>"
-status: proposed   # proposed | accepted | superseded | deprecated
+status: proposed   # proposed | ratified | superseded
 created: YYYY-MM-DD
 last_updated: YYYY-MM-DD
 authors: [<github-handle>]
