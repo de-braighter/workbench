@@ -417,12 +417,12 @@ beyond a stub; multi-frame composition (a board embedded in a tree node).
 
 This work fires the two ADRs the north-star §8 named as deferred until consumer #2:
 
-- **ADR-Lxx — Generic substrate tree renderer + render-definition registry as a
+- **ADR-239 — Generic substrate tree renderer + render-definition registry as a
   design-system brick.** Ratifies the renderer/registry/edit-engine living in
   design-system (ADR-168), fed by per-source projections; ratifies the two-trees
   discipline as governing (kernel plan tree ≠ presentation tree; geometry never
   enters the kernel).
-- **ADR-Lyy — Render-tree contract home + shape.** Ratifies that the `RenderNode`
+- **ADR-240 — Render-tree contract home + shape.** Ratifies that the `RenderNode`
   type lives framework-agnostic inside the brick package (not substrate-contracts),
   its invariants (single-root / acyclic / unique-ids), and the `EditIntent` shape.
 
@@ -450,6 +450,6 @@ ADRs are designer-first / substrate-architect work at the **front** of the arc
 ## Status
 
 **proposed.** Promotes the north-star capture's deferred Thread A into an actionable,
-sliced design under Approach A. Graduates to a ratified concept doc + ADR-Lxx/Lyy at
+sliced design under Approach A. Graduates to a ratified concept doc + ADR-239/240 at
 landing (§10). Next step: an implementation plan (writing-plans), starting with the
 designer-first ADRs and the S0 contracts.

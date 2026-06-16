@@ -44,16 +44,16 @@ Each file has one responsibility; `render-node.ts` is type-only (no runtime), so
 The spec (§10) fires two ADRs that must be `proposed`/`accepted` before code lands (the implementer precondition). This task is a designer dispatch, not TDD.
 
 **Files:**
-- Create: `layers/specs/adr/adr-<next>-generic-tree-renderer-board-kit.md` (ADR-Lxx)
-- Create: `layers/specs/adr/adr-<next>-render-tree-contract-home-and-shape.md` (ADR-Lyy)
+- Created: `layers/specs/adr/adr-239-generic-substrate-tree-renderer-board-kit-design-system-brick.md` (ADR-239)
+- Created: `layers/specs/adr/adr-240-render-tree-contract-home-and-shape.md` (ADR-240)
 
 - [ ] **Step 1:** Dispatch the `substrate-architect` agent (cross-cutting design-system + two-trees boundary) to author the two ADRs using `/adr-scaffolder` for numbering + template. Inputs: the design spec, north-star §8.
-  - **ADR-Lxx** ratifies: the renderer/registry/edit-engine as a design-system brick (ADR-168); per-source projections; the two-trees discipline as governing (kernel plan tree ≠ presentation tree; geometry never enters the kernel).
-  - **ADR-Lyy** ratifies: `RenderNode` lives platform-agnostic in `design-system-core` (NOT substrate-contracts); invariants = single-root / acyclic / unique-ids; the `EditIntent` shape; editing = pure-transform (Approach A), command-algebra deferred.
+  - **ADR-239** ratifies: the renderer/registry/edit-engine as a design-system brick (ADR-168); per-source projections; the two-trees discipline as governing (kernel plan tree ≠ presentation tree; geometry never enters the kernel).
+  - **ADR-240** ratifies: `RenderNode` lives platform-agnostic in `design-system-core` (NOT substrate-contracts); invariants = single-root / acyclic / unique-ids; the `EditIntent` shape; editing = pure-transform (Approach A), command-algebra deferred.
 - [ ] **Step 2:** Land the ADRs via PR (specs are PR-gated). Acceptance: both `status: accepted` (or `proposed` with founder sign-off), indexed, spec-auditor clean.
 - [ ] **Step 3:** Confirm the design spec's `ratified-by:` is updated to cite the two ADR numbers; graduate the north-star capture per §10 (separate spec PR — may trail).
 
-> Gate: do not start Task 1 until ADR-Lyy fixes the `RenderNode` home + invariants (this plan assumes `design-system-core` + single-root/acyclic/unique-ids).
+> Gate: do not start Task 1 until ADR-240 fixes the `RenderNode` home + invariants (this plan assumes `design-system-core` + single-root/acyclic/unique-ids).
 
 ---
 
@@ -144,7 +144,7 @@ export type SvgPrimitive =
   | { p: 'path'; d: string; fill?: string; stroke?: string }
   | { p: 'text'; x: number; y: number; text: string; fill?: string; anchor?: 'start' | 'middle' | 'end' };
 
-/** The derived presentation node. Invariants (ADR-Lyy): single-root, unique ids, acyclic. */
+/** The derived presentation node. Invariants (ADR-240): single-root, unique ids, acyclic. */
 export interface RenderNode<P = unknown> {
   id: string;
   kind: string;
@@ -254,7 +254,7 @@ import type { RenderNode } from './render-node.js';
 
 export interface TreeValidationError { code: 'duplicate-id' | 'cycle'; detail: string; }
 
-/** Validate ADR-Lyy invariants: unique ids, acyclic. (Single-root is structural.) */
+/** Validate ADR-240 invariants: unique ids, acyclic. (Single-root is structural.) */
 export function validateTree(tree: RenderNode): TreeValidationError[] {
   const errors: TreeValidationError[] = [];
   const seen = new Set<string>();
