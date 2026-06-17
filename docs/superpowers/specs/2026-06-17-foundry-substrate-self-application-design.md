@@ -56,8 +56,12 @@ that don't share a spine**:
   events*). The *observing* side.
 
 So "migrate Foundry to a Substrate product" is really: **do the doing-machine and
-the twin collapse onto one kernel plan tree + event log?** This v0 takes the first,
-non-destructive step toward "yes".
+the twin collapse onto one kernel plan tree + event log?** This v0 takes the first
+step toward "yes" — the **twin (`pack-devloop`) is merged into `domains/foundry`**
+(it becomes foundry's observation+inference concern), while the **doing-machine
+(Foundry MCP) stays separate and is only observed** (no rewire — that is the held v1
+line). The three-way split (machine + twin + new model) collapses to two: the
+doing-machine, and the product (foundry = absorbed twin ⊕ metamodel ⊕ instances).
 
 ## 2. Founder-approved decisions (the brainstorm record)
 
@@ -67,31 +71,37 @@ non-destructive step toward "yes".
 | D2 | **Blueprint scope** | *Both faces, one recursive model* — the model declares the product's **substance** AND its **build-process** as one tree. |
 | D3 | **First slice** | *Descriptive v0* — model + observe. No driving, no generation. |
 | D4 | **`ai` resource** | *First-class typed resource + capacity* — `ai`/`human`/`compute` typed refs on nodes; warm-pool capacity **observed** (not scheduled) in v0. |
-| D5 | **Home/structure** | *Target a `domains/foundry` product, deliver it v0-thin* — a thin metamodel overlay reusing existing observations, explicitly stamped as the seed of the future domain; `pack-devloop` reused (not merged). |
+| D5 | **Home/structure** | *A `domains/foundry` product formed by **merging `pack-devloop` into it*** — the SDLC read-twin becomes foundry's observation+inference concern (`domains/devloop` re-homed/absorbed, tests staying green), then extended with the metamodel + substance face + instances. The Foundry MCP **doing-machine** stays separate and observed (not rewired) in v0. |
+| D6 | **`WorkItem` grain** | *Story (epic-item)* — the leaf is a **story**, not a single PR. The PRs that implement a story attach to it as observations (their `Producer:`/`Effect:` lines feed the story node's run-manifest + effect). |
 
 ## 3. Architecture (the boundary)
 
-A new domain `domains/foundry`, seeded v0 as a thin overlay. It **composes** the
-four kernel concerns via the published `@de-braighter/substrate-*` packages —
-**zero kernel change** — the posture `pack-devloop` proved. It does **not** rebuild
-observation: it reuses the event streams the Foundry MCP machine and `pack-devloop`
-already emit. All domain-specific shape lives in a **typed pack lib + `metadata`
-JSONB**.
+`domains/foundry` is formed by **absorbing `domains/devloop`** (the SDLC read-twin)
+and extending it. It **composes** the four kernel concerns via the published
+`@de-braighter/substrate-*` packages — **zero kernel change** — the posture
+`pack-devloop` already proved (ADR-192/193). The absorbed twin brings its tested
+observation log + inference; the new work adds the metamodel, the substance/resource
+faces, and the two product instances. The Foundry MCP doing-machine is **not**
+absorbed in v0 — it stays a separate actuator whose event stream foundry *reads*.
+All domain-specific shape lives in a **typed pack lib + `metadata` JSONB**.
 
 ```text
-domains/foundry  (NEW — v0 seed)
-  ├─ metamodel (typed pack lib)        ← node/resource/substance type vocabulary
-  ├─ instances (authored kernel data)  ← Product(foundry) + Product(whales)
-  └─ derivations (views over kernel)   ← cycle-time · completeness · ai-bound?
-        ▲ reads                              ▲ reads
-        │ foundry event stream                │ pack-devloop observation log
-   (SlotLeased, gate, merge, …)         (CI / review / retro events)
+domains/foundry  (= domains/devloop, grown up)
+  ├─ twin         (ABSORBED pack-devloop: observation log + inference)  ← CI/review/retro events
+  ├─ metamodel    (typed pack lib: node / resource / substance vocabulary)
+  ├─ instances    (authored kernel data: Product(foundry) + Product(whales))
+  └─ derivations  (views over kernel: cycle-time · completeness · ai-bound?)
+        ▲ reads (Foundry MCP machine — separate, NOT absorbed in v0)
+        │ foundry event stream  (SlotLeased, gate, merge, …)
 ```
 
-Form is **correct-minimal** (the `pack-devloop` Path-A precedent): substrate-typed
-against `@de-braighter/substrate-contracts`, **no NestJS / Prisma / Postgres / RLS**
-unless demand-pulled. Foundry-the-process is single-tenant, no-PHI, read-mostly in
-v0; the full runtime stack would be the over-engineering ADR-176 forbids.
+Form is **correct-minimal** (the `pack-devloop` Path-A precedent it inherits):
+substrate-typed against `@de-braighter/substrate-contracts`, **no NestJS / Prisma /
+Postgres / RLS** unless demand-pulled. Foundry-the-process is single-tenant, no-PHI,
+read-mostly in v0; the full runtime stack would be the over-engineering ADR-176
+forbids. **Migration safety:** the absorption re-homes `domains/devloop`'s existing
+libs/tests first and keeps them green *before* any metamodel work begins (sequenced
+in the plan), so the merge is a contained, reversible refactor — not a rewrite.
 
 ## 4. The metamodel — "both faces, one recursive tree"
 
@@ -102,15 +112,16 @@ output** of walking it.
 Product(foundry)                                    ← root
  └─ Capability(autonomous-conduct)
      └─ Feature(warm-pool)
-         └─ WorkItem(foundry#6)                     ← leaf ≈ a PR / epic-item
+         └─ WorkItem(story: warm-pool-auto-engagement)   ← leaf = a STORY (epic-item)
               resource: ai                          ← typed: ai | human | compute
               effect:   cycle-time −0.3 ± 0.1       ← EffectDeclaration (ADR-154), optional, never a gate
-              yields:   [Pool.lease-primitive]      ← SUBSTANCE this item produces
+              yields:   [Pool.lease-primitive]      ← SUBSTANCE this story produces
+              ← observations: the implementing PRs (foundry#6, wb#141) attach here
 ```
 
 | Face | Modeled as | Derivation |
 |---|---|---|
-| **Process** ("BUILT-BY") | `Product → Capability → Feature → WorkItem` single-parent tree; each `WorkItem` carries `resource`, optional `effect`, `yields[]` | the authored plan tree |
+| **Process** ("BUILT-BY") | `Product → Capability → Feature → WorkItem` single-parent tree; `WorkItem` = a **story** (D6), carrying `resource`, optional `effect`, `yields[]`; implementing PRs attach as observations | the authored plan tree |
 | **Substance** ("IS") | typed refs: `Pack`, `Board`, `Policy`, `Indicator` | `substance(product) = ⋃ yields(done work-items)` — **derived, never stored** |
 | **Resource** | `ai \| human \| compute` ref per node; `Pool{slots, leased}` for `ai` | pool state derived from `SlotLeased`/lease events |
 
@@ -124,7 +135,8 @@ rest is small.
 
 ## 5. The four-concern spine
 
-Extends `pack-devloop`'s ratified mapping (its §5.1) to the substance + resource
+**Absorbs** `pack-devloop`'s ratified mapping (its §5.1) — the observation +
+inference rows come with the merge — and **extends** it to the substance + resource
 faces.
 
 | Kernel concern | `foundry` v0 instantiation | Kernel surface (all ratified) |
@@ -148,11 +160,11 @@ Product(whales)  ─┴─►    (SlotLeased,gate,merge)│   ┌──► compl
 - **Authoring (v0 = hand-authored seed).** Both products are authored from data that
   *already exists*, so the model is grounded, not invented.
   - `Product(foundry)` — reconstructed from the real foundry board (O-items, the
-    slice-3 backlog, conductor PRs); `WorkItem`s are actual PRs (`foundry#6`,
-    `foundry#7`, `wb#141`…); their `resource`/`effect`/`yields` come from the PR
-    bodies you already write — **the `Producer:` and `Effect:` lines are literally
-    the run-manifest and the effect declaration.**
-  - `Product(whales)` — reconstructed from the shipped 6-item wedge
+    slice-3 backlog, conductor stories); `WorkItem`s are **stories** (D6); the PRs
+    that implemented each story (`foundry#6`, `foundry#7`, `wb#141`…) attach as
+    observations — **their `Producer:` and `Effect:` lines are literally the
+    run-manifest and the effect declaration** feeding the story node.
+  - `Product(whales)` — reconstructed from the shipped 6-item wedge as six stories
     (`E1 → E2 → {E3 ∥ E4} → E5 → E6`). **The acid-test instance** — authored using
     only the shapes `Product(foundry)` already used.
 - **Ingest.** A read-only ingester maps events that *already flow* onto `WorkItem`
@@ -202,11 +214,12 @@ discipline.)
 
 ## 10. What stays out (the v0 boundary / YAGNI)
 
-No driving (conductor keeps its MCP queue — v1) · no generation/scaffolding (v2) ·
-no scheduler/daemon (session-pull stays) · **no kernel change** · no new MCP tools
-(read existing streams) · no studio UI (substance face is studio-*shaped* but
-unsurfaced) · no agri/oncology instances yet (just foundry + whales) · **no
-pack-devloop merge** — v0 *composes* it; merge-vs-compose is an open question.
+No driving — the Foundry MCP **doing-machine** is untouched (observed, not rewired —
+v1) · no generation/scaffolding (v2) · no scheduler/daemon (session-pull stays) ·
+**no kernel change** · no new MCP tools (read existing streams) · no studio UI
+(substance face is studio-*shaped* but unsurfaced) · no agri/oncology instances yet
+(just foundry + whales). **In scope:** absorbing `pack-devloop` (D5) — but as a
+green-tests re-home first, *then* the metamodel, never a rewrite.
 
 ## 11. Testing
 
@@ -230,25 +243,30 @@ pack-devloop merge** — v0 *composes* it; merge-vs-compose is an open question.
 ### ADR triggers
 
 - **ADR (new):** sanction `domains/foundry` as a pack-on-platform meta-product, zero
-  kernel change (mirrors ADR-192 for `pack-devloop`).
+  kernel change, **amending/superseding ADR-192** to re-home the SDLC twin from
+  `pack-devloop` into `domains/foundry` (the D5 merge).
 - **ADR (new):** record substance-face-as-derived-projection (`substance = ⋃
   yields`), so it is never mistaken for stored state.
-- The `pack-devloop` reconciliation rides as a named open question, not an ADR yet.
 
 ## 13. v0 deliverables (concrete)
 
-1. `domains/foundry` scaffold (seed of the domain) + the typed metamodel pack lib.
-2. Seed authoring of `Product(foundry)` + `Product(whales)`.
-3. Read-only ingester mapping existing events → `WorkItem` nodes.
-4. The three derived posteriors + the substance projection.
-5. The genericity + replay tests.
-6. The two ADRs.
+1. **Absorb `domains/devloop` → `domains/foundry`** (re-home libs/tests, stay green)
+   — the D5 merge, done first and contained.
+2. The typed metamodel pack lib (node / resource / substance vocabulary).
+3. Seed authoring of `Product(foundry)` + `Product(whales)` at story grain (D6).
+4. Read-only ingester mapping existing events → story `WorkItem` nodes.
+5. The three derived posteriors + the substance projection.
+6. The genericity + replay tests.
+7. The two ADRs.
 
 ## 14. Open questions (carried, not blocking)
 
 | Question | Activating trigger |
 |---|---|
-| Merge vs compose with `pack-devloop` (the read-twin)? | v0 shows the concrete overlap between the two. |
-| `WorkItem` subject granularity — PR vs epic-item? | A posterior comes out too coarse or too sparse to act on. |
 | v1 actuation mode — session-pull vs scheduled wake? | The decision to let the product *drive* the `ai` resource (v1). |
 | Does the substance face become the Studio's user-authored metamodel? | The Studio authoring surface is greenlit; v0 keeps it studio-*shaped* but internal. |
+| Does the Foundry MCP doing-machine eventually fold onto the kernel tree too? | v1 driving lands and the bespoke queue state becomes the redundant half. |
+
+> **Resolved in this revision:** `pack-devloop` is **merged** into `domains/foundry`
+> (D5), and `WorkItem` grain is **story / epic-item** (D6) — both moved out of open
+> questions.
