@@ -1,0 +1,34 @@
+# scenario-lab — the domain-agnostic synthetic-scenario inference engine.
+# Status: proven — the SAME engine drives oncology breast-survivorship AND
+#         industrial pump predictive-maintenance, differing ONLY by a scenario
+#         data file (§11 fit-gate PASS on both). It is the agnostic core the
+#         studio direction + the "one engine -> many domains" thesis rest on.
+# Form: pure-TS library (no UI, no DB, no kernel coupling); depends only on the
+#       published @de-braighter/substrate-* inference backbone. Domain vocabulary
+#       lives ONLY in src/scenarios/ data; the src/engine/ tree is domain-agnostic
+#       and that boundary is ENFORCED in ci:local (structural + lexical gate) plus
+#       a cross-domain golden regression — ADR-243 (scenario-lab engine purity).
+# Repo created 2026-06-17 (was local-only before).
+
+name: scenario-lab
+domain: agnostic-engine
+status: proven
+repo: github.com/de-braighter/scenario-lab
+local: domains/scenario-lab/
+
+# INVARIANT (ADR-243): never add domain/disease vocabulary or a `../scenarios`
+# import to src/engine/ — a new domain is a new scenario data file, zero engine
+# change. The engine-purity gate enforces this; do not weaken it to land a change.
+
+# Hints for orchestrator judgment, not enforcement. Pure-TS engine + tests, pnpm.
+enabled:
+  agents:
+    suggested:
+      - implementer
+      - reviewer
+      - qa-engineer
+      - local-ci
+      - test-pro
+  skills:
+    suggested:
+      - md-quality-review
