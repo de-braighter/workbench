@@ -35,6 +35,32 @@ note: >
 
 ---
 
+## 0. Revision 2 (2026-06-17) — corrected against the codebase
+
+The plan-author pass found the codebase already further along than §1/§3/§13
+assumed. **`domains/foundry` already exists** as the doing-machine and is
+**already event-sourced** (`src/events.ts` typed events · `src/log.ts` append-only
+JSONL log over `DomainEventEnvelope` · `src/state.ts` derived state · `src/wt-pool.ts`
+lease/capacity · `src/mcp/` the MCP server). **`domains/devloop` already** has
+`ingest/` (reads foundry events), `plan/` (derives a plan tree) and `inference/`
+(posteriors/calibration). So:
+
+- The merge (D7) is **into the existing `domains/foundry`**, keeping its log
+  canonical — not a new domain, not a rename. After the merge the doing-machine is
+  **co-located** with the twin; "untouched" means *its `ops.ts` coordination logic
+  is not rewired* (still v1), not that it lives apart.
+- Much of v0's observe+infer (the "ingester", the posteriors) **already exists** in
+  devloop and is **repointed**, not built from scratch.
+- **v0 therefore shrinks to three things:** (1) merge the two domains (move modules,
+  tests stay green), (2) add the genuinely-new **metamodel** (substance/resource
+  faces + the two instances), (3) the genericity acid-test. §13 below is superseded
+  by the plan's phase list.
+
+The decisions (§2, incl. D7), the metamodel (§4), the four-concern spine (§5), the
+acid test (§9) and the governance (§12) are unchanged by this correction.
+
+---
+
 ## 1. Provenance & motivation
 
 The direction comes from the founder/ChatGPT brainstorm *"Produktfabrik durch
@@ -73,6 +99,7 @@ doing-machine, and the product (foundry = absorbed twin ⊕ metamodel ⊕ instan
 | D4 | **`ai` resource** | *First-class typed resource + capacity* — `ai`/`human`/`compute` typed refs on nodes; warm-pool capacity **observed** (not scheduled) in v0. |
 | D5 | **Home/structure** | *A `domains/foundry` product formed by **merging `pack-devloop` into it*** — the SDLC read-twin becomes foundry's observation+inference concern (`domains/devloop` re-homed/absorbed, tests staying green), then extended with the metamodel + substance face + instances. The Foundry MCP **doing-machine** stays separate and observed (not rewired) in v0. |
 | D6 | **`WorkItem` grain** | *Story (epic-item)* — the leaf is a **story**, not a single PR. The PRs that implement a story attach to it as observations (their `Producer:`/`Effect:` lines feed the story node's run-manifest + effect). |
+| D7 | **Merge approach** (codebase reality) | *Keep `@de-braighter/foundry`'s log canonical, move modules in* — absorb `domains/devloop` **into the existing `domains/foundry`**: keep foundry's `events.ts`/`log.ts`/`state.ts`/`wt-pool.ts` canonical; **move** devloop's `ingest`/`plan`/`inference` into foundry and **repoint** them at foundry's log; the metamodel rides foundry's existing log. Defer full log-unification. |
 
 ## 3. Architecture (the boundary)
 
