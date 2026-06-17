@@ -136,20 +136,25 @@ leaf(work-item).metadata = {
   shape via `metadata` JSONB, ADR-176-safe). The metamodel `vocabulary.ts`
   validator is extended to require them on `work-item` leaves.
 
-`planFrontier(tree, state, now)` (new, `plan/frontier.ts`):
+`planFrontier(tree, state, now)` (new, `plan/frontier.ts`) is defined as the
+**composition** `claimableItems ∘ projectTreeState` — it does **not** re-implement
+the claimability rule at all:
 
-1. Collect **work-item leaves** (`kind === 'work-item'`).
-2. A leaf is **claimable** iff: its `itemId` is not done/retired in the log
-   (reuse `itemDone`/`itemRetired`/`itemStatus`), every `dependsOn` itemId is done,
-   and its `scope` is disjoint from every active claim's scope (reuse
-   `scopesDisjoint`).
-3. Sort by product priority, then queue order, then `itemId` — **identical
-   ordering** to `claimableItems`, so the two are set-and-order comparable.
-4. Map to the existing `NextItem` shape. **No new public types.**
+1. `projectTreeState(tree, s)` rebuilds `DerivedState.items` from the tree's
+   work-item leaves: **structure** (`itemId`, `scope`, `dependsOn`, `productKey`)
+   comes from the leaf/root metadata; **status** (`claims`, `merged`, `retired`,
+   `queuedAt`) is copied from the real log-derived `s`. Every other concern
+   (`products`, `gates`, …) is carried over unchanged.
+2. `planFrontier = claimableItems(projectTreeState(tree, s), now)` — the **existing**
+   `claimableItems` (with its existing priority→queue-order→`itemId` sort) runs over
+   the tree-projected item set and returns the same `ItemState[]`; `nextItems` maps
+   it through the existing `toNextItem`. **No new public types, no second
+   claimability encoding.**
 
-Frontier helpers (`itemDone`, `scopesDisjoint`, …) are **reused** from `state.ts`,
-not reimplemented — a single source of the claimability rule (the same M1 review
-lesson that already unified `nextItems` and the status board).
+This is the strongest possible M1 protection: there is exactly **one** encoding of
+"claimable" (`claimableItems`), applied to two different item structures (the live
+queue vs the tree projection). The divergence test (§5) compares those two
+applications. The only genuinely new logic is the structural projection.
 
 ## 5. The acid test — built to *bite* (the kill-criterion)
 
@@ -181,10 +186,18 @@ the exact branches `claimableItems` distinguishes — so the test exercises ever
 claimability transition, not just the happy path.
 
 **Mutation tests (proving the falsifier bites).** A test is worthless if it cannot
-be made to fail. Perturbation cases assert the divergence test goes **red**:
-drop a `dependsOn` from a leaf; widen a leaf `scope` to overlap another; remove a
-leaf that the queue still has; flip a leaf `status`. Each perturbation MUST flip
-the invariant to failing — encoded as `expect(divergence(...)).toBe(false)`.
+be made to fail. The biting perturbations are **structural** — they change what the
+tree declares, so the tree- and queue-derived frontiers must disagree
+(`expect(diverged(...)).toBe(true)`): drop a `dependsOn` from a leaf; widen a leaf
+`scope` to overlap an active claim; remove a leaf the queue still has.
+
+**Negative control (proving we read status from the log, not the leaf).** Flipping a
+leaf's descriptive `status` must **not** diverge (`expect(diverged(...)).toBe(false)`).
+The frontier derivation (`projectTreeState`) takes claim/done status from the event
+log, **never** from `leaf.status` (which feeds only the substance/completeness
+derivations). A mutation here that *did* bite would mean the frontier was wrongly
+reading descriptive metadata — so its staying green is itself a correctness
+assertion, not a gap.
 
 **Replay determinism.** `planFrontier` is a pure fold over a pinned event slice +
 the authored tree — bit-stable across runs (reuses the substrate replay
