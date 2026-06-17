@@ -1,0 +1,44 @@
+# studio — the plan-tree authoring studio seed (Board Kit Plan 3 consumer).
+# Status: seed — slices S4–S6 shipped (studio#1, 2026-06-17): read-only PlanTree
+#         projection -> gesture-native structural authoring (add/delete via onKey,
+#         drag-reparent via the board-kit dropTarget seam) -> label inspector.
+# Form: a LEAN Angular 21 + vitest pnpm app (apps/studio-ui) that authors a kernel
+#       PlanTree through the published <ds-board-kit> brick and persists edits via an
+#       in-memory kernel-shaped PlanTreeStore. NO NestJS / DB / kernel coupling — it
+#       COMPOSES the published @de-braighter/design-system-{core,angular} +
+#       substrate-contracts packages; live-substrate wiring is deferred to a later slice.
+# Repo: github.com/de-braighter/studio — PRIVATE (was local-only before 2026-06-17).
+# Direction: the path-BUILDER studio meta-product ("sell the builder, not the paths") —
+#            the agnostic scenario-lab engine + the design-system board-kit brick are its
+#            seed. See concepts: studio-product-direction.
+
+name: studio
+domain: authoring-studio
+status: seed
+repo: github.com/de-braighter/studio
+local: domains/studio/
+
+# INVARIANT (the two-trees discipline, ADR-239/240): the kernel PlanTree is the source
+# of truth; the board-kit RenderNode tree is a DERIVED projection; layout geometry is
+# NEVER persisted (the `move` EditIntent maps to no kernel verb). reparent composes
+# node-removal + subtree-insertion — the app authors no kernel concept and adds no verb.
+
+# Hints for orchestrator judgment, not enforcement. Lean Angular 21 + vitest, pnpm.
+enabled:
+  agents:
+    suggested:
+      - designer
+      - ui-pro
+      - implementer
+      - reviewer
+      - charter-checker
+      - qa-engineer
+      - a11y-pro
+      - local-ci
+      - test-pro
+  skills:
+    suggested:
+      - angular-architecture-concierge
+      - angular-feature-generator-decomposition-aware
+      - angular-signals-standalone-governance
+      - md-quality-review
