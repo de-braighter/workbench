@@ -698,7 +698,7 @@ In `domains/foundry/src/instances/foundry-product.ts`:
   },
 ```
 
-(b) Add `scope` + `dependsOn` to **every** existing work-item leaf's `meta`. Each leaf's `scope` is the foundry repo narrowed by a stable `pathPrefix`; `dependsOn` is `[]` for the already-shipped items (they are independent done work). Example for the first leaf (`story-pool-auto`) — apply the same shape to all eight existing leaves, varying `pathPrefix`:
+(b) Add `scope` + `dependsOn` to **every** existing work-item leaf's `meta`. These eight leaves are all `status: 'done'` — they never become claimable, so their scope is descriptive-only and **scope-disjointness among them is irrelevant** (only active claims gate disjointness, and a done item has none). So scope each to its **real** primary source area; do **not** invent file paths. `dependsOn` is `[]` (independent shipped work). Example for the first leaf (`story-pool-auto`):
 
 ```ts
   {
@@ -717,8 +717,7 @@ In `domains/foundry/src/instances/foundry-product.ts`:
   },
 ```
 
-Use these `pathPrefix` values (one per existing leaf, keeping scopes disjoint):
-`story-pool-auto`→`src/wt-pool.ts`; `story-retire`→`src/ops-retire.ts`; `story-presence`→`src/ops-coordinator.ts`; `story-ledger-scan`→`src/derivations/`; `story-suppress-fp`→`src/metamodel/`; `story-effect-parser`→`src/derivations/cycle-time.ts`; `story-conductor-gate-decide`→`src/ops-gate.ts`; `story-pool-enqueue`→`src/mcp/`.
+Use these `pathPrefix` values, all **real** existing paths (overlap is fine — these are done items): `story-pool-auto`→`src/wt-pool.ts`; `story-retire`→`src/ops.ts`; `story-presence`→`src/ops.ts`; `story-ledger-scan`→`src/derivations/`; `story-suppress-fp`→`src/metamodel/`; `story-effect-parser`→`src/derivations/cycle-time.ts`; `story-conductor-gate-decide`→`src/ops.ts`; `story-pool-enqueue`→`src/mcp/`. (Verify each against the actual `domains/foundry/src/` tree before writing.)
 
 (c) Add the in-flight Phase-B story as a new **queued** leaf under a new feature on `cap-scale` (or reuse `feat-conductor`):
 
