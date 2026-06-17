@@ -48,16 +48,29 @@ This is decomposed into two slices; **only Slice 1A is built now.**
    not own** (the `devloop:*` namespace) rather than validate-and-throw. Devloop's reader already
    folds both namespaces. Invariant: *each reader folds only its own namespace + shared types; the
    other namespace is inert to it.*
-4. **Deterministic event identity.** Devloop's own events mint stable `eventId`s
-   (`uuidv5` over each event's natural key, mirroring foundry's writer) so dedup and re-runnable
-   migration are idempotent. Historical events keep their already-persisted ids.
+4. **Idempotency via content-based dedup (RATIFIED).** Devloop events carry no `eventId` (the
+   kernel mints one on persist if ever needed). Idempotency is achieved by **content `dedupKey`**
+   (`eventType + canonical(payload)`) — the same mechanism devloop's existing `backfill` already
+   uses and that has produced **0 collisions across ~4 230 own-events** in the live log. uuidv5
+   per-event natural-key minting was considered and deferred (YAGNI: content-dedup is sufficient
+   and avoids the burden of defining a natural key per event type). Safeguard: the cutover runbook
+   includes a **pre-flight collision check** — count `devloop:*` events vs distinct dedupKeys; any
+   shortfall must be resolved before the migration runs.
 5. **Source-truthful `occurredAt`.** Devloop's own events carry source time (GitHub PR
    `createdAt`/`mergedAt`, verdict time) — already true for backfilled events; the ingest-time drift
    problem **disappears** with the copy-step.
-6. **One-time migration.** Append devloop's historical **own** events (those NOT already in the
-   canonical log) into the canonical log, ordered by `occurredAt`, deduped by `eventId`, idempotent,
-   with the pre-migration canonical log backed up. Devloop's historical *ingested* foundry events are
-   skipped (already present).
+6. **One-time migration + append-only ordering contract.** Append devloop's historical **own**
+   events (those NOT already in the canonical log) into the canonical log, deduped by `dedupKey`,
+   idempotent, with the pre-migration canonical log backed up. Devloop's historical *ingested*
+   foundry events are skipped (already present natively).
+
+   **Append-only integrity — no global reorder.** The canonical log is written in WRITE order and
+   existing lines are NEVER reordered (doing so would corrupt the append-only invariant). The
+   migration sorts devloop's historical own-events by `occurredAt` **among themselves** before
+   appending, but the resulting canonical log is NOT globally time-sorted — foundry's existing
+   lines precede the appended history. **Readers are responsible for temporal ordering.** They
+   already sort by `occurredAt` where it matters (e.g. `flowSummary`, calibration windows). This
+   is an explicit design invariant, not a defect.
 7. **Green-first, then retire.** Run the **full devloop suite green** against the canonical log
    BEFORE retiring the separate devloop log (archive the old file; do not delete).
 
@@ -83,27 +96,39 @@ landing green. Recorded as a planned follow-on, decided post-1A.
 
 - **Namespacing** is the coordination contract: `foundry:*` vs `devloop:*`. Each `fold` filters its
   namespace (+ any shared/kernel types). No cross-namespace coupling.
+- **Append-only, readers sort.** The log is written in WRITE order; no reordering of existing
+  lines ever occurs. Readers sort by `occurredAt` locally when temporal order is required. The
+  log is NOT globally time-sorted after migration (foundry history precedes appended devloop
+  history); this is correct and expected.
 - **No live stream.** File-based remains; a long-running reader re-reads the file (unchanged from
   today). An HTTP/MCP event stream is explicitly **out of scope** (YAGNI; note as future v1.1).
 
 ## 4. Acid test — must BITE
 
 Per the arc's falsifier discipline (independently-authored fixtures + mutation that flips RED +
-negative control + whole-branch review):
+negative control + whole-branch review). The primary acid-test file is
+`test/canonical-collapse.acid.test.ts` in `domains/devloop`.
 
-1. **Independently-authored fixture** — a hand-built canonical log with interleaved `foundry:*` +
-   `devloop:*` events and *known* expected posteriors (NOT produced by the code under test).
-2. **Bit-stability** — folding the canonical log reproduces devloop's posteriors (cycle-time median,
-   calibration score, reliability) **bit-for-bit** vs the pre-collapse two-log computation for the
-   same logical events (seeded PRNG → replay-deterministic).
-3. **Red-on-seam mutation (THE seam-detector)** — remove ONE `devloop:*` observation event from the
+1. **Red-on-seam mutation (THE seam-detector).** Remove ONE `devloop:*` observation event from the
    canonical log (simulating "it stayed behind in the old separate log"). A posterior changes; the
    equality assertion goes **RED**. If any event is not in the one canonical log, this test fails.
-4. **Negative control A** — appending an unrelated/no-op event type does NOT move any posterior
-   (the test is not trivially sensitive to every line).
-5. **Negative control B (foundry side)** — foundry's coordination state (`claimableItems`,
-   `planFrontier`) is **identical** with vs without `devloop:*` events present in the canonical log
-   (reader tolerance proven; doing-machine unaffected by twin observations).
+   This is the falsifier: if the test passes despite a missing event, it is not a real seam test.
+2. **Negative control A** — appending an unrelated/no-op `foundry:*` event type does NOT move any
+   devloop posterior (the test is not trivially sensitive to every line; foundry events are inert
+   to devloop readers for this fixture).
+3. **Bit-stability** — deterministic readers (those that do NOT use `Math.random`) recompute
+   posteriors **identically** across multiple runs against the same canonical log. Note: `cycle-time`
+   and `reliability` readers use unseeded `Math.random` internally — acid assertions use only
+   deterministic readers (e.g. calibration hit-rate, event counts) to avoid flakiness.
+4. **Order-robustness** — the posterior is invariant to the physical line order of the canonical log.
+   A shuffled-but-content-identical log produces the same posterior (readers sort by `occurredAt`
+   locally). This replaces the earlier "two-log equivalence" framing, which a whole-branch review
+   found tautological (comparing two things that are always identical by construction does not
+   exercise the seam).
+5. **Negative control B (foundry side) — `domains/foundry/test/reader-tolerance.test.ts`.** Foundry's
+   coordination state (`claimableItems`, `planFrontier`) is **identical** with vs without `devloop:*`
+   events present in the canonical log. Anchored in the foundry repo (which owns the fold); proves
+   the doing-machine is unaffected by twin observations.
 6. **Migration idempotency** — running the migration twice yields a **byte-identical** canonical log.
 7. **Green gate** — the entire devloop test suite passes against the canonical log BEFORE the
    separate log is retired.
@@ -138,3 +163,14 @@ Shadow-then-collapse, never big-bang:
 §12-style: once Slice 1A is green, does `planFrontier` subsume `claimableItems` (retire the queue
 shadow)? That is **Stage 2** of the ladder (doing-side unification), not Phase B — noted, not decided
 here.
+
+## 9. Known follow-up — Slice 1B / hardening
+
+**Concurrent-writer safety.** After Slice 1A, foundry's doing-machine and devloop's CLI both
+`appendFileSync` to the same canonical `events.jsonl`. Per-call `appendFileSync` is effectively
+atomic for the small writes each process makes (a single serialised JSON line), but **concurrent
+multi-process appends are a new condition** not yet stress-tested in Slice 1A. In the current
+usage pattern (foundry conductor and devloop CLI are rarely concurrent), this is low-risk. However,
+it should be explicitly revisited and stress-tested in **Slice 1B or a dedicated hardening task**
+before the canonical log is load-bearing for any high-frequency automated writer. Mitigation
+options (file locking, a single writer process, an in-process queue) are deferred to that task.
