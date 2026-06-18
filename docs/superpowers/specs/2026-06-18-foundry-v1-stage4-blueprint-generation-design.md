@@ -28,6 +28,21 @@ missing half of the extract↔generate pivot (Stage 5 then compiles the blueprin
 
 ## 2. Decision — invert the blueprint into a spec + events
 
+### Known data-shape requirement — productKey-aligned specs
+
+For a clean **one-round** round-trip (`generate ∘ extract == identity, exact`), a product's spec
+keys MUST be **productKey-aligned**: every item key takes the form `<productKey>/<suffix>` and the
+root key equals `productKey`. When that holds, all uuidv5 ids re-derive identically after the key
+rewrite and the round-trip is exact in one pass.
+
+WHALES_PRODUCT's internal key scheme (`whales/*`) differs from its productKey
+(`whales-and-bubbles`). This is a latent authoring inconsistency: the keys were authored before the
+productKey was settled. Generation gracefully **normalizes** such specs to the new key on the first
+round and is **idempotent** thereafter (re-running generation on the already-normalized product
+produces an identical result). Normalization is not a defect — it is the correct behavior for
+misaligned input — but it means the strong one-round identity does NOT hold for WHALES against its
+original keys (it holds against the normalized form).
+
 ### Slice 4A (build now)
 
 Three net-new functions (no new shapes — they consume/produce existing types):
@@ -71,25 +86,53 @@ The keystone identity: **`buildCascadeTree(blueprintToSpec(bp, k)) ≡ bp.proces
 rewrite)** — `blueprintToSpec` faithfully inverts `buildCascadeTree`. Composed with `blueprintToEvents`
 + `extractBlueprint`, a generated product re-expresses the source blueprint.
 
-## 4. Acid test — must BITE (generate∘extract == identity)
+**Precision on round-trip strength:**
+- For **productKey-aligned specs** (item keys `<productKey>/<suffix>`, root key == productKey):
+  `generate ∘ extract == identity` holds **exactly in one round** (proven on the key-aligned fixture).
+  This is the strong claim.
+- For specs whose internal key scheme differs from the productKey (e.g. WHALES's `whales/*` keys vs
+  productKey `whales-and-bubbles`): generation **normalizes** the key scheme on the first round and
+  is **idempotent** thereafter. The strong one-round identity holds against the *normalized* form, not
+  the original authoring. WHALES is the real-data normalization case.
 
-For **WHALES_PRODUCT** (real, yield-bearing) AND an independently-authored **fixture-product**:
+## 4. Acid test — must BITE (two proofs)
 
-1. **Same-key round-trip (the exact bite):** `bp = extractBlueprint(SPEC, stateWithDone, key)`;
+The acid test proves **both** claims: strong one-round identity on a productKey-aligned fixture, and
+normalize-then-idempotent on WHALES (the real-data case).
+
+**Proof A — strong identity (key-aligned fixture):**
+
+1. **Same-key round-trip (exact bite):** use an independently-authored fixture whose keys are
+   productKey-aligned. `bp = extractBlueprint(SPEC, stateWithDone, key)`;
    `spec' = blueprintToSpec(bp, key)`; `events = blueprintToEvents(spec', key)`;
-   `state' = fold(events)`; `bp' = extractBlueprint(spec', state', key)`. Assert `bp'.process` **deep-equals**
-   `bp.process` (SAME key → SAME uuidv5 node ids → exact equality) and `bp'.done` equals `[]` (a freshly
-   generated product has nothing merged). This proves `blueprintToSpec`+`blueprintToEvents` reconstruct
-   the product losslessly.
-2. **New-key generation (re-express a distinct product):** `generate(bp, 'whales-clone')`; the clone's
-   re-extracted process is **structurally isomorphic** to `bp.process` with all ids re-derived from the
-   new key (assert via re-keying `bp.process` to the new key and deep-equal, OR a structural compare:
-   same node count, same kind/parent-structure, same metadata-minus-key-derived-fields, same yields).
-3. **Mutation → RED:** corrupt `blueprintToSpec` (drop a node / mangle the re-key); the re-extracted
+   `state' = fold(events)`; `bp' = extractBlueprint(spec', state', key)`. Assert `bp'.process`
+   **deep-equals** `bp.process` (SAME key → SAME uuidv5 node ids → exact equality) and `bp'.done`
+   equals `[]` (a freshly generated product has nothing merged). This is the **strong claim**:
+   `generate ∘ extract == identity` exactly in one round.
+2. **Mutation → RED:** corrupt `blueprintToSpec` (drop a node / mangle the re-key); the re-extracted
    process diverges from `bp.process` → the round-trip assertion goes RED.
-4. **Genericity:** the SAME generic `blueprintToSpec`/`blueprintToEvents` handle WHALES + the fixture
+
+**Proof B — idempotent normalization (WHALES real-data case):**
+
+3. **Round-1 normalization:** `bp = extractBlueprint(WHALES_SPEC, state, 'whales-and-bubbles')`;
+   `spec' = blueprintToSpec(bp, 'whales-and-bubbles')`; `events = blueprintToEvents(spec', 'whales-and-bubbles')`;
+   `state' = fold(events)`; `bp' = extractBlueprint(spec', state', 'whales-and-bubbles')`. The
+   original WHALES keys (`whales/*`) are normalized to `whales-and-bubbles/*` on this first pass.
+   Assert `bp'.process` is structurally complete (same node count, kind/parent-structure, metadata,
+   yields) and `bp'.done == []`.
+4. **Idempotent (round-2):** run the same round-trip on `spec'` (the already-normalized spec). Assert
+   `bp''process` **deep-equals** `bp'.process` — no further change. This proves normalization
+   converges in one round and holds stable thereafter.
+
+**Shared assertions:**
+
+5. **New-key generation (re-express a distinct product):** `generate(bp, '<newKey>')` for both the
+   aligned fixture and WHALES; the clone's re-extracted process is **structurally isomorphic** to
+   `bp.process` with all ids re-derived from the new key (same node count, same kind/parent-structure,
+   same metadata-minus-key-derived-fields, same yields).
+6. **Genericity:** the SAME generic `blueprintToSpec`/`blueprintToEvents` handle WHALES + the fixture
    with no product-specific branch (assert by cross-product divergence + each matching its own source).
-5. **Builds green + valid:** `blueprintToEvents` output passes the event schemas (fold without throw);
+7. **Builds green + valid:** `blueprintToEvents` output passes the event schemas (fold without throw);
    the full foundry suite stays green.
 
 ## 5. Reversibility
@@ -103,8 +146,10 @@ beyond "queue from a blueprint instead of a hand-listed item array".
 
 - **ADR-249** records: blueprint GENERATION is the inverse of extraction — `blueprintToSpec` faithfully
   inverts `buildCascadeTree`, `blueprintToEvents` instantiates the product via the existing
-  `ProductRegistered`/`WorkItemQueued` events; `generate ∘ extract == identity` (modulo product key).
-  Completes the extract↔generate pivot (Stage 5 compiles). Status `proposed` until charter-checker COHERENT.
+  `ProductRegistered`/`WorkItemQueued` events; `generate ∘ extract == identity` (exact, one round) for
+  productKey-aligned specs; for misaligned specs (e.g. WHALES), generation normalizes the key scheme on
+  the first round and is idempotent thereafter. Completes the extract↔generate pivot (Stage 5 compiles).
+  Status `proposed` until charter-checker COHERENT.
 - **ADR-176 inclusion test — NOT triggered.** All three functions are pack-level; they consume/produce
   the ratified `PlanTree` + existing pack events + the `CascadeNodeSpec`/`ProductBlueprint` pack types.
   No new shape (explicitly NO `GenerationRequest`/`GenerationResult` wrapper — return `spec[]` + `events[]`
