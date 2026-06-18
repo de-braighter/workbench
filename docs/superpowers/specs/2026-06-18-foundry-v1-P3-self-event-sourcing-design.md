@@ -159,8 +159,8 @@ planFrontierAll(state, nowMs)
 
 conductor (/foundry-conduct)
   reads planFrontierAll → sees foundry items
-  foundry_claim('foundry/p5', ...) → SUCCEEDS
-  foundry_claim('foundry/p1', ...) → REJECTED (already done via claim-release)
+  foundry_claim('foundry/p5-tree-reconciliation', ...) → SUCCEEDS (queued, dep p1 done)
+  foundry_claim('foundry/p4-concurrent-writer', ...) → REJECTED (already done via claim-release)
 ```
 
 ---
@@ -171,15 +171,16 @@ conductor (/foundry-conduct)
 |---|---|---|---|---|---|
 | `foundry/p1-yields-in-log` | Yields-in-log (P1) | `src/metamodel/` | [] | `[{kind:'pack',id:'yields-in-log'}]` | `done` |
 | `foundry/p2-mcp-surface` | MCP extract/compile tools (P2) | `src/mcp/` | [] | `[{kind:'pack',id:'mcp-extract-compile'}]` | `done` |
-| `foundry/p3-self-event-sourcing` | Self-event-sourcing bootstrap (P3) | `src/instances/` | [] | `[{kind:'pack',id:'foundry-self-bootstrap'}]` | `queued` |
-| `foundry/p4-concurrent-writer` | Concurrent-writer safety (P4) | `src/store-lock.ts` | [] | `[{kind:'policy',id:'log-lock-v1'}]` | `queued` |
-| `foundry/p5-completeness-critic` | Completeness critic (acid-test ratchet) | `src/plan/` | [`foundry/p3-self-event-sourcing`] | `[{kind:'policy',id:'completeness-critic-v1'}]` | `queued` |
-| `foundry/p6-live-browser-runtime` | Live browser-runtime (studio integration) | `src/compiler/` | [`foundry/p5-completeness-critic`] | `[{kind:'pack',id:'browser-runtime-v1'}]` | `queued` |
+| `foundry/p3-self-event-sourcing` | Self-event-sourcing bootstrap (P3) | `src/instances/` | [`foundry/p4-concurrent-writer`] | `[{kind:'pack',id:'foundry-self-bootstrap'}]` | `done` |
+| `foundry/p4-concurrent-writer` | Concurrent-writer safety (P4) | `src/store-lock.ts` | [] | `[{kind:'policy',id:'log-lock-v1'}]` | `done` |
+| `foundry/p5-tree-reconciliation` | Hierarchical↔flat tree reconciliation (P5) | `src/plan/` | [`foundry/p1-yields-in-log`] | `[{kind:'policy',id:'tree-reconciliation'}]` | `queued` |
+| `foundry/p6-scheduled-wake` | Scheduled-wake actuation (P6) | `src/wt-pool.ts` | [] | `[{kind:'policy',id:'scheduled-wake-v1'}]` | `queued` |
+| `foundry/p7-live-browser-runtime` | Live browser-runtime target (P7) | `src/compiler/` | [] | `[{kind:'pack',id:'browser-runtime-v1'}]` | `queued` |
+| `foundry/p8-devloop-retirement` | Devloop repo retirement (P8) | `src/log.ts` | [`foundry/p4-concurrent-writer`] | `[{kind:'policy',id:'devloop-retirement-v1'}]` | `queued` |
 
-Note: P3's own itemId is `foundry/p3-self-event-sourcing` with `status:'queued'` in the
-fixture (the bootstrap cannot mark itself done; the implementer runs `foundry_record_merge`
-after the P3 PR lands). P1 and P2 are `status:'done'` (they shipped before P3). All scopes
-carry `repo:'de-braighter/foundry'`.
+Note: P1/P2/P3/P4 are `status:'done'` in the shipped fixture (all merged before bootstrap
+ran). P5-P8 are `status:'queued'` — the live frontier the conductor picks up post-bootstrap.
+All scopes carry `repo:'de-braighter/foundry'`.
 
 ---
 
@@ -210,11 +211,14 @@ frontier = planFrontierAll(stateAfter, Date.now())
 frontierIds = frontier.map(i => i.itemId)
 ```
 
-Assert `frontierIds` includes `foundry/p3-self-event-sourcing` (queued, deps satisfied).
-Assert `frontierIds` does NOT include `foundry/p1-yields-in-log` (done) or
-`foundry/p2-mcp-surface` (done).
-Assert `frontierIds` does NOT include `foundry/p5-completeness-critic` (queued but depends
-on p3 which is queued-not-done → blocked). This is the dependency-gate bite.
+Assert `frontierIds` includes `foundry/p5-tree-reconciliation` (queued, dep p1 is done →
+unblocked) and `foundry/p6-scheduled-wake` (queued, no deps).
+Assert `frontierIds` does NOT include `foundry/p1-yields-in-log` (done),
+`foundry/p2-mcp-surface` (done), `foundry/p3-self-event-sourcing` (done), or
+`foundry/p4-concurrent-writer` (done).
+Assert `frontierIds` does NOT include `foundry/p8-devloop-retirement` (queued but depends
+on p4; p4 is done so p8 IS actually unblocked — assert it IS in the frontier). This is the
+dependency-gate bite: a done dep unblocks its dependents.
 
 ### T3 — The BITE: stale annotation has no effect on frontier
 
@@ -245,11 +249,12 @@ Step 2 — prove runtime immunity:
 stateAfter = fold(foundryBootstrapEvents(freshState, TS))
 ```
 
-Assert `ops.claim({ itemId: 'foundry/p3-self-event-sourcing', ... })` SUCCEEDS (queued,
-no active claim, deps met for p3 which has no dependsOn).
-Assert `ops.claim({ itemId: 'foundry/p1-yields-in-log', ... })` is REJECTED with an error
+Assert `ops.claim({ itemId: 'foundry/p5-tree-reconciliation', ... })` SUCCEEDS (queued,
+deps satisfied — `foundry/p1-yields-in-log` is done in the bootstrapped state).
+Assert `ops.claim({ itemId: 'foundry/p4-concurrent-writer', ... })` is REJECTED with an error
 matching `already done` or `itemDone` (the claim path must reject done items; verified
-against `state.ts:195-196` defense-in-depth).
+against `state.ts:195-196` defense-in-depth). Note: p3 is also done post-bootstrap and
+would likewise be rejected — p4 is used here because it has no dependsOn (simpler fixture).
 
 ### T5 — Idempotency
 
@@ -296,8 +301,15 @@ ADR-254 (proposed) records the bootstrap decision; charter-checker must return C
 **Risk 2 — registering P5-P8 as queued is the right call.**
 The fuller-vision grind items have not been built; they are genuinely queued work. Registering them now means the conductor can pick them up via `foundry_claim` immediately after P3 lands. The alternative (defer registration until a human runs `foundry_queue_push` manually) adds ceremony with no benefit. Registering them here is the self-application payoff.
 
-**Risk 3 — P3 cannot mark itself done.**
-`foundry/p3-self-event-sourcing` stays `status:'queued'` in the fixture and in the log after bootstrap. The implementer runs `foundry_record_merge` (or `foundry_release(outcome:'done')`) after the P3 PR lands. This is correct — the bootstrap cannot pre-declare its own completion; that would violate the log-as-authority invariant.
+**Risk 3 — SETTLED: P3 marks itself done in the fixture; this does NOT violate log-as-authority.**
+`foundry/p3-self-event-sourcing` carries `status:'done'` in the shipped fixture because the
+bootstrap function is designed to run POST-MERGE (after the P3 PR lands). At the moment the
+bootstrap executes, P3 is genuinely done. The fixture is a one-time accurate SEED — a snapshot
+of reality at bootstrap time — not a runtime read. After seeding, the LOG is the sole runtime
+authority: `itemStatus` is derived exclusively from `fold(log)`, and `planFrontierAll` reads
+only `DerivedState` (folded from the log), never the fixture. The `FOUNDRY_PRODUCT` array
+carries a top-of-file comment making this explicit. Conclusion: `status:'done'` for P3/P4 in
+the fixture is correct and coherent; no log-as-authority violation; risk is resolved.
 
 ---
 
@@ -319,8 +331,8 @@ events from the tail of the log restores prior state.
 After the P3 PR merges and `foundry_record_merge('foundry/p3-self-event-sourcing', prRef)`
 is called:
 1. Run `foundry_bootstrap` once on the live canonical log (idempotent; safe to re-run).
-2. Run `foundry_status` — foundry should appear in the products list with P5/P6 in
-   the frontier (P3/P4 also appear as queued).
+2. Run `foundry_status` — foundry should appear in the products list with P5/P6/P8 in
+   the frontier (P3/P4 are done; P7 queued with no blocking deps also appears).
 3. The conductor (`/foundry-conduct`) can now claim foundry items via `planFrontierAll`
    without any code change.
 
