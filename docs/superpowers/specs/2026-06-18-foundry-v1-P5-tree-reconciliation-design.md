@@ -9,7 +9,8 @@
 
 - **Date:** 2026-06-18
 - **Scope:** `domains/foundry` (`src/events.ts`, `src/metamodel/generate.ts`, `src/state.ts`,
-  `src/plan/tree-from-queue.ts`, `src/plan/frontier.ts`).
+  `src/plan/tree-from-queue.ts`, `src/plan/frontier.ts`, `src/ops.ts`,
+  `src/mcp/server.ts`, `src/mcp/tools.ts`, `src/instances/foundry-bootstrap.ts`).
   `layers/specs` (ADR-255, status proposed).
 - **Predecessors:** ADR-241 (foundry as sanctioned meta-product), ADR-242 (substance =
   derived ⋃ yields, never stored), ADR-244 (conductor drives plan-tree frontier),
@@ -56,7 +57,9 @@ the P5 gap flagged by the completeness-critic after the autonomous ladder comple
 
 The mechanism is the same additive shape P1 used for `yields`: an OPTIONAL field on the
 `WorkItemQueued` payload, normalized on fold, threaded through the tree derivation. Five
-numbered touch-points:
+numbered touch-points (R1–R5), plus a shared `ancestryOf` emit helper that closes the
+producer side on ALL FOUR `WorkItemQueued` emit sites (R2b — the un-deferred §12 work, this
+mirrors P1/ADR-251's "four yields emit sites" pattern; see §12).
 
 **R1 — Event schema (`src/events.ts`):** add an OPTIONAL `ancestry?: AncestorRef[]` to the
 `WorkItemQueued` Zod object (`events.ts:60-65`). Define and export a new `AncestorRefSchema`
@@ -78,28 +81,59 @@ to `WorkItemQueued` as `ancestry: z.array(AncestorRefSchema).optional()`. Option
 events without it parse cleanly (Zod `.optional()` with no `.default()`); absent ancestry
 reproduces today's flat behavior exactly.
 
-**R2 — `blueprintToEvents` (`src/metamodel/generate.ts`):** when emitting `itemQueued(...)`
-for a work-item leaf (`generate.ts:180-205`), walk that leaf's `parent` chain UP the spec —
-EXCLUDING the product root — and emit the ordered chain (root-child-first) as `ancestry`. The
-spec is already in scope; build a `key → CascadeNodeSpec` map once, then for each work-item
-walk `parent` pointers, collecting `{ key, kind, title }` for every non-root ancestor, and
-reverse into root-first order. Spread it into the `itemQueued` call exactly as P1 spread
-`yields` (`generate.ts:202`):
+**R2 — shared `ancestryOf` helper (`src/metamodel/generate.ts:59-80`):** the emit-time walk is
+factored into ONE exported helper, `ancestryOf(wi, byKey)`, so every producer threads ancestry
+identically. Given a work-item `CascadeNodeSpec` and a `key → CascadeNodeSpec` map, it walks the
+`parent` chain UP the spec — EXCLUDING the product root (`node.parent === null` stops the walk) —
+collecting `{ key, kind, title }` for every non-root ancestor, then reverses into root-child-first
+order. A work-item directly under the product root yields an empty `ancestry` → the field is
+omitted at every call site → flat behavior, no phantom intermediates.
 
 ```ts
-const ancestry = ancestryOf(wi, byKey); // ordered capability..feature, root excluded
-events.push(itemQueued({
-  itemId, productKey: newKey, title, scope, dependsOn, qualityObligations,
-  ...(epic != null ? { epic } : {}),
-  ...(lane != null ? { lane } : {}),
-  ...(yields != null ? { yields } : {}),
-  ...(ancestry.length > 0 ? { ancestry } : {}),
-  ts: now,
-}));
+export function ancestryOf(wi: CascadeNodeSpec, byKey: Map<string, CascadeNodeSpec>): AncestorRef[] {
+  const chain: AncestorRef[] = [];
+  let fromKey = wi.key;
+  let parentKey = wi.parent;
+  const visited = new Set<string>();
+  while (parentKey != null) {
+    if (visited.has(parentKey)) throw new Error(`ancestry walk: cycle detected at ${parentKey} for node ${fromKey}`);
+    visited.add(parentKey);
+    const node = byKey.get(parentKey);
+    if (node == null) throw new Error(`ancestry walk: dangling parent ${parentKey} for node ${fromKey}`);
+    if (node.parent === null) break; // product root — excluded
+    const title = (node.meta as Record<string, unknown> | undefined)?.['title'] as string | undefined;
+    chain.push({ key: node.key, kind: node.kind, ...(title != null ? { title } : {}) });
+    fromKey = node.key;
+    parentKey = node.parent;
+  }
+  return chain.reverse(); // leaf-parent-first → root-child-first
+}
 ```
 
-A work-item directly under the product root (no intermediate levels) yields an empty
-`ancestry` → the field is omitted → flat behavior, no phantom intermediates.
+`ancestryOf` is the EMIT-TIME strict path: it throws loudly on a malformed authored spec — both a
+dangling mid-chain `parent` (a key absent from `byKey`) AND a `parent` cycle (a chain that never
+reaches `parent === null`, caught by the visited-set guard). Well-formed authored specs never hit
+either; the throw is the loud-failure contract for bad authored input (§9b). This is intentionally
+the OPPOSITE posture from the reconstruct-time graceful degrade in R4 / §9a — see §9 for the
+emit-strict vs read-total split.
+
+**R2b — thread `ancestryOf` through ALL FOUR `WorkItemQueued` emit sites.** `blueprintToEvents` is
+the first and primary producer, but it is NOT the only write path to a `WorkItemQueued` event.
+P5 closes the producer side on every one — exactly as P1/ADR-251 had to thread `yields` through
+its four yields emit sites (the symmetric "all-emit-sites" lesson: greening on one producer while
+the live path uses another is a methodological mismatch the review caught for yields). The four:
+
+| # | Emit site | Source | Notes |
+|---|-----------|--------|-------|
+| 1 | `blueprintToEvents` | `src/metamodel/generate.ts:236` | the generate / extract→generate path; spreads `...(ancestry.length > 0 ? { ancestry } : {})` into `itemQueued` exactly as it spreads `yields` |
+| 2 | `queuePush` / `ItemInput.ancestry` | `src/ops.ts:39, 62` | the manual queue-push path; `ItemInput` gains optional `ancestry?: AncestorRef[]`, threaded onto the appended `itemQueued`. EXPOSED on the `foundry_queue_push` MCP tool schema (`src/mcp/server.ts:86`, `ancestry: z.array(AncestorRefSchema).optional()`) so a conductor can queue a hierarchically-placed item directly |
+| 3 | `foundry_generate_from_blueprint` | `src/mcp/tools.ts:97` | the MCP generate handler; computes `ancestryOf(n, byKey)` per work-item and passes it through to `queuePush` |
+| 4 | `foundryBootstrapEvents` | `src/instances/foundry-bootstrap.ts:65` | **THE KEY one** — the ONLY write path for the live `FOUNDRY_PRODUCT`. `planFrontierAll` drives foundry's OWN frontier off the bootstrap-written items (P3/ADR-254), so without ancestry HERE the self-application honesty is false: `treeFromQueue('foundry')` would reconstruct flat even though the authored product is 4-level. ACID 7 is the bootstrap-path proof (`foundryBootstrapEvents → fold → treeFromQueue ≡structural≡ buildCascadeTree(FOUNDRY_PRODUCT)`: FOUNDRY = 1 product / 5 capabilities / 8 features / 17 work-items, depth 4) |
+
+Each call site builds its own `byKey = new Map(spec.map((n) => [n.key, n]))` over the spec in
+scope and spreads `...(ancestry.length > 0 ? { ancestry } : {})` into the `itemQueued` it emits.
+A work-item directly under the product root yields an empty `ancestry` → the field is omitted →
+flat behavior, no phantom intermediates.
 
 **R3 — Fold (`src/state.ts`):** carry `ancestry` into `ItemState.ancestry`, normalized
 NON-OPTIONAL with a default `[]` — exactly mirroring how `yields` is normalized in the
@@ -133,6 +167,28 @@ field, and `buildCascadeTree` (`cascade.ts:24`) maps each `key → uuidv5('casca
 (`cascade.ts:25`). Therefore reconstructing nodes with the SAME keys the authored spec used
 produces IDENTICAL node ids → structural equality with `buildCascadeTree(authoredSpec)`. The
 keys are carried verbatim through `AncestorRef.key`, so the round-trip is exact.
+
+**`specFromQueue` is a TOTAL function — graceful degrade, never throw (`tree-from-queue.ts:30-106`).**
+A well-formed `CascadeNodeSpec[]` has globally-unique keys, so a given ancestor key occupies one
+fixed depth → one fixed parent. The union-dedup step tracks `seen: Map<key, parentKey>`. If a
+LATER occurrence of an already-seen key reconstructs to a DIFFERENT parent (the same key at two
+chain depths), the source ancestry is malformed. On that collision `specFromQueue` does NOT throw:
+it emits a `console.warn` (`[foundry] specFromQueue: ancestry collision for product <k> (key <a>
+under parents <p1>/<p2>); falling back to flat reconstruction`), sets a `collided` flag, and
+RETURNS a deterministic FLAT reconstruction for THAT product only (every work-item directly under
+the product root — the pre-P5 behavior, no phantom intermediates).
+
+The rationale is the frontier invariant, stated as a non-negotiable: `specFromQueue` (via
+`treeFromQueue`) feeds `planFrontierAll`, the SOLE conductor driver, which iterates ALL products.
+The `planFrontierAll ≡ claimableItems` invariant must hold over every log. A throw inside the
+per-product projection would brick the frontier for ALL products — one malformed product would
+take down the healthy ones, vanishing the entire conductor frontier. So the projection MUST be
+total; malformation is surfaced as a warning (not silently swallowed, not fatal). ACID 9 is the
+explicit frontier-resilience proof: one malformed product present alongside a healthy one →
+`planFrontierAll` does not throw, the healthy product's claimable items stay present + unchanged,
+and the malformed product's items still appear (flat, via the fallback). This is the
+reconstruct-time GRACEFUL-DEGRADE path, intentionally the OPPOSITE posture from the emit-time
+strict throw in R2 / §9b.
 
 **R5 — `projectTreeState` (`src/plan/frontier.ts`):** pass `ancestry` through the leaf
 projection like `epic` is passed (`frontier.ts:52-63`), PRESERVING the
@@ -318,12 +374,45 @@ returns the IDENTICAL frontier with vs without intermediate nodes. This pins the
 `planFrontierAll ≡ claimableItems` invariant: claimability reads only leaf work-items + scope
 + `dependsOn`, never tree depth, so intermediate nodes are inert to the frontier.
 
-### Real-product proof (foundry / whales)
+### Real-product proof (foundry / whales) — ACID 6
 
 Run the round-trip on `FOUNDRY_PRODUCT` (5 cap / 8 feat / 17 wi) and `WHALES_PRODUCT`
 (1 cap / 3 feat / 6 wi). Assert the reconstructed tree's depth and node-kind multiset match
 the authored fixture. Before P5, both reconstruct to depth 2; after P5, they reconstruct the
-full 4-level tree. Proves the gap is closed for the two real shipped product fixtures.
+full 4-level tree. Proves the gap is closed for the two real shipped product fixtures. ACID 6
+runs the round-trip via `blueprintToEvents` (the generate path).
+
+### Bootstrap / live-log path — ACID 7 (the KEY self-application proof)
+
+ACID 6 greens via `blueprintToEvents`, but the LIVE foundry product is written ONLY by
+`foundryBootstrapEvents` (`planFrontierAll` drives foundry's own frontier off the bootstrap-written
+items per P3/ADR-254). Before this fix, bootstrap was ancestry-blind → the live product
+reconstructed FLAT, and ACID 6 greened on a path the live log never uses (a methodological
+mismatch — the same failure P1's review caught for yields). ACID 7 exercises the path the live log
+ACTUALLY uses: `foundryBootstrapEvents(emptyState) → fold → treeFromQueue('foundry') ≡structural≡
+buildCascadeTree(FOUNDRY_PRODUCT)`, asserting kind-multiset `{ product: 1, capability: 5,
+feature: 8, work-item: 17 }`, max depth 4, and the exact parent-edge set.
+
+### Queue-push / MCP path — ACID 8
+
+`queuePush(ItemInput with ancestry) → fold → treeFromQueue` reconstructs the intermediates,
+proving `ItemInput.ancestry` (the `foundry_queue_push` MCP path) carries hierarchy onto the log;
+a leaf with NO ancestry stays flat under the product root (no phantom intermediates).
+
+### Frontier resilience — ACID 9 (one malformed product must not brick healthy ones)
+
+A HEALTHY 4-level product present alongside a MALFORMED product (the same ancestor key under two
+different parents). Assert `planFrontierAll` does NOT throw, the healthy product's claimable items
+stay present + unchanged, and the malformed product's items still appear (flat, via the
+`specFromQueue` fallback), with the malformation surfaced via `console.warn`. This is the explicit
+proof of the total-projection rationale (§9a / R4).
+
+### Collision-guard + cycle-guard unit tests
+
+The collision guard (same key at two parents → flat fallback + warn, total over any log; vs the
+redundant-sibling case which dedups cleanly) and the cycle guard (`ancestryOf` throws
+synchronously, does not hang, on a parent cycle) are pinned as standalone tests — the empirical
+proofs of the emit-strict (§9b) vs read-total (§9a) split.
 
 ---
 
@@ -366,14 +455,50 @@ log.
   same flat tree as before.
 
 Real-product logs (agri, whales, oncology) contain existing `WorkItemQueued` events without
-`ancestry`. Backfilling those is out of scope; only NEW queued events (post-P5 deploy via
-`blueprintToEvents`) carry ancestry. Old events continue to reconstruct flat. The historical
+`ancestry`. Backfilling those is out of scope; only NEW queued events (post-P5 deploy via the
+four emit sites in R2b) carry ancestry. Old events continue to reconstruct flat. The historical
 foundry items registered by the P3 bootstrap (ADR-254) likewise have no ancestry until
-re-queued.
+re-registered.
+
+**Live-log re-cutover is a SEPARATE, founder-gated step — NOT done in this slice.** The existing
+live foundry items were registered by the P3 bootstrap (ADR-254) BEFORE P5, so they carry no
+ancestry and `treeFromQueue('foundry')` over the live `data/events.jsonl` still reconstructs flat.
+The CODE now emits ancestry for FUTURE bootstrap runs (and for the test fixtures that prove ACID 7
+on an empty state), but re-cutting-over the REAL live log — re-registering the live foundry items
+so their ancestry lands — is a live-shared-log mutation and therefore a founder decision (the same
+class of gated cutover P3/ADR-254 itself required). It is explicitly out of scope here. Until the
+founder runs that re-cutover, the live foundry product's log-derived tree stays flat; the
+self-application honesty (ACID 7) is proven on the bootstrap code path against a fresh state, not
+asserted over the already-cutover live log.
 
 ---
 
-## 9. Frontier invariant — claimability is depth-blind
+## 9. Failure-mode discipline + the frontier invariant
+
+P5 has two structurally different failure-handling postures, applied at two different times. They
+are intentionally OPPOSITE, and the split is the load-bearing design choice this section records.
+
+### 9a. Reconstruct-time (read) — TOTAL, graceful degrade
+
+`specFromQueue` / `treeFromQueue` feeds `planFrontierAll`, the SOLE conductor driver, which
+iterates ALL products. A hypothetically-malformed log (an ancestor key reconstructing under two
+different parents — see R4) must NOT take down the frontier. So at READ time the projection is
+TOTAL: on collision it falls back to a flat reconstruction for THAT product and emits a
+`console.warn`; it never throws. A throw here would brick `planFrontierAll` for every healthy
+product — one malformed product would vanish the whole conductor frontier. ACID 9 (frontier
+resilience) is the explicit proof: one malformed product must not brick the healthy ones.
+
+### 9b. Emit-time (write) — STRICT, loud throw
+
+`ancestryOf` (R2), the emit-time walk shared by all four producers, throws loudly on a malformed
+AUTHORED spec — both a dangling mid-chain parent (key absent from the spec map) AND a parent cycle
+(visited-set guard; without it the `while` would never terminate). Well-formed authored specs
+never hit either; the throw is the loud-failure contract for bad authored input. This is the
+OPPOSITE of 9a on purpose: bad authored input fails loudly at the producer, where the author can
+fix it; a hypothetically-malformed log degrades gracefully at the reader, so the always-on
+conductor stays up. The two are not in tension — they guard different inputs at different times.
+
+### 9c. Frontier invariant — claimability is depth-blind
 
 The `planFrontierAll ≡ claimableItems` invariant (ADR-246/247) MUST survive P5. It does,
 structurally:
@@ -389,17 +514,18 @@ structurally:
   frontier with or without the intermediate nodes.
 
 The acid-test "frontier invariant" case (§6) is the empirical proof: identical frontier with
-vs without intermediate nodes.
+vs without intermediate nodes. ACID 9 extends it to the resilience guarantee in 9a.
 
 ---
 
 ## 10. Boundary note — ancestry rides only on work-item leaf events
 
-`blueprintToEvents` emits `ancestry` ONLY on the `WorkItemQueued` events (the work-item leaves
-it already filters for at `generate.ts:178`). Intermediate `capability` / `feature` nodes do
-NOT get their own events — they are reconstructed purely from the ancestry carried on the
-leaves. This is the same leaf-only boundary P1 (ADR-251) established for `yields`: the event log
-records leaf facts, and intermediate structure is DERIVED from those leaf facts at tree-build
+All four producers (R2b) emit `ancestry` ONLY on the `WorkItemQueued` events (the work-item
+leaves — `blueprintToEvents` and `foundry_generate_from_blueprint` filter for them; `queuePush`
+and `foundryBootstrapEvents` only ever queue work-items). Intermediate `capability` / `feature`
+nodes do NOT get their own events — they are reconstructed purely from the ancestry carried on
+the leaves. This is the same leaf-only boundary P1 (ADR-251) established for `yields`: the event
+log records leaf facts, and intermediate structure is DERIVED from those leaf facts at tree-build
 time, never separately stored. The boundary keeps the event vocabulary unchanged (no new event
 type) and upholds "store generators, derive graphs" (ADR-176).
 
@@ -408,12 +534,18 @@ type) and upholds "store generators, derive graphs" (ADR-176).
 ## 11. Slice scope
 
 - **foundry:** add `AncestorRefSchema` + `ancestry?` to `WorkItemQueued` (`src/events.ts`);
-  emit the ancestor chain in `blueprintToEvents` (`src/metamodel/generate.ts`); normalize
-  `ancestry` onto `ItemState` in the fold (`src/state.ts`); reconstruct intermediate nodes +
-  rewire leaf parents in `specFromQueue` (`src/plan/tree-from-queue.ts`); thread `ancestry`
-  through `projectTreeState` + `LeafMeta` (`src/plan/frontier.ts`). Add the acid-test battery
-  (primary round-trip + red mutation + flat negative control + P1-intact + frontier-invariant
-  + real-product proof).
+  add the shared `ancestryOf` emit helper (`src/metamodel/generate.ts`); thread it through ALL
+  FOUR `WorkItemQueued` emit sites — `blueprintToEvents` (`src/metamodel/generate.ts`),
+  `queuePush` / `ItemInput.ancestry` (`src/ops.ts`) exposed on the `foundry_queue_push` MCP tool
+  (`src/mcp/server.ts`), `foundry_generate_from_blueprint` (`src/mcp/tools.ts`), and
+  `foundryBootstrapEvents` (`src/instances/foundry-bootstrap.ts`); normalize `ancestry` onto
+  `ItemState` in the fold (`src/state.ts`); reconstruct intermediate nodes + rewire leaf parents
+  in `specFromQueue` as a TOTAL function with collision graceful-degrade
+  (`src/plan/tree-from-queue.ts`); thread `ancestry` through `projectTreeState` + `LeafMeta`
+  (`src/plan/frontier.ts`). Add the acid-test battery (ACID 1 primary round-trip + ACID 2 red
+  mutation + ACID 3 flat negative control + ACID 4 P1-intact + ACID 5 frontier-invariant + ACID 6
+  real-product proof + ACID 7 bootstrap/live-log path + ACID 8 queue-push path + ACID 9 frontier
+  resilience + the collision-guard and cycle-guard tests).
 - **specs:** ADR-255 (proposed) — codifies the ancestry-in-log mechanism as the structural
   round-trip contract.
 
@@ -423,15 +555,35 @@ fold-normalized pattern.
 
 ---
 
-## 12. Deferred
+## 12. Shipped beyond the original cut + what remains deferred
 
-- **Historical log backfill** — real-product logs contain `WorkItemQueued` events without
-  `ancestry`. Backfilling them to recover their authored hierarchy is out of scope; only new
-  queued events carry ancestry. Old events reconstruct flat.
-- **Ancestry on `foundry_queue_push` / MCP input** — the manual queue-push path (`ItemInput`,
-  `foundry_queue_push`) does not yet accept `ancestry`. Adding it would let a conductor queue a
-  hierarchically-placed item directly. Deferred; `blueprintToEvents` is the first and primary
-  producer (the generate path), and closing the round-trip there is the P5 objective.
+This slice shipped MORE than the original cut described. Two items the first draft listed as
+deferred were instead BUILT, and one new founder-gated step was named. Recorded here so the
+durable spec matches the shipped code (the ledger's recurring ADR-vs-code drift; reconcile before
+ratify).
+
+### Un-deferred — SHIPPED in this slice
+
+- **Ancestry on ALL FOUR `WorkItemQueued` emit sites (was: "Ancestry on `foundry_queue_push` /
+  MCP input — deferred").** The original cut closed the round-trip only on `blueprintToEvents` and
+  left the manual queue-push / MCP path for later. The shipped code threads ancestry through the
+  shared `ancestryOf` helper on EVERY producer (R2b): `blueprintToEvents`, `queuePush` /
+  `ItemInput.ancestry` (exposed on the `foundry_queue_push` MCP tool schema),
+  `foundry_generate_from_blueprint`, AND `foundryBootstrapEvents`. The bootstrap site is the
+  KEY one: it is the only write path for the live `FOUNDRY_PRODUCT`, so without it the
+  self-application honesty (`treeFromQueue('foundry')` reconstructing the 4-level hierarchy) would
+  be false. ACID 7 / ACID 8 prove the bootstrap and queue-push paths. This mirrors P1/ADR-251's
+  "four yields emit sites" fix — the same all-producers lesson, applied to ancestry.
+
+### Remains deferred
+
+- **Live-log re-cutover (founder-gated; NOT in this slice).** The existing live foundry items
+  registered by the P3 bootstrap (ADR-254) before P5 carry no ancestry; the code now emits
+  ancestry for future/test bootstrap runs, but re-registering the REAL live `data/events.jsonl`
+  items is a live-shared-log mutation and a founder decision. Out of scope here; see §8.
+- **Historical log backfill** — real-product logs (agri, whales, oncology) contain
+  `WorkItemQueued` events without `ancestry`. Backfilling them to recover their authored hierarchy
+  is out of scope; only new queued events carry ancestry. Old events reconstruct flat.
 - **Intermediate-node metadata richness** — reconstructed capability / feature nodes carry only
   `kind` + `meta.title` from the `AncestorRef`. Richer intermediate metadata (descriptions,
   effect declarations on intermediate levels) is not carried. Deferred; demand-driven per
