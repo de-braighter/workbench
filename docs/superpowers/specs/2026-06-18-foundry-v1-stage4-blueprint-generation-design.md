@@ -52,12 +52,17 @@ Three net-new functions (no new shapes — they consume/produce existing types):
   faithful inverse of `buildCascadeTree` (modulo the key rewrite). Preserves hierarchy, yields, scope,
   dependsOn, resource, effects.
 - **`blueprintToEvents(spec: CascadeNodeSpec[], newKey: string): (ProductRegistered | WorkItemQueued)[]`**
-  — the minimal event set to instantiate the spec as a LIVE product: one `ProductRegistered` (from the
-  product root + scope) + one `WorkItemQueued` per work-item node (itemId/scope/dependsOn/title/
-  qualityObligations from the node metadata). A freshly-generated product has nothing done.
+  — the **pure event-projection** counterpart: given a spec it returns the minimal event set to instantiate
+  the spec as a LIVE product (one `ProductRegistered` from the product root + scope; one `WorkItemQueued`
+  per work-item node carrying itemId/scope/dependsOn/title/qualityObligations from node metadata). A
+  freshly-generated product has nothing done. **Used directly by the round-trip acid test** — `fold(blueprintToEvents(spec))` instantiates the product in-memory to prove the generated events are correct.
+  It is NOT called by the MCP tool at runtime; the MCP tool writes via `queuePush` directly (see below).
 - **`foundry_generate_from_blueprint(blueprint, newKey)` MCP tool** — a thin wrapper: `blueprintToSpec`
-  → `blueprintToEvents` → `queuePush` (emit the events), so a blueprint generates a live product. Reuses
-  the existing `queuePush` path (idempotent product registration + dup-item rejection).
+  derives the re-keyed spec, then writes the product live via the **existing `queuePush`** (idempotent
+  product registration + dup-item rejection) directly — it does NOT call `blueprintToEvents` at runtime.
+  Both paths (`queuePush` and `blueprintToEvents`) emit the same `ProductRegistered` + `WorkItemQueued`
+  events; `blueprintToEvents` is the pure projection the acid test uses to verify that the event-set
+  is correct before any I/O occurs.
 
 ### Deferred (recorded)
 
@@ -74,13 +79,21 @@ ProductBlueprint bp { productKey, process: PlanTree, done }
         │  blueprintToSpec(bp, newKey)
         ▼
 CascadeNodeSpec[] spec'  (re-keyed; one node per PlanTree node)
-        │  blueprintToEvents(spec', newKey)            │  buildCascadeTree(spec')
-        ▼                                              ▼
-(ProductRegistered + WorkItemQueued[])           PlanTree'  ( ≡ bp.process, modulo key )
-        │  queuePush / fold
+        │                                              │  buildCascadeTree(spec')
+        │  [MCP tool / live path]  queuePush           ▼
+        │──────────────────────────────────▶  PlanTree'  ( ≡ bp.process, modulo key )
+        │
+        │  [acid test / pure projection]  blueprintToEvents(spec', newKey)
+        ▼
+(ProductRegistered + WorkItemQueued[])   ← same events queuePush emits; used by fold in the test
+        │  fold
         ▼
 state'  ──extractBlueprint(spec', state', newKey)──▶  bp'  ( generate∘extract identity )
 ```
+
+> **Two paths, same events:** the MCP tool writes live via `queuePush` (idempotent, I/O); the acid
+> test projects the same event set in-memory via `blueprintToEvents` and verifies correctness via
+> `fold`. They are functionally equivalent — both emit `ProductRegistered` + `WorkItemQueued`.
 
 The keystone identity: **`buildCascadeTree(blueprintToSpec(bp, k)) ≡ bp.process` (modulo the key
 rewrite)** — `blueprintToSpec` faithfully inverts `buildCascadeTree`. Composed with `blueprintToEvents`
