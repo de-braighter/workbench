@@ -71,6 +71,13 @@ it into the `itemQueued(...)` call: `...(yields != null ? { yields } : {})`. Thi
 round-trip: spec → `blueprintToEvents` → events WITH yields → fold → `treeFromQueue` WITH
 yields → `extractBlueprint` → `blueprintSubstance` non-empty.
 
+**R6b — foundry_generate_from_blueprint MCP tool:** the `foundry_generate_from_blueprint`
+tool instantiates a product from a blueprint by constructing an `ItemInput[]` and calling
+`queuePush`. It must populate `ItemInput.yields` from each work-item's blueprint meta so
+that the generated product's `WorkItemQueued` events carry yields into the log from the
+moment of instantiation. Without this, a product generated via this tool would exhibit the
+same empty-substance-face bug that P1 closes for `blueprintToEvents`.
+
 **R7 — log-only substance helper:** add `src/metamodel/substance-log.ts` exporting:
 
 ```ts
