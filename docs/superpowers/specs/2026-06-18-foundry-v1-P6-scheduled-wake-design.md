@@ -12,7 +12,7 @@
 
 - **Date:** 2026-06-18
 - **Scope:** `domains/foundry` (`src/events.ts`, `src/scope.ts`, `src/state.ts`,
-  `src/wake.ts` (new), `src/ops.ts`, `src/mcp/tools.ts`, `src/mcp/server.ts`).
+  `src/plan/wake.ts` (new), `src/ops.ts`, `src/mcp/tools.ts`, `src/mcp/server.ts`).
   `layers/specs` (ADR-256, status proposed).
 - **Predecessors:** ADR-241 (foundry as sanctioned meta-product), ADR-244 (conductor drives the
   plan-tree frontier), ADR-246 (`planFrontierAll` / `treeFromQueue`), ADR-247 (doing-side
@@ -164,7 +164,7 @@ schedule that SILENTLY never fires. The `.refine` makes a bad anchor fail LOUD a
 (`src/scope.ts:32-33`):
 
 ```ts
-export const wakeAggregateId = (scheduleId: string): string => uuidv5(`wake-schedule:${scheduleId}`);
+export const wakeAggregateId = (scheduleId: string): string => uuidv5(`wake:${scheduleId}`);
 ```
 
 `aggregateType` is `'WakeSchedule'`; both events for a schedule share its aggregate id.
@@ -207,21 +207,21 @@ The `?? -1` floor means an as-yet-unfired schedule reports `lastFiredTick = -1`,
 first due tick (tick 1, see R3) compares `1 > -1` and fires. `Math.max` makes a replayed /
 out-of-order `WakeFired` a no-op — the fold never advances backwards.
 
-### R3 — the pure decision function (`src/wake.ts`, new)
+### R3 — the pure decision function (`src/plan/wake.ts`, new)
 
 `currentTick` and `dueWakes` are PURE — no I/O, no `Date.now()`, the only time input is the
 `nowMs` argument:
 
 ```ts
-export function currentTick(schedule: { intervalMinutes: number; anchorAt: string }, nowMs: number): number {
-  return Math.floor((nowMs - Date.parse(schedule.anchorAt)) / (schedule.intervalMinutes * 60_000));
+export function currentTick(intervalMinutes: number, anchorAt: string, nowMs: number): number {
+  return Math.floor((nowMs - Date.parse(anchorAt)) / (intervalMinutes * 60_000));
 }
 
-export function dueWakes(s: DerivedState, nowMs: number): { scheduleId: string; tick: number }[] {
-  const due: { scheduleId: string; tick: number }[] = [];
-  for (const [scheduleId, schedule] of s.wakeSchedules) {
-    const k = currentTick(schedule, nowMs);
-    const last = s.lastFiredTick.get(scheduleId) ?? -1;
+export function dueWakes(state: DerivedState, nowMs: number): DueWake[] {
+  const due: DueWake[] = [];
+  for (const [scheduleId, sched] of state.wakeSchedules) {
+    const k = currentTick(sched.intervalMinutes, sched.anchorAt, nowMs);
+    const last = state.lastFiredTick.get(scheduleId) ?? -1;
     if (k >= 1 && k > last) due.push({ scheduleId, tick: k });
   }
   return due;
@@ -503,7 +503,7 @@ is read. Anchor `T0`, interval 60 minutes throughout.
   and typed constructors (`src/events.ts`); add `wakeAggregateId` (`src/scope.ts`); add the
   `wakeSchedules` + `lastFiredTick` derived-state slots and the two fold cases — first-writer-
   wins for `WakeScheduled`, monotonic-max for `WakeFired` (`src/state.ts`); add the pure
-  `currentTick` + `dueWakes` decision functions (`src/wake.ts`, new); add the `scheduleWake` +
+  `currentTick` + `dueWakes` decision functions (`src/plan/wake.ts`, new); add the `scheduleWake` +
   `wake` write ops under `withStoreLock` (`src/ops.ts`); add the `foundry_schedule_wake` +
   `foundry_wake` MCP tools (`src/mcp/tools.ts`, `src/mcp/server.ts`). Add the acid battery
   (fires-at-time + idempotent-no-double-act + missed-tick-collapse + not-yet-due negative
