@@ -37,7 +37,7 @@
   all-product frontier re-check: it folds the log into state and unions
   `planFrontier(treeFromQueue(p, s), s, nowMs)` over every registered product. It has NO
   side effects on claimability — calling it once or a thousand times yields the same frontier
-  for the same `(state, nowMs)`. `nextItems` (`src/ops.ts:395`) is its read-only projection
+  for the same `(state, nowMs)`. `nextItems` (`src/ops.ts:396`) is its read-only projection
   through `toNextItem`.
 - The clock is already INJECTED. Every op resolves `now` via `nowOf(deps)` over
   `FoundryDeps.now` (`src/ops.ts:24, 28`), which defaults to `() => new Date().toISOString()`.
@@ -127,7 +127,11 @@ const WakeScheduled = z.object({
   scheduleId: z.string().min(1),
   coordinatorId: z.string().min(1).optional(),
   intervalMinutes: z.number().int().positive(),
-  anchorAt: z.string().min(1), // ISO 8601 instant
+  // Must be a PARSEABLE instant: the schedule decides dueness from Date.parse(anchorAt),
+  // so an unparseable value would yield NaN ticks and a schedule that SILENTLY never fires.
+  anchorAt: z.string().min(1).refine((v) => !Number.isNaN(Date.parse(v)), {
+    message: 'anchorAt must be a parseable instant (ISO 8601)',
+  }),
 });
 const WakeFired = z.object({
   scheduleId: z.string().min(1),
@@ -150,7 +154,11 @@ export const wakeFired = (i: z.input<typeof WakeFired> & { ts: string }) =>
 
 `intervalMinutes` is a POSITIVE int (Zod-validated on construct, so a zero/negative interval
 fails loud at the producer, not silently divides-by-zero in `currentTick`). `tick` is a
-NON-NEGATIVE int. `anchorAt` is the ISO instant the schedule's tick-0 boundary sits on.
+NON-NEGATIVE int. `anchorAt` is the ISO instant the schedule's tick-0 boundary sits on, and it
+is validated as a PARSEABLE instant (Zod `.refine(v => !Number.isNaN(Date.parse(v)))`): `dueWakes`
+derives ticks from `Date.parse(anchorAt)`, so an unparseable anchor would yield `NaN` ticks and a
+schedule that SILENTLY never fires. The `.refine` makes a bad anchor fail LOUD at the producer
+(`scheduleWake` throws) rather than recording a dead never-firing schedule — proven by ACID 7.
 
 **Scope (`src/scope.ts`):** add the wake aggregate id, mirroring `coordinatorAggregateId`
 (`src/scope.ts:32-33`):
@@ -282,9 +290,10 @@ export function wake(
     const s = load(deps);
     const due = dueWakes(s, nowMs).filter((d) => input.scheduleId == null || d.scheduleId === input.scheduleId);
     for (const d of due) append(ev.wakeFired({ scheduleId: d.scheduleId, tick: d.tick, ts }), deps.logPath);
-    // re-read so lastFiredTick reflects the appended WakeFired events, then project the frontier
-    const after = load(deps);
-    const frontier = planFrontierAll(after, nowMs).map((i) => toNextItem(after, i));
+    // Project the frontier from the PRE-APPEND snapshot `s`. A WakeFired marker does NOT change
+    // claimability (it only advances lastFiredTick), so re-loading after the append yields an
+    // identical planFrontierAll — no post-append `load(deps)` reload is needed.
+    const frontier = planFrontierAll(s, nowMs).map((i) => toNextItem(s, i));
     return { fired: due, frontier };
   });
 }
@@ -294,8 +303,18 @@ export function wake(
 makes re-scheduling a no-op that returns the existing schedule). `wake` computes the due ticks
 at `now` (optionally filtered to one schedule), appends a `WakeFired` for each (advancing
 `lastFiredTick`), and returns the freshly-projected `planFrontierAll` frontier. The frontier
-projection REUSES `nextItems`' `toNextItem` projection (`src/ops.ts:381`) so the woken frontier
-is byte-identical to `nextItems` for the same `now` (R-acid #5).
+projection REUSES `nextItems`' `toNextItem` projection (`src/ops.ts:382`) but — and this is the
+load-bearing distinction — it projects the **FULL** `planFrontierAll` set, NOT sliced to a limit.
+`nextItems` defaults to `.slice(0, 5)` (the top-5 drain view); `wake` takes NO limit param and
+returns the COMPLETE claimable set. The woken frontier therefore equals `nextItems(deps, 100)`
+(any limit ≫ the frontier size), i.e. the whole `planFrontierAll` projection — the conductor
+wants the full picture to decide capacity, not the truncated drain head (R-acid #5).
+
+> **Projection note (pre-append snapshot).** `wake` projects from the snapshot `s` loaded
+> BEFORE the `WakeFired` appends — not from a post-append reload. A `WakeFired` marker advances
+> `lastFiredTick` only; it does not touch any item's claimability, so `planFrontierAll(s, nowMs)`
+> and `planFrontierAll(load(deps), nowMs)` are identical. The pre-append projection is the
+> shipped code; a future reader should NOT "fix" it to add an `after = load(deps)` reload.
 
 ### R5 — MCP tools + server (`src/mcp/tools.ts`, `src/mcp/server.ts`)
 
@@ -461,12 +480,16 @@ is read. Anchor `T0`, interval 60 minutes throughout.
    `WakeFired` event (the log has zero `foundry:WakeFired.v1` envelopes for that schedule).
    Proves `wake` does not hallucinate a tick before the schedule is due.
 
-5. **Woken frontier ≡ planFrontierAll.** For the same `now`, `wake(deps).frontier` deep-equals
-   `nextItems(deps)` (equivalently `planFrontierAll(state, now)` projected through
-   `toNextItem`). Pins that the wake's frontier is the IDENTICAL frontier the conductor would
-   drain — `wake` re-checks the same `planFrontierAll`, with no claimability side-effect.
-   Authored over a non-trivial state (queued items + a dependency + a TTL-expired claim) so the
-   equality is a genuine bite, not `[] == []`.
+5. **Woken frontier is the FULL `planFrontierAll`, not the top-5 drain view.** For the same
+   `now`, `wake(deps).frontier` deep-equals `nextItems(deps, 100)` — the FULL `planFrontierAll`
+   projection through `toNextItem`, NOT the default `nextItems(deps)` which slices to the top 5.
+   `wake` takes NO limit param: it returns the COMPLETE claimable set (the conductor wants the
+   whole picture to decide capacity). Authored over a 7-item fixture (queued across two products)
+   so the full-vs-truncated distinction BITES: `wake(...).frontier` `toEqual(nextItems(deps, 100))`,
+   `toHaveLength(7)`, and `length > 5` — if `wake` ever sliced to the default limit of 5 the
+   length assertions flip RED. This is the genuine bite (not `[] == []`): a 7-item frontier proves
+   the wake re-checks the same `planFrontierAll` the conductor drains, untruncated and with no
+   claimability side-effect.
 
 6. **Builds green.** Full foundry test suite stays green; no existing conductor, projector,
    fold, or frontier behaviour changes (the two new events are additive; existing folds skip
@@ -484,7 +507,7 @@ is read. Anchor `T0`, interval 60 minutes throughout.
   `wake` write ops under `withStoreLock` (`src/ops.ts`); add the `foundry_schedule_wake` +
   `foundry_wake` MCP tools (`src/mcp/tools.ts`, `src/mcp/server.ts`). Add the acid battery
   (fires-at-time + idempotent-no-double-act + missed-tick-collapse + not-yet-due negative
-  control + woken-frontier-≡-planFrontierAll + builds-green).
+  control + woken-frontier-is-FULL-planFrontierAll + anchorAt-parseable-or-throw + builds-green).
 - **specs:** ADR-256 (proposed) — codifies the external-clock scheduled-wake mechanism + the
   collapse semantic + the ADR-176-non-trigger.
 
