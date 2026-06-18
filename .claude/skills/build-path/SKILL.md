@@ -123,9 +123,19 @@ is disjoint from every ACTIVE claim. Design consequences:
 7. **Decompose into work items.** For each item: `itemId` (`<key>/E<n>` or
    `<key>/E<n>.<m>`), `title`, `epic` (optional), `scope` (`repo` + `pathPrefix` and/or
    `issue` — greenfield products rely on pathPrefix), `dependsOn` (itemIds),
-   `lane`, `qualityObligations`. `scope.issue` is filled when the target repo +
-   story issues exist; worker sessions create story issues per the
-   story-tracker workflow once the repo exists.
+   `lane`, `qualityObligations`, and optionally `yields`. `scope.issue` is filled
+   when the target repo + story issues exist; worker sessions create story issues
+   per the story-tracker workflow once the repo exists.
+
+   **`yields` — substance the item produces into the log (ADR-251 / ADR-242).**
+   Each work item MAY declare `yields: SubstanceRef[]` where
+   `SubstanceRef = { kind: 'pack' | 'board' | 'policy' | 'indicator', id: string }`.
+   `yields` names the substance (pack, board, policy, or indicator) that a DONE
+   item delivers — this is what gives a generated product its substance face in
+   the canonical log and enables downstream consumers to discover what was built.
+   Emit `yields` on items whose primary output IS a discrete substance unit (e.g.
+   the scaffold item that produces the pack, a UI epic that produces a board); omit
+   it on sequencing, ADR-authoring, and purely infrastructural items.
 8. **Disjointness proof.** Enumerate every UNORDERED pair (neither transitively
    depends on the other) in a table: pair → evidence (`different repo` /
    `non-nested paths: <a> vs <b>` / `distinct issues`) → verdict. Any pair
@@ -163,7 +173,7 @@ is disjoint from every ACTIVE claim. Design consequences:
    ## Quality battery config
    ## Lanes & parallelism
    ## Work items
-   <table: itemId · title · scope · dependsOn · lane · qualityObligations>
+   <table: itemId · title · scope · dependsOn · lane · qualityObligations · yields>
    ## Disjointness proof
    <the unordered-pair table>
    ```
@@ -176,7 +186,10 @@ is disjoint from every ACTIVE claim. Design consequences:
 11. **Push.** Check `foundry_status` first: itemIds must be NEW (queue_push
     rejects existing ones — never re-push). Then `foundry_queue_push {
     product: { productKey, name, repo, riskTier, charterRef, stage:
-    "execution" }, items: [<the full item list>] }`. For an already-registered
+    "execution" }, items: [<the full item list>] }`. Items with a substance
+    output carry `yields` in the payload, e.g.:
+    `{ itemId: 'acme/E1', title: 'Scaffold pack', ..., yields: [{ kind: 'pack', id: 'acme-core' }] }`.
+    For an already-registered
     product the product block is ignored (registration is write-once via the
     MCP surface) — the charter FILE stays the tier authority either way.
 12. **Verify + hand off.** `foundry_status` shows the items queued with only
