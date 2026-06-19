@@ -182,31 +182,34 @@ implicitly via the `...it` spread in `queuePush`, `ops.ts:61`; `ancestry` is spr
 `ops.ts:63` because of its conditional. `effects` follows the explicit-conditional form for symmetry
 and to keep the absent-field-omitted invariant.)
 
-**R5 — `projectTreeState` (`src/plan/frontier.ts`):** pass `effects` through the leaf projection like
-`yields` / `ancestry` are passed (`frontier.ts:63-64`), PRESERVING the `planFrontierAll ≡
-claimableItems` invariant. `LeafMeta` (`frontier.ts:12-19`) gains an optional `effects?:
-EffectDeclaration[]`; `projectTreeState` (`frontier.ts:50-65`) copies `effects: m.effects ??
-prior?.effects ?? []` onto the rebuilt `ItemState`, exactly as it copies `yields` (`frontier.ts:63`)
-and `ancestry` (`frontier.ts:64`).
+**R5 — `projectTreeState` (`src/plan/frontier.ts`):** carry `effects` through the leaf projection,
+PRESERVING the `planFrontierAll ≡ claimableItems` invariant. The single load-bearing difference from
+`yields`/`ancestry` (which live on `n.metadata` and are read off `LeafMeta`): `effects` live on the
+PlanNode's TYPED `effectDeclarations` field, NOT on `n.metadata`. So `projectTreeState` reads them
+DIRECTLY off the node — `const effects = n.effectDeclarations as EffectDeclaration[] | undefined` —
+and copies `effects: effects ?? prior?.effects ?? []` onto the rebuilt `ItemState`. `LeafMeta`
+(`frontier.ts:12-19`) is NOT extended with an `effects?` field, because effects are never in
+metadata.
 
 ```ts
-// LeafMeta (frontier.ts:12-19): add
-effects?: import('@de-braighter/substrate-contracts/plan-tree').EffectDeclaration[];
-
-// projectTreeState rebuilt ItemState (frontier.ts:50-65): add
-effects: m.effects ?? prior?.effects ?? [],
+// projectTreeState (frontier.ts), inside the per-leaf rebuild: read off the typed PlanNode field
+// (NOT metadata, where yields/ancestry sit), then carry with the same prior-fallback shape:
+const effects = n.effectDeclarations as EffectDeclaration[] | undefined;
+// … on the rebuilt ItemState:
+effects: effects ?? prior?.effects ?? [],
 ```
 
 > **Frontier-path nuance (read carefully).** `projectTreeState` reads the leaf's metadata via
-> `n.metadata as LeafMeta` (`frontier.ts:46`), but `effects` lives on `PlanNode.effectDeclarations`,
-> NOT on `n.metadata`. So `m.effects` is read off `metadata` and is normally `undefined` on a tree
-> built by `buildCascadeTree` (which puts effects on `effectDeclarations`, not `metadata`). The
-> `prior?.effects` fallback is what carries effects through THIS path — `projectTreeState` is the
-> frontier-driving rebuild, where the log-derived `prior` ItemState (which R2 populated) supplies
-> `effects`. This is exactly how `yields`/`ancestry` already behave on the leaf-meta side: their
-> round-trip into the BLUEPRINT runs through `specFromQueue` (R3), while `projectTreeState`'s job is
-> the FRONTIER, for which effects are inert (see §6). The `effects` carried here keeps the projected
-> `ItemState` complete; it does NOT change claimability.
+> `n.metadata as LeafMeta` (`frontier.ts:46`) for `itemId` / `scope` / `dependsOn` / `title` /
+> `yields` / `ancestry`, but `effects` lives on `PlanNode.effectDeclarations`, NOT on `n.metadata`.
+> So `effects` is read straight off the node (`n.effectDeclarations`) — on a tree built by
+> `buildCascadeTree` (`cascade.ts:44`) that is exactly where effects land — with `prior?.effects` as
+> the fallback for any leaf whose node carries none (e.g. a log-derived `prior` ItemState that R2
+> populated). This is the one read that does NOT go through `LeafMeta`: `yields`/`ancestry` round-trip
+> into the BLUEPRINT through `specFromQueue` (R3) off metadata, whereas effects round-trip through the
+> typed `effectDeclarations` field. `projectTreeState`'s job is the FRONTIER, for which effects are
+> inert (see §6); the `effects` carried here keeps the projected `ItemState` complete but does NOT
+> change claimability.
 
 ### What does NOT change
 
@@ -490,8 +493,9 @@ extract→compile pivot composes for all three.
   `WorkItemQueued` emit sites — `blueprintToEvents` (`src/metamodel/generate.ts`), `queuePush` /
   `ItemInput.effects` (`src/ops.ts`) exposed on the `foundry_queue_push` MCP schema
   (`src/mcp/server.ts`), `foundry_generate_from_blueprint` (`src/mcp/tools.ts`), and
-  `foundryBootstrapEvents` (`src/instances/foundry-bootstrap.ts`); thread `effects` through
-  `projectTreeState` + `LeafMeta` (`src/plan/frontier.ts`). Add the acid battery (ACID 1 broken-pivot
+  `foundryBootstrapEvents` (`src/instances/foundry-bootstrap.ts`); carry `effects` through
+  `projectTreeState` by reading the typed `n.effectDeclarations` field (NOT `LeafMeta`, which is
+  unchanged) (`src/plan/frontier.ts`). Add the acid battery (ACID 1 broken-pivot
   centerpiece + ACID 2 mutation + ACID 3 negative control + ACID 4 bootstrap path + ACID 5
   backward-compat + ACID 6 P1+P5-intact + ACID 7 frontier-invariant + ACID 8 builds-green). **No
   `@de-braighter/substrate-*` change. No P7 compiler / materializer change.**
