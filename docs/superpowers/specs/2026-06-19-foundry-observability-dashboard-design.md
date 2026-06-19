@@ -1,18 +1,25 @@
 # Foundry observability dashboard — a "mission-control" overview of the machine
 
 > A self-contained HTML page that answers, in ONE glance: **is the machine healthy?
-> what needs me? what's next?** OVERVIEW-FIRST — it leads with deltas + decisions and
-> collapses inventory (done items) into progress bars; it NEVER dumps every product's
-> full plan tree. A PURE renderer over foundry's OWN derived state (`fold` → `DerivedState`
-> + `planFrontierAll`), a thin CLI that writes the file, and a read-only MCP tool.
-> **Zero kernel change** — pack-level rendering over a derived view ("store generators,
-> derive graphs" upheld; ADR-176 NOT triggered).
+> what needs me? what's next? — and on which level did we model each product?**
+> OVERVIEW-FIRST — it leads with deltas + decisions and collapses inventory (done items)
+> into progress bars; it NEVER dumps every product's full plan tree as endless-scroll rows.
+> It DOES surface each product's AUTHORED hierarchy compactly (a plan-tree-structure panel:
+> Product → Capability → Feature → work-item, with rollup chips + status-colored leaf
+> badges), falling back to a one-line summary for products without an authored model
+> (labelled `(log-derived — flat until re-cutover)` — the live-flat-vs-authored-model gap
+> made visible). A PURE renderer over foundry's OWN derived state (`fold` → `DerivedState`
+> + `planFrontierAll`) — the authored models are INJECTED via `opts.models` so the renderer
+> stays pure — a thin CLI that writes the file, and a read-only MCP tool. **Zero kernel
+> change** — pack-level rendering over a derived view ("store generators, derive graphs"
+> upheld; ADR-176 NOT triggered).
 
 - **Date:** 2026-06-19
 - **Scope:** `domains/foundry` — a NEW `src/dashboard/` module:
-  `src/dashboard/render-foundry-dashboard.ts` (new — the pure renderer
-  `renderFoundryDashboard(state, nowMs): string`), `src/dashboard/cli.ts` (new — the thin
-  `dashboard` CLI that folds the live log + writes the HTML), the `foundry_dashboard`
+  `src/dashboard/render.ts` (new — the pure renderer
+  `renderFoundryDashboard(state, nowMs, opts?): string`), `src/dashboard/cli.ts` (new — the
+  thin `dashboard` CLI that folds the live log, builds the authored model via
+  `buildCascadeTree(FOUNDRY_PRODUCT)`, and writes the HTML), the `foundry_dashboard`
   read-only MCP tool in `src/mcp/tools.ts` (one additive entry), a `"dashboard"` npm
   script in `package.json`, and `test/dashboard.acid.test.ts` (new — the signal-quality
   acid battery). `layers/specs` (ADR-261, status proposed).
@@ -52,6 +59,12 @@ single surface that answers the three operating questions:
 1. **Is the machine healthy?** (idle or busy; how much is in flight; anything stale/stuck)
 2. **What needs me?** (pending gates; reclaimable stale claims; priority anomalies)
 3. **What's next?** (the top of the global frontier the conductor will claim)
+4. **On which level did we model each product?** (the founder's direct question — for
+   foundry itself: is its work registered against an AUTHORED Product → Capability →
+   Feature → work-item hierarchy, or is the log still FLAT? The dashboard answers this
+   visually AND surfaces the gap: products whose live log has not been re-cut over to the
+   authored model show a `(log-derived — flat until re-cutover)` label — the OWED
+   re-cutover made visible.)
 
 `foundry_status` (`src/status.ts:31`) prints a useful text board, but it is a flat dump — it
 lists every product and its per-status counts as text. It does not VISUALLY separate "needs a
@@ -65,6 +78,16 @@ done or not, as an individual row. The founder **rejected** it: it was endless s
 signal. A 200-item machine where 180 items are done produced a 200-row page; the 20 items that
 mattered drowned in the 180 that did not. Listing done work as individual rows is pure noise —
 the founder does not act on a done item.
+
+**The plan-tree-STRUCTURE panel (§4 panel 6) is NOT the rejected dump.** It renders the
+AUTHORED hierarchy (Product → Capability → Feature → work-item) COMPACTLY — one line per leaf
+(a status-colored dot + the title), with capability/feature rollup CHIPS and a structural
+caption — to answer "on which level did we model this product", not to enumerate every item as
+an actionable row. The done-collapse discipline still bites where it matters: for a product
+WITHOUT an authored model the panel does NOT enumerate its (mostly-done) flat log — it collapses
+to a one-line summary and lists only the OPEN items. The rejected v0 was a flat per-item DUMP
+with no structure and no collapse; the structural panel is a compact authored TREE with a
+collapsing flat fallback. The two are different by construction (and acid-locked apart, §6).
 
 ### 1.2 The approved design — the overview-first INVERSION
 
@@ -89,47 +112,74 @@ The result: a 200-item machine renders a compact page whose row-count is bounded
 
 Three thin pieces, separated so the renderer is a PURE, unit-testable function:
 
-### 2.1 The pure renderer — `renderFoundryDashboard(state, nowMs): string`
+### 2.1 The pure renderer — `renderFoundryDashboard(state, nowMs, opts?): string`
 
 ```ts
-// src/dashboard/render-foundry-dashboard.ts
+// src/dashboard/render.ts
+import type { PlanTree, PlanNode } from '@de-braighter/substrate-contracts/plan-tree';
 import {
   itemStatus, activeClaim, staleClaims,
   type DerivedState, type ItemState, type ItemStatus,
 } from '../state.js';
 import { planFrontierAll } from '../plan/plan-frontier-all.js';
 
+/** Injected authored model trees + the footer merge count — both built by the I/O
+ *  caller (CLI/MCP) and passed in so the renderer stays PURE. `models[productKey]` is
+ *  the AUTHORED Product → Capability → Feature → work-item PlanTree; a product absent
+ *  here falls back to the flat log-derived summary (honestly labelled). */
+export interface DashboardOpts {
+  models?: Record<string, PlanTree>;
+  merges?: number;
+}
+
 /** PURE: no I/O, no clock read (nowMs is injected), no log access. Returns a
  *  self-contained HTML string (inline CSS, no external resources). Unit-testable. */
-export function renderFoundryDashboard(state: DerivedState, nowMs: number): string { /* … */ }
+export function renderFoundryDashboard(
+  state: DerivedState, nowMs: number, opts?: DashboardOpts,
+): string { /* … */ }
 ```
 
-The renderer takes the ALREADY-folded `DerivedState` plus an injected `nowMs` — it reads NO
-files, no environment, no wall clock. This is what makes it unit-testable: a fixture state +
-a fixed `nowMs` produce a deterministic HTML string the acids assert against (§6). The merge
-count for the delivery-pulse footer (§4 panel 6) is the one log-derived number the renderer
-needs; the CLI passes it in alongside the state (a small `{ merges: number }` companion, or
-the renderer accepts the raw envelope count — see §5). The renderer itself never touches the
-log.
+The renderer takes the ALREADY-folded `DerivedState`, an injected `nowMs`, and an optional
+`opts` companion — it reads NO files, no environment, no wall clock. This is what makes it
+unit-testable: a fixture state + a fixed `nowMs` (+ fixed `opts.models`) produce a deterministic
+HTML string the acids assert against (§6). **The `opts` companion carries the two values the
+renderer cannot derive from `DerivedState` alone, BOTH injected to keep purity intact:**
+
+- **`opts.models`** — the AUTHORED hierarchy trees (one `PlanTree` per product) the plan-tree-
+  structure panel (§4 panel 6) renders. The renderer never builds them; the CLI/MCP build them
+  via `buildCascadeTree(FOUNDRY_PRODUCT)` and inject them. A product with no entry falls back to
+  the flat log-derived summary.
+- **`opts.merges`** — the merge count for the delivery-pulse footer (§4 panel 7). When omitted,
+  the renderer derives it from the items' own `merged` field (`items.filter(it => it.merged != null).length`);
+  the CLI/MCP MAY pass it explicitly. Either way the renderer never touches the log.
 
 ### 2.2 The thin CLI — `src/dashboard/cli.ts` (the `dashboard` npm script)
 
 ```ts
 // src/dashboard/cli.ts — the ONLY I/O boundary
-import { writeFileSync } from 'node:fs';
-import { readEnvelopes, DEFAULT_LOG } from '../log.js';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { DEFAULT_DATA_DIR, DEFAULT_LOG, readEnvelopes } from '../log.js';
 import { fold } from '../state.js';
-import { renderFoundryDashboard } from './render-foundry-dashboard.js';
+import { buildCascadeTree } from '../plan/cascade.js';
+import { FOUNDRY_PRODUCT } from '../instances/foundry-product.js';
+import { renderFoundryDashboard } from './render.js';
 
-const events = readEnvelopes(DEFAULT_LOG);     // fold the LIVE canonical log
-const state = fold(events);
-const html = renderFoundryDashboard(state, Date.now());
-writeFileSync(OUT_HTML, html, 'utf8');         // write the self-contained page
+const outPath = process.argv[2] || join(DEFAULT_DATA_DIR, 'foundry-dashboard.html');
+const state = fold(readEnvelopes(DEFAULT_LOG));   // fold the LIVE canonical log
+// Build foundry's AUTHORED model here (the I/O boundary) and inject it — the renderer
+// stays pure. A 'foundry' / FOUNDRY_PRODUCT reference is fine in src/dashboard/ (§3).
+const models = { foundry: buildCascadeTree(FOUNDRY_PRODUCT) };
+const html = renderFoundryDashboard(state, Date.now(), { models });
+mkdirSync(dirname(outPath), { recursive: true });
+writeFileSync(outPath, html, 'utf8');             // write the self-contained page
+process.stdout.write(outPath + '\n');
 ```
 
 Registered as `"dashboard": "tsx src/dashboard/cli.ts"` in `package.json` (alongside the
-existing `"mcp"` / `"wt-pool"` scripts). The CLI is the ONLY piece that reads the log + writes
-a file; it is deliberately too thin to need its own unit test (the renderer carries the logic).
+existing `"mcp"` / `"wt-pool"` scripts). The CLI is the piece that reads the log, builds the
+authored model (`buildCascadeTree(FOUNDRY_PRODUCT)`), and writes the file; it is deliberately
+thin (the renderer carries all the rendering logic + its acid coverage).
 
 ### 2.3 The read-only MCP tool — `foundry_dashboard`
 
@@ -137,16 +187,20 @@ One additive entry in `makeTools` (`src/mcp/tools.ts:48`), the same read-only sh
 `foundry_status` (`tools.ts:49`):
 
 ```ts
-foundry_dashboard: guard((a: { write?: boolean; outPath?: string }) => {
+foundry_dashboard: guard((a: { outPath?: string }) => {
   const state = fold(readEnvelopes(deps.logPath));
-  const html = renderFoundryDashboard(state, Date.parse(nowIso()));
-  // write the HTML + return the path (default), or return the HTML directly.
-  return a.write === false ? html : writeAndReturnPath(html, a.outPath);
+  // Inject foundry's AUTHORED model → the plan-tree panel renders its 4-level
+  // hierarchy overlaid with live status. ('foundry' ref is fine in dashboard/, §3.)
+  const models = { foundry: buildCascadeTree(FOUNDRY_PRODUCT) };
+  const html = renderFoundryDashboard(state, Date.parse(nowIso()), { models });
+  const outPath = a.outPath ?? join(deps.dataDir || DEFAULT_DATA_DIR, 'foundry-dashboard.html');
+  return writeAndReturnPath(html, outPath);
 }),
 ```
 
 It is READ-ONLY — it emits NO events (like `foundry_status`, `foundry_next`, `foundry_gate_status`).
-It either writes the HTML file and returns the path, or returns the HTML string directly. A
+It folds the live log, builds + injects foundry's authored model (the same
+`buildCascadeTree(FOUNDRY_PRODUCT)` the CLI uses), writes the HTML file, and returns the path. A
 coordinator / the founder can invoke it to refresh the dashboard without leaving the MCP surface.
 
 ---
@@ -157,9 +211,19 @@ coordinator / the founder can invoke it to refresh the dashboard without leaving
 not recorded.**
 
 The dashboard is **FOUNDRY-STATE-SPECIFIC by design.** It reads foundry's own concepts:
-`state.products`, the `FOUNDRY_PRODUCT` fixture, `planFrontierAll`, foundry gates, foundry
-coordinators, the `foundry:MergeRecorded.v1` event type. It is, intentionally, the opposite of
-agnostic — it is a view OF the foundry machine, for the foundry operator.
+`state.products`, the `FOUNDRY_PRODUCT` fixture (built into the injected model via
+`buildCascadeTree(FOUNDRY_PRODUCT)`), `planFrontierAll`, foundry gates, foundry coordinators, the
+`foundry:MergeRecorded.v1` event type — and the priority-anomaly heuristic keys on the head
+product literally being `'foundry'` (the foundry-builds-foundry footgun: only the
+self-referential product topping its OWN frontier is the anomaly; a real product legitimately
+leading its first-time work is what priority is FOR — §4.1). It is, intentionally, the opposite
+of agnostic — it is a view OF the foundry machine, for the foundry operator.
+
+**A `'foundry'` / `FOUNDRY_PRODUCT` literal is FINE in `src/dashboard/`** — it is NOT
+agnostic-gated. The product-literal ban applies ONLY to `src/compiler/` (the ADR-243 glob).
+`src/dashboard/` is intentionally foundry-specific, so the `'foundry'` literal in the
+priority-anomaly heuristic (`render.ts`) and the `FOUNDRY_PRODUCT` import in the CLI/MCP are by
+design, not leaks. This is the load-bearing boundary the table below records.
 
 `src/compiler/` is **agnostic-GATED** by [ADR-243](../../../layers/specs/adr/adr-243-scenario-lab-engine-purity.md):
 the auto-discovering glob test (`test/compiler.acid.test.ts:338-393`) reads EVERY `.ts` under
@@ -184,8 +248,10 @@ specific; that is not a violation, it is the design. ADR-261 D2 codifies this as
 
 ## 4. The panels (the approved layout)
 
-Six panels, top to bottom, deltas-first. (All carried faithfully from the approved demo; the
-demo source is the byte-level reference for the HTML/CSS.)
+Seven panels, top to bottom, deltas-first. (Panels 1–5 + 7 carried faithfully from the approved
+demo; panel 6 — the plan-tree-structure panel — was added during implementation to answer the
+founder's "on which level did we model foundry" question and surface the live-flat-vs-authored
+gap. The demo source remains the byte-level reference for panels 1–5 + 7.)
 
 1. **Compact header + machine-state pill + timestamp.** `FOUNDRY · mission control`, a pill
    that reads `● BUSY · N in flight` when `inFlight.length > 0` else `● IDLE`, and the ISO
@@ -217,40 +283,70 @@ demo source is the byte-level reference for the HTML/CSS.)
    (itemId · title · a status badge). A product with no open work contributes NOTHING. When NO
    product has open work: `no open work — every queued item is done.`
 
-6. **Delivery-pulse footer.** A light one-line pulse from the foundry log alone: merge count
-   (`events.filter(e => e.eventType === 'foundry:MergeRecorded.v1').length`), `%` of all queued
-   work done, the `done/total` item count, and the product count.
+6. **Plan tree · structure (the modeling-level answer).** For each product, a COMPACT view of
+   its AUTHORED hierarchy — directly answering the founder's "on which level did we model this
+   product". Two modes, chosen per-product by whether an authored model was injected (`opts.models[productKey]`):
+   - **Modeled product → the authored tree.** Renders the injected `PlanTree` as an indented
+     Product → Capability → Feature → work-item tree: capability/feature HEADERS each carry a
+     rollup CHIP summarizing their descendant work-items (e.g. `8 items · 4✓ 4 queued`), each
+     work-item LEAF is ONE compact line (a status-colored dot + the title + a status badge,
+     colored by the live `itemStatus` of the matching `itemId`; a leaf with no live item reads a
+     neutral `not yet queued`), and a structural CAPTION leads the block:
+     `N levels · C capabilities / F features / W work-items · depth D` (e.g. for foundry's
+     authored model, the `"4 levels · 5 cap / 8 feat / 17 wi"`-shape line). The renderer NEVER
+     dumps per-leaf scope/dependsOn/yields metadata — one compact line per leaf (acid 6c).
+   - **Un-modeled product → a one-line flat summary (the gap made visible).** A product WITHOUT
+     an injected model falls back to a COMPACT summary, NOT a per-item list: a status mini-bar +
+     a count phrase (`N work-items · all done`, or `X done / Y open`), labelled
+     `(log-derived — flat until re-cutover)` on the product header. Only the OPEN
+     (non-done/non-retired) items are listed as leaf lines — the done ones collapse into the
+     count (the done-collapse discipline, now extended to this fallback). This is the
+     live-flat-vs-authored-model gap the founder asked to see: a product still reading its flat
+     log (the OWED re-cutover) is honestly flagged, not dressed up as a tree.
+
+7. **Delivery-pulse footer.** A light one-line pulse: merge count (from `opts.merges`, else
+   derived as `items.filter(it => it.merged != null).length`), `%` of all queued work done, the
+   `done/total` item count, and the product count.
 
 ### 4.1 The DERIVED priority-anomaly advisory (the founder's signal)
 
 The advisory fires when the #1 frontier item belongs to the **lowest-priority-number** product
-(the most-favored), AND that product's own frontier items LEAD the global frontier — meaning
-that product (working its own deferred/self items) would **preempt any newly-queued product
-work** before the conductor ever reaches it. This is honest signal derived purely from the data
-(carried verbatim from the approved demo, `priorityAnomaly()`):
+(the most-favored) **AND that product is `'foundry'` itself** AND foundry's own frontier items
+LEAD the global frontier — meaning foundry (working its own deferred/self items) would **preempt
+any newly-queued product work** before the conductor ever reaches it. The `'foundry'` key is the
+load-bearing discriminator: only the SELF-REFERENTIAL product (foundry building foundry) topping
+its own work is the coordination smell; a REAL product legitimately leading its first-time work
+is exactly what priority is FOR, not an anomaly. This is honest signal derived purely from the
+data (the shipped `priorityAnomaly(state, frontier)` helper — an exported, separately-unit-tested
+pure function):
 
 ```ts
-function priorityAnomaly(): { product: string; priority: number; items: string[] } | null {
+export function priorityAnomaly(state: DerivedState, frontier: ItemState[]): Advisory | null {
   const head = frontier[0];
   if (head == null) return null;                              // empty frontier → no anomaly
   const headProduct = state.products.get(head.productKey);
   if (headProduct == null) return null;
-  const minPriority = Math.min(...products.map((p) => p.priority));
+  const minPriority = Math.min(...[...state.products.values()].map((p) => p.priority));
   if (headProduct.priority !== minPriority) return null;      // head is NOT the most-favored → no anomaly
+  // ONLY the self-referential product (foundry building foundry) is the anomaly — a real
+  // product legitimately leading its own work is the intended priority order. A 'foundry'
+  // literal is fine in src/dashboard/ (NOT agnostic-gated, unlike src/compiler/ — §3).
+  if (head.productKey !== 'foundry') return null;
   const ownFrontier = frontier.filter((i) => i.productKey === head.productKey);
+  if (ownFrontier.length === 0) return null;
   const leadsAll = frontier
     .slice(0, ownFrontier.length)
     .every((i) => i.productKey === head.productKey);          // its items LEAD the global frontier
-  if (!leadsAll || ownFrontier.length === 0) return null;
+  if (!leadsAll) return null;
   return { product: head.productKey, priority: headProduct.priority,
            items: ownFrontier.map((i) => i.itemId.split('/').pop() ?? i.itemId) };
 }
 ```
 
 **Calm by construction.** It returns `null` (→ all-clear) when: the frontier is empty; the head
-item is NOT the lowest-priority-number product (a legitimately-top product is normal, not an
-anomaly); or the favored product's items do not actually lead. The acid battery pins both the
-fire AND the no-false-fire cases (§6 acid c).
+item is NOT the lowest-priority-number product; the head product is NOT `'foundry'` (a real
+product leading is normal, not an anomaly); or foundry's items do not actually lead. The acid
+battery pins both the fire AND the no-false-fire cases (§6 acid c).
 
 ---
 
@@ -271,13 +367,18 @@ that isn't already a foundry primitive:
 | items (itemId, title, productKey) | `state.items` — `ItemState` `src/state.ts:42` |
 | gates (pending = `decision == null`) | `state.gates` — `GateState` `src/state.ts:60` |
 | coordinators (presence, optional) | `state.coordinators` — `CoordinatorState` `src/state.ts:83` |
-| merge count (pulse footer) | `events.filter(e => e.eventType === 'foundry:MergeRecorded.v1')` — `MERGE_RECORDED` `src/events.ts:30` |
+| merge count (pulse footer) | `opts.merges` (injected) ELSE `items.filter(it => it.merged != null).length` (derived in `render.ts`) |
+| authored model tree (plan-tree panel) | `opts.models[productKey]` (injected `PlanTree`) — built by the CLI/MCP via `buildCascadeTree(FOUNDRY_PRODUCT)` (`src/plan/cascade.ts` + `src/instances/foundry-product.ts`) |
+| per-leaf live status (status overlay) | `itemStatus(state.items.get(authoredItemId), nowMs)` — the authored leaf's `metadata.itemId` looked up against live items in `render.ts` |
 
-The renderer reads `DerivedState` + `nowMs`; the CLI/MCP additionally hand it the envelope
-list (or just the merge count) for the pulse footer — the single number the fold does not
-already expose. `claimable === planFrontierAll(state, nowMs)` rests on the acid-tested invariant
+The renderer reads `DerivedState` + `nowMs` + the `opts` companion. The merge count and the
+authored model trees are the two values the fold does not expose; the CLI/MCP hand them in via
+`opts` (the merge count is also derivable from each item's `merged` field, so `opts.merges` is
+optional). `claimable === planFrontierAll(state, nowMs)` rests on the acid-tested invariant
 `planFrontierAll ≡ claimableItems` (`plan-frontier-all.ts:7`), so the KPI's "claimable" number
-is the same set the conductor would actually claim.
+is the same set the conductor would actually claim. The plan-tree panel overlays each AUTHORED
+leaf with its LIVE status by matching the leaf's `metadata.itemId` against `state.items` — so the
+authored structure and the live progress are reconciled at render time, never stored.
 
 ---
 
@@ -295,27 +396,43 @@ fixed `nowMs`. Assert the rendered KPI strip carries EXACTLY those numbers (`pro
 fixture item to `done` → `items done/total` flips to `8/12` and the assertion catches it.
 
 **(b) DONE-COLLAPSE — the guard against regressing to endless-scroll.** Build a fixture with
-MANY done items (e.g. 50 items, 48 done across several products). Assert the renderer does NOT
-emit one detail row per done item — concretely: count the "active work · what's left" item rows
-(e.g. `<li>` under `ul.awlist`) and assert it equals the number of NON-done, non-retired items
-(here 2), NOT the total (50). Equivalently, assert the rendered HTML length / row-count is
-bounded by `open-items + top-5-frontier + products`, not by total items, and that a done item's
-`itemId` does NOT appear as an `awlist` detail row. **MUTATION → RED:** a regression that lists
-done items individually (the rejected v0) blows the row-count assertion past the open-item count.
-This is the acid that keeps the overview-first inversion from rotting back to the dump.
+MANY done items (e.g. 20 done across two products + 2 open). Assert the OVERVIEW region — the
+HTML BEFORE the plan-tree-structure panel (split on the `<!-- 6. PLAN TREE` marker) — does NOT
+emit one detail row per done item: no done title appears in an overview detail row, and the
+overview detail-row count (matching `<li>` NOT carrying `class="tleaf"`, i.e. excluding the
+structural-panel leaf rows) is bounded by `open-items + top-5-frontier + a few advisory flags`,
+not by total items. **The overview-region split is load-bearing:** the structural plan-tree panel
+(panel 6) DELIBERATELY surfaces every authored leaf (done included, as compact dots) to show the
+hierarchy — that is NOT the rejected dump, so it is excluded from this count by the `.tleaf`
+filter; the done-collapse guard applies to the OVERVIEW panels (attention / up-next / active-work)
+only. **MUTATION → RED:** a regression that lists done items individually in the overview (the
+rejected v0) blows the bounded row-count assertion. This is the acid that keeps the overview-first
+inversion from rotting back to the dump.
+
+**(b2) FLAT-FALLBACK done-collapse — the same guard, extended to the plan-tree panel's flat
+fallback.** Build a fixture with a product that has NO authored model and MANY done items (e.g. 5
+done, no model). Assert the plan-tree panel (the HTML AFTER the `<!-- 6. PLAN TREE` marker)
+collapses it to a one-line summary: it contains the honest label `log-derived — flat until
+re-cutover` and the all-done phrase (`5 work-items · all done`), emits NO per-done-item leaf row
+(no `class="tleaf"`, no done title), and NO capability/feature header (`class="tkind"`). For a
+flat product with mixed done+open (e.g. 3 done + 2 open), assert the summary reads `3 done / 2
+open`, the 2 OPEN items ARE listed as leaf rows, and EXACTLY the 2 open rows appear (the 3 done
+ones collapse into the count). **MUTATION → RED:** enumerating the flat product's done items as
+leaf rows blows the exact open-row count and surfaces a done title in the flat block.
 
 **(c) Priority-anomaly fires when it should + does NOT false-fire.**
-- **Fires:** a fixture where product `A` (priority 1, the lowest number) has its own deferred
-  items leading the global frontier while product `B` (priority 5) has freshly-queued work →
-  assert the "needs attention" panel contains the `PRIORITY` flag naming `A` and its leading
-  items.
-- **No false-fire (legitimate top):** a fixture where the favored product's top item is normal
-  forward work (it does not lead the whole frontier, or a higher-priority product's item heads
-  it) → assert NO `PRIORITY` flag.
-- **No false-fire (all-clear):** all-done fixture AND empty-frontier fixture → assert the panel
-  renders `✓ all clear` and emits NO `PRIORITY` flag. **MUTATION → RED:** inverting the
-  `headProduct.priority !== minPriority` guard makes the anomaly fire on a legitimate top product
-  → the no-false-fire assertion catches it.
+- **Fires:** a fixture where `foundry` (priority 1, the lowest number) has its OWN queued items
+  (`foundry/p5`, `foundry/p6`) leading the global frontier while a real product (`oncology`,
+  priority 5) has freshly-queued work → assert `priorityAnomaly()` returns non-null naming
+  `foundry`, and the "needs attention" panel contains the `PRIORITY` flag + the word `preempt`.
+- **No false-fire (legitimate top):** a fixture where a REAL product (`oncology`, priority 1) tops
+  the frontier with its own first-time work (`foundry` is priority 9, lower-favored) → assert
+  `priorityAnomaly()` returns `null` (no `PRIORITY` flag). The `head.productKey !== 'foundry'`
+  guard is exactly what makes a real product topping legitimate, not an anomaly.
+- **No false-fire (all-clear):** all-done / empty-frontier fixture → assert `priorityAnomaly()`
+  returns `null`, the panel renders `✓ all clear`, and emits NO `PRIORITY` flag. **MUTATION →
+  RED:** dropping the `head.productKey !== 'foundry'` guard makes the anomaly fire on the
+  legitimate real-product top → the no-false-fire assertion catches it.
 
 **(d) "what's left" lists ONLY non-done items.** Over a mixed fixture, assert every itemId that
 appears in the "active work" panel has `itemStatus !== 'done' && !== 'retired'`, and that at
@@ -334,9 +451,31 @@ inline in a single `<style>` block and there is no external script. The page mus
 `file://` URL with no network. **MUTATION → RED:** introducing an external `<link>`/`<script src>`
 trips the assertion.
 
-**(g) Determinism + purity.** `renderFoundryDashboard(state, nowMs)` called twice on the same
-`(state, nowMs)` → deep-equal strings; the function reads no files / env / wall clock (a fixed
-`nowMs` is injected). This is what underwrites acids (a)–(f).
+**(g) Determinism + purity.** `renderFoundryDashboard(state, nowMs, opts?)` called twice on the
+same `(state, nowMs, opts)` → deep-equal strings; the function reads no files / env / wall clock
+(a fixed `nowMs` + fixed `opts.models` are injected). This is what underwrites acids (a)–(f).
+
+**(h) Plan-tree STRUCTURE — the authored hierarchy renders.** With an injected model (a known
+4-level fixture: 2 capabilities / 3 features / 5 work-items, depth 3, built via
+`buildCascadeTree(MODEL_SPEC)`), assert the panel renders the capability + feature HEADERS
+(`Capability A/B`, `Feature A1/A2/B1`), every work-item LEAF as a compact line, a header rollup
+CHIP (e.g. `3 items`), and the structural CAPTION counts matching the authored model
+(`2 capabilities / 3 features / 5 work-items`, `4 levels`, `depth 3`). **MUTATION → RED:** a
+miscount in the caption or a dropped header turns it RED.
+
+**(i) Status OVERLAY per leaf.** Over a fixture where some authored leaves have live items
+(`demo/1` done, `demo/2` queued) and one does not (`demo/5` never queued), assert: the done leaf
+renders the done color (`#22c55e`) + a `done` badge, the queued leaf renders the queued color
+(`#9aa4b2`) + a `queued` badge, and the UNMATCHED leaf renders a neutral `not yet queued` (no
+`done` badge). **MUTATION → RED:** mislabeling the unmatched leaf or losing the status-color
+lookup trips it.
+
+**(j) Compactness preserved — no verbose metadata dump.** With an authored model whose leaves
+carry `itemId` / `scope` / etc., assert the rendered leaf lines do NOT dump `dependsOn`,
+`pathPrefix`, or `"yields"` — each leaf is the compact `<li class="tleaf">` shape (dot + title +
+status) and nothing more. **MUTATION → RED:** a regression that serializes the leaf metadata
+surfaces one of the forbidden tokens. This is the structural-panel analogue of the done-collapse
+guard: the panel shows STRUCTURE compactly, it does not become a metadata dump.
 
 ---
 
@@ -407,12 +546,18 @@ Recorded as deferred so v1 stays the static overview-first page:
 
 ## 10. Slice scope
 
-- **foundry:** add `src/dashboard/render-foundry-dashboard.ts` (the pure renderer, carried from
-  the approved demo — the panels, the `esc()`, the `priorityAnomaly()`), `src/dashboard/cli.ts`
-  (the thin live-log → HTML CLI), the `"dashboard"` npm script, the `foundry_dashboard`
-  read-only MCP tool (one additive entry in `src/mcp/tools.ts`), and the acid battery
-  `test/dashboard.acid.test.ts` (KPI-match + DONE-COLLAPSE + anomaly fire/no-false-fire +
-  what's-left-non-done + HTML-escape + self-contained + determinism). **No `@de-braighter/*`
+- **foundry:** add `src/dashboard/render.ts` (the pure renderer, carried from the approved demo —
+  the overview panels, the `esc()`, the exported `priorityAnomaly()` — PLUS the added plan-tree-
+  structure panel: `renderModelTree` for authored products, `renderFlatFallback` for un-modeled
+  ones), `src/dashboard/cli.ts` (the thin live-log → HTML CLI that injects
+  `buildCascadeTree(FOUNDRY_PRODUCT)` via `opts.models`), the `"dashboard"` npm script, the
+  `foundry_dashboard` read-only MCP tool (one additive entry in `src/mcp/tools.ts`, same model
+  injection), and the acid battery `test/dashboard.acid.test.ts` (KPI-match · DONE-COLLAPSE
+  overview + flat-fallback · anomaly fire/no-false-fire (`'foundry'`-keyed) · what's-left-non-done
+  · HTML-escape · self-contained · determinism · plan-tree structure · status-overlay ·
+  compactness). It reuses `buildCascadeTree` / `FOUNDRY_PRODUCT` from the existing
+  `src/plan/cascade.ts` + `src/instances/foundry-product.ts` and the `PlanTree` / `PlanNode` types
+  from `@de-braighter/substrate-contracts` (read-only — no kernel change). **No `@de-braighter/*`
   change.**
 - **specs:** ADR-261 (proposed) — codifies (1) foundry gets a first-class observability surface
   (overview-first, pure renderer over derived state); (2) the agnosticism boundary
