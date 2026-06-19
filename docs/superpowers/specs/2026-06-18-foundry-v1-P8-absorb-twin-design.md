@@ -161,24 +161,52 @@ indifferent to whether the code lives in devloop or twin.
 Two of the four corrections are directly asserted by tests already in the absorbed suite, so a
 mis-rooting flips them RED automatically:
 
-- **Edit #1 (`log.ts:15`)** is pinned by `test/canonical-log-path.test.ts:30` and
-  `test/log-env.test.ts:22`, both asserting `DEFAULT_LOG.replace(/\\/g,'/')` matches
-  `/foundry\/data\/events\.jsonl$/`. The corrected expression
-  (`join(PKG_ROOT,'..','data','events.jsonl')` from `foundry/twin`) resolves to
+- **Edit #1 (`log.ts:15`)** is pinned by `test/canonical-log-path.test.ts` and
+  `test/log-env.test.ts`. As inherited from devloop, both asserted
+  `DEFAULT_LOG.replace(/\\/g,'/')` matches `/foundry\/data\/events\.jsonl$/`. The corrected
+  expression (`join(PKG_ROOT,'..','data','events.jsonl')` from `foundry/twin`) resolves to
   `…/domains/foundry/data/events.jsonl`, which STILL ends in `foundry/data/events.jsonl` → GREEN.
   The WRONG unchanged expression resolves to `…/foundry/foundry/data/events.jsonl`, which ALSO
   matches the `$`-anchored regex (it still ends in `foundry/data/events.jsonl`) — so this regex
   alone does NOT catch the double-`foundry` bug. The acid that DOES catch it is the bit-identical
   derivation (§7) plus an absolute-path assertion (§7 mutation), not the suffix regex. Flagged so
   the implementer does not over-trust the suffix test.
-- **Edit #3 (`config.ts:36`)** is NOT pinned by `test/knowledge-graph/config.test.ts`, because that
-  test INJECTS an explicit `packRoot` (`/cluster/domains/devloop`) and asserts the RESOLVER LOGIC
-  (`clusterRoot === resolve(packRoot,'..','..')`) — it never exercises the auto-derived default. So
-  edit #3 must change ONLY the DEFAULT derivation, and the injected-packRoot test continues to pass
-  UNCHANGED (it asserts the `..,..` relationship from a `domains/<pack>` packRoot, which is correct
-  for an injected 2-deep packRoot regardless of where the real code lives). The DEFAULT correction
-  is exercised by the live `kg:rebuild` + the activity-overlay tests that read the real corpus, and
-  by the §7 acid.
+
+  **Reconciled to shipped (2026-06-19) — these 2 inherited path tests were made LOCATION-ROBUST.**
+  Beyond being too weak (above), the inherited `/foundry\/data\/events\.jsonl$/` suffix regex is
+  also BRITTLE: it assumes the package's parent directory is literally named `foundry`, which is
+  FALSE inside a git worktree (e.g. `…/.claude/worktrees/<name>/data/events.jsonl`), where the test
+  then fails for a non-bug reason. The implementer fixed BOTH tests to assert the EXACT computed path
+  instead of the suffix: each derives `TWIN_PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')`
+  and asserts `resolve(DEFAULT_LOG) === resolve(TWIN_PKG_ROOT, '..', 'data', 'events.jsonl')` — which
+  is location-robust (passes in a main clone AND a worktree) AND simultaneously satisfies the §7
+  mutation's exact-absolute-path requirement (it flips RED on the double-`foundry` mis-rooting). This
+  is an INTENTIONAL, BEHAVIOUR-NEUTRAL robustness divergence from devloop's originals — it changes
+  the TEST's assertion strength + portability, not the runtime: `src/log.ts` carries ONLY the edit-#1
+  re-rooting (`'foundry','data'` → `'data'`) and no other change, so the twin's RUNTIME log-path
+  behaviour is bit-identical to devloop. Bit-identity is a claim about BEHAVIOUR (proven by the §7
+  byte-identical ritual cross-check from both locations + the 391 other tests passing identically),
+  not about every test file's source being byte-frozen — a more portable assertion of the SAME
+  behaviour is not a behaviour change.
+- **Edit #3 (`config.ts:36`)** is NOT pinned by the resolver's CORE-LOGIC assertion in
+  `test/knowledge-graph/config.test.ts`, because that test INJECTS an explicit `packRoot` and asserts
+  the RESOLVER LOGIC relationship — it never exercises the auto-derived default. So edit #3 changes
+  ONLY the DEFAULT derivation.
+
+  **Reconciled to shipped (2026-06-19) — config.test.ts is UPDATED, not "unchanged".** The spec's
+  earlier draft claimed `config.test.ts` "continues to pass UNCHANGED." That was WRONG: the injected
+  `packRoot` and the resolver depth this test pins (`resolve(packRoot, '..', '..')`) plus the default
+  `logPath` SHAPE (`join(packRoot, '..', 'foundry', 'data', ...)`) are EXACTLY the resolver internals
+  that re-rooting edits #2 (`config.ts:46` default `logPath`) and #3 (`config.ts:36` default
+  `clusterRoot` depth) deliberately changed. So the implementer correctly UPDATED the test to TRACK
+  the re-rooted resolver: the injected `packRoot` became `…/domains/foundry/twin`, the clusterRoot
+  assertion became the 3-deep `resolve(PACK, '..', '..', '..')`, and the default-`logPath` assertion
+  became the sibling-data contract `join(PACK, '..', 'data', 'events.jsonl')` (the twin pack's parent
+  `data/`). This is a test TRACKING the legitimate re-rooting — NOT a behavior change in the resolver
+  under test; the resolver still computes "cluster root from packRoot" and "canonical log = the
+  foundry repo's `data/`", only from the new 3-deep package location. The DEFAULT correction is
+  additionally exercised by the live `kg:rebuild` + the activity-overlay tests that read the real
+  corpus, and by the §7 acid.
 
 ---
 
@@ -426,8 +454,11 @@ over the same log. Charter-checker is the governance gate.
   `sonar-project.properties`, `.npmrc` (§4.1); do NOT copy `.git`/`.githooks`/Docker metadata or a
   live log (§4.2); apply EXACTLY the 4 re-rooting edits of §3.2 + the prose-comment update of §3.3
   (the ONLY non-verbatim changes); DROP the `prepare` script from the absorbed `package.json`
-  (§4.4); `cd foundry/twin && npm install` (independent install). Foundry root `package.json` is
-  UNTOUCHED.
+  (§4.4); `cd foundry/twin && npm install` (independent install). Foundry root `package.json` +
+  lockfile are UNTOUCHED. **The ONE foundry-core source edit (reconciled to shipped):** add a 1-line
+  `'twin/**'` entry to foundry's `vitest.config.ts` `exclude` array so vitest's recursive discovery
+  does NOT sweep `twin/test/**` into foundry CORE's run (§11) — restoring foundry core's test count +
+  coverage to exactly pre-absorb.
 - **specs:** ADR-257 (proposed) — codifies the absorb-only consolidation + the re-rooting crux +
   the founder-gated retirement boundary + the ADR-176 non-trigger.
 - **Acceptance criteria:** (1) foundry CORE `ci:local` (`typecheck && test:coverage`) GREEN and
@@ -451,8 +482,23 @@ orthogonal to foundry's conductor logic.
   re-rooting EXISTS to keep this byte-identical.
 - The `logLockDir = logPath + '.lock'` lock convention (ADR-253) — a pure function of `logPath`,
   preserved by correct re-rooting.
-- foundry CORE's `package.json`, lockfile, `src/`, `test/`, and `ci:local` — Option B leaves them
-  untouched.
+- foundry CORE's `package.json`, lockfile, `src/`, and `test/` — Option B leaves them untouched.
+  Root `package.json` + `package-lock.json` are PROVABLY byte-unchanged (verified by
+  `git diff` excluding `twin/**`).
+
+  **Reconciled to shipped (2026-06-19) — one foundry-core file DID change: `foundry/vitest.config.ts`.**
+  The spec's earlier draft listed foundry core's `vitest.config.ts` among "does not change." In
+  practice the move required a 1-line addition: vitest's recursive test discovery from the foundry
+  root was sweeping the absorbed `twin/test/**` into foundry CORE's run (folding the twin's ~396
+  cases + its coverage into foundry core's gate), which BREACHES the core-unchanged criterion. The
+  fix is a single `'twin/**'` entry appended to the existing `exclude` array
+  (`exclude: [...configDefaults.exclude, '**/.claude/**', '**/.ci-worktrees/**', 'twin/**']`) — same
+  rationale as the pre-existing `.claude`/`.ci-worktrees` worktree excludes. This is the ONLY
+  foundry-core source file the absorb touches; foundry core's `ci:local` behaviour (its OWN test
+  count + coverage over `src/`) is restored to exactly what it was before the absorb, and root
+  `package.json`/`package-lock.json` stay byte-unchanged. (The `vitest.config.ts` COPIED into
+  `foundry/twin/` per §4.1 is the twin's OWN config and is verbatim — distinct from this foundry-core
+  edit.)
 - `@de-braighter/substrate-contracts` / `@de-braighter/substrate-runtime` — the twin consumes them
   as published deps, unchanged.
 - The twin's RUNTIME logic — every behaviour is bit-identical; only 4 path segments + one comment +
