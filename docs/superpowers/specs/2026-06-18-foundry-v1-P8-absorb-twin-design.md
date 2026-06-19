@@ -13,7 +13,7 @@
 - **Date:** 2026-06-18
 - **Scope:** `domains/foundry` (gains `foundry/twin/` — a verbatim copy of `domains/devloop`'s
   `src/`, `test/`, `db/`, `data/` fixtures, `package.json`, `tsconfig.json`, `vitest.config.ts`,
-  plus 4 surgical re-rooting edits across 3 files). `layers/specs` (ADR-257, status proposed).
+  plus 4 surgical re-rooting edits across 3 files). `layers/specs` (ADR-258, ratified — renumbered from 257 after the #338 collision).
   `domains/devloop` is UNCHANGED and KEPT (the bit-identical acid + the ongoing twin ritual both
   need it parallel until the founder-gated retirement).
 - **Predecessors:** [ADR-241](../../../layers/specs/adr/adr-241-sanction-domains-foundry-meta-product-rehome-sdlc-twin.md)
@@ -459,7 +459,7 @@ over the same log. Charter-checker is the governance gate.
   `'twin/**'` entry to foundry's `vitest.config.ts` `exclude` array so vitest's recursive discovery
   does NOT sweep `twin/test/**` into foundry CORE's run (§11) — restoring foundry core's test count +
   coverage to exactly pre-absorb.
-- **specs:** ADR-257 (proposed) — codifies the absorb-only consolidation + the re-rooting crux +
+- **specs:** ADR-258 (ratified; renumbered from 257 after the #338 collision) — codifies the absorb-only consolidation + the re-rooting crux +
   the founder-gated retirement boundary + the ADR-176 non-trigger.
 - **Acceptance criteria:** (1) foundry CORE `ci:local` (`typecheck && test:coverage`) GREEN and
   UNCHANGED (the root `package.json`/lockfile are not edited — provable by `git diff`). (2) The
