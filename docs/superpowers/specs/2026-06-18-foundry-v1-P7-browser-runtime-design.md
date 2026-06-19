@@ -12,10 +12,21 @@
 
 - **Date:** 2026-06-18
 - **Scope:** `domains/foundry` (`src/compiler/target-browser-runtime.ts` (new),
+  `src/compiler/plan-tree-to-render-node.ts` (new, shared faithful projection),
   `src/compiler/registry.ts`, `src/compiler/materialize-html.ts` (new),
-  `test/compiler-browser-runtime.acid.test.ts` (new), `test/browser-runtime-live.acid.test.ts`
-  (new, gated)). `layers/specs` (ADR-259, status proposed). **No `@de-braighter/substrate-*`
-  change.**
+  `test/p7-browser-runtime.acid.test.ts` (new — the single deterministic acid battery)).
+  `layers/specs` (ADR-259, status proposed). **No `@de-braighter/substrate-*` change.**
+- **Shipped-as note (reconciled 2026-06-19 against `domains/foundry` `v1-p7-browser-runtime` @
+  `ae72738`):** the deterministic acid battery shipped as a SINGLE file
+  (`test/p7-browser-runtime.acid.test.ts`) — there is NO standalone committed
+  `test/browser-runtime-live.acid.test.ts`. Browser automation does not run inside the vitest
+  runner (foundry carries no Playwright dep and no DOM lib), so the crown is proven by (a) a
+  COMMITTED, deterministic acid that evals the REAL emitted runtime against a fake window
+  (ACID 4) **plus** (b) a ONE-TIME live real-browser demonstration the coordinator performed
+  via chrome-devtools MCP (NOT a CI test). §5 + §8 below carry the honest reconciliation; §3.5
+  / §3.6 are corrected to match. The descriptor shape, the agnosticism gate, and the ADR-176
+  pack-level verdict are unchanged — only the test approach + the fixtures differ from the
+  original draft.
 - **Predecessors:** [ADR-250](../../../layers/specs/adr/adr-250-foundry-multi-target-product-compiler.md)
   (the `CompileTarget<O>` interface + Target A test-harness + Target B render-tree; explicitly
   DEFERRED the live browser-runtime as "the most ambitious target; a later slice"),
@@ -285,22 +296,44 @@ export function materializeHtml(descriptor: BrowserRuntimeDescriptor): string { 
 - Renders `descriptor.views` as a nested DOM tree (one element per `RenderNode`, `data-node-id` =
   the node id, nesting = `children`) — so the page DOM is the PlanTree, node-for-node and
   edge-for-edge.
-- Renders, for each `InteractionBinding`, a `<button data-node-id data-effect-declaration-id>` whose
-  click handler emits a STRUCTURED event carrying `{ nodeId, effectDeclarationId }` (e.g.
-  `window.__firedInterventions.push(...)` + a `CustomEvent('foundry:intervention-fired', { detail })`).
-  This is the genuine actuation: clicking the button FIRES the intervention.
+- Renders, for each `InteractionBinding`, a `<button data-node-id data-effect-id>` whose `onclick`
+  invokes `window.__fireIntervention(this)`, which reads the button's own data attributes, pushes
+  the STRUCTURED `{ nodeId, effectDeclarationId }` onto `window.__firedInterventions`, and dispatches
+  a `CustomEvent('intervention', { detail })` (shipped runtime — `materialize-html.ts:62-68`; the
+  event name is `intervention` and the data attribute is `data-effect-id`). This is the genuine
+  actuation: clicking the button FIRES the intervention.
 - Is self-contained (inline script, no network) so it loads from a `file://` URL with no server.
 - Is AGNOSTIC: it consumes only the descriptor shape; it contains no `instances/` import and no
   `productKey` literal, so the ADR-243 glob test auto-covers it (it lives under `src/compiler/`).
 
-The LIVE proof is a browser-automation acid (§5 acid 4): load the emitted HTML in a real browser,
-assert the rendered DOM node-count + edges + ids match the PlanTree 1:1, click an intervention
-button, and assert it FIRES `{ nodeId, effectDeclarationId }` with an id that EXISTS on that node's
-declared effects. Because browser automation can be non-deterministic in CI, this live acid is
-GATED + flaky-tolerant (the `FOUNDRY_TEARING_STRESS` precedent — `test/concurrent-writer.acid.test.ts:321`
-gates a platform-dependent negative control behind an env flag). The **deterministic core acid is
-the descriptor mapping** (§5 acids 1–3), which runs unconditionally and is the real kill-criterion;
-the live browser click is the crown demonstration on top.
+**How the crown is PROVEN (reconciled to the shipped state).** The original draft scoped a committed,
+gated browser-automation acid (`test/browser-runtime-live.acid.test.ts`). That is NOT how it shipped:
+browser automation does not run inside the vitest runner (foundry carries no Playwright dep and no DOM
+lib), so a Playwright/chrome-MCP run cannot live in the unit-test suite. The crown is proven by two
+complementary pieces instead:
+
+- **(a) COMMITTED, deterministic — eval the REAL emitted runtime (ACID 4,
+  `test/p7-browser-runtime.acid.test.ts:419-477`).** The acid EXTRACTS the real inline
+  `RUNTIME_SCRIPT` from `materializeHtml(descriptor)`, evals it against a minimal fake `window`
+  (`new Function('window', scriptBody)(win)`), parses the `data-node-id`/`data-effect-id` the emitted
+  HTML put on the intervention button, and invokes the REAL emitted `window.__fireIntervention(...)`
+  — asserting `window.__firedInterventions === [{ nodeId, effectDeclarationId }]` and that the
+  `CustomEvent('intervention')` was dispatched with the matching detail. This runs the ACTUAL emitted
+  runtime, not a duplicate test-side handler (a wave fix — `ae72738` — replaced an earlier
+  test-theater version that re-implemented the handler in the test). A regression in the real onclick
+  wiring now turns this acid RED. It runs unconditionally in `ci:local`.
+- **(b) LIVE real-browser — a ONE-TIME coordinator demonstration via chrome-devtools MCP (NOT a CI
+  test).** The coordinator loaded the emitted self-contained HTML in a real browser: the substrate
+  model rendered as a website (product → capability → work-item views); the effect-bearing node showed
+  a `fire: coverage +` button and the effect-less node showed NONE (the negative control, VISIBLE);
+  clicking the button produced `window.__firedInterventions = [{ nodeId: "4e76c046…",
+  effectDeclarationId: "f6c352b8…" }]` — the REAL `PlanNode.id` + `EffectDeclaration.declarationId`.
+  This is a demonstration in the MCP/coordinator layer, not a committed CI test — browser automation
+  lives there, not in the unit-test runner.
+
+So the deterministic descriptor mapping + the real-emitted-runtime eval (§5 acids 1–5) are the
+unconditional kill-criterion, and the coordinator's live-browser MCP run is the crown demonstration
+on top. The standalone gated `browser-runtime-live.acid.test.ts` deliverable is DROPPED.
 
 ### 3.6 Architecture diagram
 
@@ -316,11 +349,16 @@ ProductBlueprint bp ──┐            │
                                                              (no effects on a node → NO button = neg. control)
                                                   │
                                    materializeHtml(descriptor) → self-contained HTML
-                                                  │   button-click → fires { nodeId, effectDeclarationId }
-                                            ┌──────┴──────┐
-                                            ▼             ▼
-                                    LIVE browser acid (gated): load HTML, click button,
-                                    assert intervention FIRES + DOM == PlanTree 1:1
+                                                  │   button-click → window.__fireIntervention(this)
+                                                  │   → window.__firedInterventions.push({ nodeId, effectDeclarationId })
+                                                  │   + dispatchEvent(CustomEvent('intervention', { detail }))
+                                            ┌──────┴──────────────────────┐
+                                            ▼                             ▼
+                          (a) COMMITTED acid (deterministic):   (b) LIVE real-browser (one-time,
+                              eval the REAL emitted RUNTIME_SCRIPT     coordinator via chrome-MCP):
+                              vs a fake window → assert FIRES           load HTML, click, observe
+                              { nodeId, effectDeclarationId }           __firedInterventions = real ids.
+                              (test/p7-browser-runtime.acid.test.ts)    NOT a CI test.
 ```
 
 ---
@@ -344,61 +382,92 @@ P7's targets honour this by construction:
   already imported by both existing targets). No `instances/`, no productKey literal.
 - `materialize-html.ts` imports ONLY the relative descriptor type. No domain vocabulary.
 
-**The agnosticism BITES:** the same generic `browser-runtime` compile handles WHALES + FOUNDRY
-blueprints; the descriptors differ by DATA (node counts, ids, which nodes carry effects), not by
-code path (§5 acid 3).
+**The agnosticism BITES:** the same generic `browser-runtime` compile handles two
+independently-shaped blueprints (`FIXTURE_A` + `FIXTURE_B`) AND the real `ARC_CASCADE` cascade with no
+product-specific branch; the descriptors differ by DATA (node counts, ids, which nodes carry effects),
+not by code path (§5 acids 3 + 5). The structural acids use independent fixtures rather than the
+WHALES/FOUNDRY products precisely because those products carry ZERO `effectDeclarations` (no
+intervention to bind); `ARC_CASCADE` supplies the real-kernel-data binding bite (ACID 2b).
 
 ---
 
 ## 5. Acid battery — must BITE
 
-The deterministic core (acids 1–3) runs unconditionally in `ci:local`. The live browser proof
-(acid 4) is gated + flaky-tolerant. Acid 5 is the agnosticism gate (auto-covered).
+The whole battery is COMMITTED + deterministic and runs unconditionally in `ci:local`
+(`test/p7-browser-runtime.acid.test.ts`). There is no gated browser-automation acid in the suite (see
+§3.5 reconcile) — ACID 4 instead evals the REAL emitted runtime against a fake window, which is both
+committed AND deterministic.
 
-1. **Faithful projection (views 1:1 with the PlanTree).** For WHALES (real, yield-bearing) AND an
-   independently-authored fixture: `descriptor = browserRuntimeTarget.compile(bp)`. Assert
-   `countNodes(descriptor.views) === bp.process.nodes.length`, `renderEdges(descriptor.views) ===
-   planEdges(bp.process)`, and the view ids === the PlanNode ids 1:1 (sorted) — the SAME assertions
-   Target B passes (`compiler.acid.test.ts:74-87`). **MUTATION → RED:** drop a node from
-   `bp.process.nodes` (leaving a dangling `childrenIds`) → `countNodes(descriptor.views)` shrinks by
-   one → the count/edges assertion flips RED (mirrors `compiler.acid.test.ts:151-181`).
+**Fixtures (reconciled to the shipped state).** The structural acids use two INDEPENDENTLY-AUTHORED
+fixtures — `FIXTURE_A` (root → two children → one grandchild; the `branch` node carries one declared
+effect, `leaf-active` carries two, `leaf-quiet` carries NONE — the negative control) and `FIXTURE_B`
+(a different SHAPE — a flat root with three quiet children, only the root carries an effect). These
+replace the draft's WHALES/FOUNDRY production fixtures: those products carry ZERO `effectDeclarations`,
+so they are POOR intervention fixtures (no positive button binding to assert, no node-with-effect for
+the crown). Independent fixtures WITH effects are strictly stronger for the binding + negative-control
++ crown acids. The PRODUCTION-binding bite is supplied by a dedicated acid (ACID 2b) over the REAL
+`ARC_CASCADE` cascade (`src/plan/cascade.ts`), whose `pr:devloop-scaffold` node carries one real
+declared effect — so the battery still bites on real kernel data, not only synthetic fixtures.
 
-2. **Button = declared intervention (the binding bites) + negative control.** Use the `ARC_CASCADE`
-   fixture (`src/plan/cascade.ts:76-100`): the `pr:devloop-scaffold` node carries exactly one
-   `EffectDeclaration` (`indicatorId: 'coverage'`, `direction: '+'`), every other node carries NONE.
-   - **Positive:** `descriptor.interactions` contains EXACTLY one binding for the
-     `pr:devloop-scaffold` node, and `binding.effectDeclarationId` EXISTS in that node's
-     `effectDeclarations.map(e => e.declarationId)`. The binding count equals the total
-     `effectDeclarations` across all nodes.
-   - **Negative control:** every node WITHOUT `effectDeclarations` contributes ZERO bindings — assert
-     no `InteractionBinding.nodeId` references an effect-less node.
-   - **MUTATION → RED (break the binding):** (i) reference a non-existent `effectDeclarationId` — the
-     acid asserts every binding's `effectDeclarationId` exists on its node's declared effects, so a
-     fabricated id flips RED; (ii) bind a button to an effect-less node — the acid asserts the
-     binding set's `nodeId`s are exactly the nodes WITH effects, so a spurious binding on an
-     effect-less node flips RED. Both mutations bite.
+1. **Faithful projection (views 1:1 with the PlanTree).** Over `FIXTURE_A`: `descriptor =
+   browserRuntimeTarget.compile(bp)`. Assert `countNodes(descriptor.views) ===
+   bp.process.nodes.length`, `renderEdges(descriptor.views) === planEdges(bp.process)`, and the view
+   ids === the PlanNode ids 1:1 (sorted) — the SAME assertions Target B passes
+   (`compiler.acid.test.ts:74-87`; shipped at `p7-browser-runtime.acid.test.ts:184-207`).
+   **MUTATION → RED:** drop a node from `bp.process.nodes` (leaving a dangling `childrenIds`) →
+   `countNodes(descriptor.views)` shrinks by one → the count assertion flips RED.
 
-3. **Agnosticism (the kill-criterion).** The SAME generic `browser-runtime` compile handles WHALES +
-   FOUNDRY with NO product-specific branch: both produce faithful descriptors; the descriptors
-   differ by data (different `views` node counts, different `interactions` sets), not by code path.
-   Assert `countNodes(whalesDescriptor.views) !== countNodes(foundryDescriptor.views)` and each
-   mirrors its own blueprint (mirrors `compiler.acid.test.ts:89-110`).
+2. **Button = declared intervention (the binding bites) + negative control.** Over `FIXTURE_A`
+   (`branch` + `leaf-active` carry effects; `root` + `leaf-quiet` carry NONE):
+   - **Positive:** `descriptor.interactions.length` equals the total `effectDeclarations` across all
+     nodes, and EVERY binding's `effectDeclarationId` EXISTS in its referenced node's
+     `effectDeclarations.map(e => e.declarationId)` (`everyBindingResolves`).
+   - **Negative control:** every node WITHOUT `effectDeclarations` contributes ZERO bindings, and the
+     bound `nodeId` set equals EXACTLY the effect-bearing node set.
+   - **MUTATION → RED (break the binding):** (i) a fabricated `effectDeclarationId` fails the
+     resolution invariant; (ii) a binding on an effect-less node fails the "bound nodes are exactly
+     the nodes with effects" invariant; (iii) clearing `effectDeclarations` on the `branch` node in
+     the SOURCE PlanTree and re-running the REAL compiler drops exactly that node's bindings (wrong
+     count → RED) — exercising the compiler's real skip-empty path. All three bite
+     (`p7-browser-runtime.acid.test.ts:223-294`).
 
-4. **LIVE browser-click proof (the crown — gated, flaky-tolerant).** `materializeHtml(descriptor)`
-   → a self-contained HTML string; load it in a real browser (playwright or chrome-devtools MCP from
-   a `file://` URL). Assert: (a) the rendered DOM node-count (elements carrying `data-node-id`) +
-   nesting edges + ids match the PlanTree 1:1 (the "website IS the model" is VISIBLE); (b) clicking
-   the `pr:devloop-scaffold` intervention button FIRES a structured `{ nodeId, effectDeclarationId }`
-   whose `effectDeclarationId` EXISTS on that node's declared effects (the genuine "button-click =
-   intervention"); (c) an effect-less node has NO button to click. **GATED** behind an env flag
-   (the `FOUNDRY_TEARING_STRESS=1` precedent, `test/concurrent-writer.acid.test.ts:321-324`) and
-   flaky-tolerant, because browser automation is non-deterministic in CI. The deterministic descriptor
-   mapping (acids 1–3) is the real kill-criterion; this is the crown demonstration on top.
+2b. **Binds REAL kernel data — the production bite (`ARC_CASCADE`).** Compile the real
+   `ARC_CASCADE` cascade (`buildCascadeTree(ARC_CASCADE)`, `src/plan/cascade.ts`): its
+   `pr:devloop-scaffold` node carries exactly one `EffectDeclaration` (`indicatorId: 'coverage'`,
+   `direction: '+'`). Assert `interactions.length === 1`, `binding.nodeId ===
+   uuidv5('cascade:pr:devloop-scaffold')`, and `binding.effectDeclarationId ===
+   uuidv5('effect:devloop-scaffold-coverage')` — the REAL minted ids, so the acid bites on
+   production kernel data, not only the synthetic fixtures
+   (`p7-browser-runtime.acid.test.ts:299-330`).
 
-5. **Agnosticism gate holds (auto-covered).** The existing ADR-243 glob test
-   (`compiler.acid.test.ts:338-393`) passes with the three new `src/compiler/*.ts` files present —
-   no `instances/` import, no productKey literal, all imports on the allow-list. Zero test change
-   (auto-discovery).
+3. **Agnosticism + registration.** `listTargets()` contains `browser-runtime` and has length 3;
+   `compile(blueprint, 'browser-runtime')` via the registry deep-equals the direct
+   `browserRuntimeTarget.compile(blueprint)`. The ADR-243 glob gate re-runs over `src/compiler/*.ts`
+   inside this file (asserting the new `target-browser-runtime.ts` + `materialize-html.ts` are present
+   and carry no `instances/` import, no `whales-and-bubbles`, no `foundry` productKey literal). And the
+   SAME generic compile handles the two independently-shaped fixtures (ACID 5): the descriptors differ
+   by DATA (node counts, ids, which nodes carry effects), not by code path
+   (`p7-browser-runtime.acid.test.ts:334-358, 482-500`).
+
+4. **LIVE-runtime wiring — eval the REAL emitted runtime (the crown, COMMITTED + deterministic).**
+   `materializeHtml(descriptor)` → a self-contained HTML string. The acid (a) asserts one wired
+   `<button data-node-id data-effect-id>` per binding with attributes that round-trip the descriptor,
+   the page is self-contained (no external `src=`/`href="http`), and an effect-less node has NO
+   button; and (b) EXTRACTS the real inline `RUNTIME_SCRIPT`, evals it against a minimal fake `window`
+   (`new Function('window', scriptBody)(win)`), and invokes the REAL emitted
+   `window.__fireIntervention(fakeButton)` — asserting `window.__firedInterventions === [{ nodeId,
+   effectDeclarationId }]` and a dispatched `CustomEvent('intervention')` with the matching detail.
+   This runs the ACTUAL emitted runtime, not a duplicate handler (a wave fix replaced an earlier
+   test-theater version), so it is the genuine "button-click = intervention" — and it is COMMITTED +
+   deterministic, no real browser needed (`p7-browser-runtime.acid.test.ts:387-477`). The
+   real-browser run is the coordinator's one-time chrome-MCP demonstration (§3.5(b)), not a CI test.
+
+5. **Generic across ≥2 independent fixtures + determinism.** Compiling `FIXTURE_A` and `FIXTURE_B`
+   (different SHAPES) produces faithful descriptors that differ by data, not code path (different view
+   ids + edges; `FIXTURE_B`'s single root-effect → exactly one binding resolving on the root). And
+   `browserRuntimeTarget.compile(bp)` twice + `materializeHtml(descriptor)` twice are deep-equal
+   (`p7-browser-runtime.acid.test.ts:482-507`). The agnosticism gate auto-covers the new files (the
+   existing ADR-243 glob test, `compiler.acid.test.ts:338-393`, plus the in-file re-check in ACID 3).
 
 6. **Determinism.** `browserRuntimeTarget.compile(bp)` called twice on the same blueprint →
    deep-equal output; `materializeHtml(descriptor)` is a pure string function (deep-equal on the same
@@ -474,12 +543,13 @@ edit.
   factor Target B's faithful projection into a shared `src/compiler/plan-tree-to-render-node.ts`
   (behaviour-preserving refactor; Target B imports it); register the target in
   `src/compiler/registry.ts` (one additive entry); add the agnostic `materializeHtml`
-  (`src/compiler/materialize-html.ts`, new); add the deterministic acid battery
-  (`test/compiler-browser-runtime.acid.test.ts`, new — faithful-projection + button-binding +
-  negative-control + agnosticism + determinism); add the GATED live browser acid
-  (`test/browser-runtime-live.acid.test.ts`, new — load HTML, click, assert fire; gated behind an
-  env flag, flaky-tolerant). **No `@de-braighter/substrate-*` change. No `@de-braighter/design-system-core`
-  change.**
+  (`src/compiler/materialize-html.ts`, new); add the SINGLE deterministic acid battery
+  (`test/p7-browser-runtime.acid.test.ts`, new — faithful-projection + button-binding +
+  negative-control + the `ARC_CASCADE` production binding + the real-emitted-runtime eval (ACID 4)
+  + agnosticism + determinism). **No standalone `test/browser-runtime-live.acid.test.ts`** — the
+  live real-browser proof is the coordinator's one-time chrome-MCP demonstration (§3.5(b)), which
+  lives in the MCP/coordinator layer, not the unit-test runner (foundry has no Playwright dep, no
+  DOM lib). **No `@de-braighter/substrate-*` change. No `@de-braighter/design-system-core` change.**
 - **specs:** ADR-259 (proposed) — codifies the ADR-176 inclusion-test verdict (pack-level, no kernel
   change; `InterventionDescriptor` REJECTED) + the `BrowserRuntimeDescriptor` target design + the
   agnosticism gate + the AUTONOMY(2) internal-only note.
