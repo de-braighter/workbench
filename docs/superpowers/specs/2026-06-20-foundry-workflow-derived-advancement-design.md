@@ -13,43 +13,48 @@
 > fold? **Slice 3 resolves OQ-1 (reuse `planFrontier`) and builds the advancement.** Stages gain
 > `dependsOn` edges (the pipeline ORDER, as dependencies between SIBLING stages — never tree nesting); a
 > `workflowFrontier(state, now)` derives the READY stage by REUSING the EXISTING `planFrontier` fold
-> over `buildCascadeTree(FOUNDRY_WORKFLOW)`; stage completion is the EXISTING done-event
-> (`ClaimReleased` outcome `done`, the encoding P3/ADR-254's bootstrap already uses); and advancing the
-> workflow is pure RE-DERIVATION poked by scheduled-wake — NO callback, NO stored next-pointer. **Zero
-> kernel change** — the workflow tree is the existing plan-tree primitive, `dependsOn` is existing,
-> `planFrontier` is existing, the done-event is existing (ADR-176 NOT triggered, both legs fail → pack
-> territory).
+> over a `workflowTree()` PROJECTION of `FOUNDRY_WORKFLOW`'s stages into work-item leaves; stage
+> completion is the EXISTING done-event (`ClaimReleased` outcome `done` / `MergeRecorded`, the encoding
+> P3/ADR-254's bootstrap already uses); and advancing the workflow is pure RE-DERIVATION poked by
+> scheduled-wake — NO callback, NO stored next-pointer. The workflow stays ISOLATED from the product
+> conductor BY NON-REGISTRATION — `bootstrapWorkflow` queues the stage work-items but emits NO
+> `ProductRegistered`, so the workflow key is never in `s.products` and `planFrontierAll` (which iterates
+> ALL `s.products.keys()` with NO exclusion) cannot pick it up. **Zero kernel change** — the workflow
+> tree is the existing plan-tree primitive, `dependsOn` is existing, `planFrontier` is existing, the
+> done-event is existing (ADR-176 NOT triggered, both legs fail → pack territory).
 
 - **Date:** 2026-06-20
-- **Scope:** `domains/foundry` — extend the Slice-1/2 workflow module:
+- **Scope (as SHIPPED — commit `418f566`, branch `feat-workflow-advance`, 4 files):** `domains/foundry`
+  — extend the Slice-1/2 workflow module:
   - `src/instances/foundry-workflow.ts` (extend) — the existing stage nodes gain `meta.dependsOn`
-    (the pipeline ORDER, between SIBLING stages: `gate dependsOn intake`, `build-path dependsOn gate`,
-    `conduct dependsOn build-path`, `ship dependsOn conduct`) and `meta.itemId` (so each stage is a
-    foldable work-item leaf; see OQ-1 §2.2), keeping the FLAT single-parent topology from Slice 1
-    (`foundry-workflow.ts:40-105`). The workflow becomes a **product-of-stages** with a stable
-    `productKey` (`'foundry-workflow'`, already on the root meta, `foundry-workflow.ts:45`).
-  - `src/workflow/frontier.ts` (new) — `workflowFrontier(state, now): ItemState[]`, a THIN wrapper:
-    `planFrontier(buildCascadeTree(FOUNDRY_WORKFLOW), state, now)` (`plan/frontier.ts:96`), returning the
-    ready stage(s). NO new fold, NO second claimability rule.
-  - `src/instances/foundry-workflow-bootstrap.ts` (new — OR extend `foundry-bootstrap.ts`) — a pure
-    `foundryWorkflowBootstrapEvents(state, ts)` that REGISTERS the workflow product + queues each stage
-    as a `WorkItemQueued` (carrying its `dependsOn`), mirroring `foundryBootstrapEvents`
-    (`instances/foundry-bootstrap.ts:26-95`) exactly. This is the write path that makes stage-status
-    FOLDABLE.
-  - `src/plan/plan-frontier-all.ts` (extend) — EXCLUDE the workflow product from the conductor-driving
-    union (a `CONDUCTOR_EXCLUDED` set, the FOUNDRY_PRODUCT "vestigial-but-kept, outside `foundry_next`"
-    carve-out per [ADR-247](../../../layers/specs/adr/adr-247-foundry-doing-side-unified-queue-shadow-retired.md)),
-    so the workflow frontier stays ISOLATED from the product conductor until Slice 4 deliberately wires
-    it (`plan-frontier-all.ts:24-26`).
-  - `src/ops.ts` (extend) — `wake` (`ops.ts:489-506`) ALSO returns the workflow frontier
-    (`{ fired, frontier, workflowFrontier }`), so P6's external clock POKES the re-derivation. No new
+    (the pipeline ORDER, between SIBLING stages: `gate-greenlight dependsOn intake`, `build-path
+    dependsOn gate-greenlight`, `conduct dependsOn build-path`, `ship dependsOn conduct`; the shipped
+    stage keys are `stage-intake`, `stage-gate-greenlight`, `stage-build-path`, `stage-conduct`,
+    `stage-ship`), keeping the FLAT single-parent topology from Slice 1 (`foundry-workflow.ts:48-120`).
+    The stable `WORKFLOW_PRODUCT_KEY` (`'foundry-workflow'`) + `WORKFLOW_STAGE_REPO`
+    (`'de-braighter/foundry-workflow'`, a disjoint scope) are exported from this file.
+  - `src/plan/workflow-frontier.ts` (new) — holds three pure functions: `workflowTree()` projects
+    `FOUNDRY_WORKFLOW`'s stages into a work-item `PlanTree` (root carries the `productKey`; each stage →
+    a `kind: 'work-item'` leaf whose `itemId` IS the stage key, carrying the authored `dependsOn` + the
+    `WORKFLOW_STAGE_REPO` scope); `workflowFrontier(state, now): ItemState[]` is a THIN wrapper —
+    `planFrontier(workflowTree(), state, now)` (`plan/frontier.ts:96`), returning the ready stage(s), NO
+    new fold, NO second claimability rule; `workflowBootstrapEvents(state, ts)` emits ONLY a
+    `WorkItemQueued` (the EXISTING `itemQueued` event) per stage — NO `ProductRegistered`.
+  - `src/ops.ts` (extend) — `bootstrapWorkflow(deps)` (`ops.ts:576-590`) appends the
+    `workflowBootstrapEvents` (idempotent; queues each stage so its done-status is FOLDABLE — claim/
+    release need `s.items.get(itemId)`). And `wake` (`ops.ts:497-518`) ALSO returns the workflow frontier
+    (`{ fired, frontier, workflowFrontier }`, the raw `ItemState[]` — the workflow product is not in
+    `s.products`, so `toNextItem` can't map it), so P6's external clock POKES the re-derivation. No new
     write machinery — `wake` already appends `WakeFired` + re-projects; this adds one read.
+  - `src/plan/plan-frontier-all.ts` is **UNTOUCHED** — there is NO `CONDUCTOR_EXCLUDED` set; isolation is
+    by NON-REGISTRATION (the workflow key is never in `s.products`, which `planFrontierAll` iterates), so
+    ZERO lines are added to the sole conductor driver.
   - `test/workflow-advance.acid.test.ts` (new) — the five acids below, every one against a TEMP log.
   - It REUSES `planFrontier` (`src/plan/frontier.ts:96`), `claimableItems` / `depsSatisfied` /
     `itemDone` (`src/state.ts:498,404,124`), `buildCascadeTree` (`src/plan/cascade.ts:24`), the
-    `ClaimReleased` done-event (`src/events.ts`, folded at `state.ts:233-244`), `planFrontierAll`
-    (`src/plan/plan-frontier-all.ts:24`), the bootstrap pattern (`instances/foundry-bootstrap.ts:26`),
-    and the P6 `wake` op (`src/ops.ts:489`). **No `@de-braighter/substrate-*` change. No
+    `ClaimReleased` done-event / `MergeRecorded`, `projectTreeState`'s ProductState synthesis for an
+    un-registered product (`src/plan/frontier.ts:76-89`), the `itemQueued` event (`src/events.ts`), and
+    the P6 `wake` op (`src/ops.ts:497`). **No `@de-braighter/substrate-*` change. No
     `@de-braighter/design-system-*` change.**
 - **Predecessors / boundary:**
   [ADR-263](../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md) (Slice 1 — D4
@@ -64,8 +69,11 @@
   frontier reuses),
   [ADR-246](../../../layers/specs/adr/adr-246-foundry-queue-events-are-plan-node-declarations.md) /
   [ADR-247](../../../layers/specs/adr/adr-247-foundry-doing-side-unified-queue-shadow-retired.md)
-  (`treeFromQueue` + `planFrontierAll` universal; ONE claimability encoding; the FOUNDRY_PRODUCT
-  vestigial-but-kept exclusion from the conductor set — the exclusion pattern this slice copies),
+  (`treeFromQueue` + `planFrontierAll` universal — iterating ALL `s.products.keys()` with NO exclusion;
+  ONE claimability encoding the workflow frontier reuses. NOTE: ADR-247's "vestigial" point was the
+  removed `source:'plan'` parameter, NOT a FOUNDRY_PRODUCT conductor exclusion — and P3/ADR-254 made
+  FOUNDRY_PRODUCT a real conductor-driven product, so there is no carve-out to copy; the workflow stays
+  isolated by NON-REGISTRATION instead),
   [ADR-176](../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md) (the
   inclusion test — §6, both legs fail → pack territory),
   [ADR-127](../../../layers/specs/adr/adr-127-kernel-substrate-v1.md) (the four kernel concerns; the
@@ -77,14 +85,16 @@
   scope-disjoint`); `depsSatisfied` (`src/state.ts:404-408` — `dependsOn.every(d => itemDone(dep))`,
   the EXACT deps-done reachability rule); `itemDone` (`src/state.ts:124-126` — `merged != null ∨
   claims.some(c => c.released?.outcome === 'done')`, the done-event encoding); the `projectTreeState`
-  leaf filter (`src/plan/frontier.ts:44` — only `kind === 'work-item'` leaves become foldable items —
-  the load-bearing OQ-1 §2.2 fact); the bootstrap done-pair encoding
-  (`instances/foundry-bootstrap.ts:87-91` — `claimAcquired` + `claimReleased(outcome:'done')` makes
-  `itemDone()` true from the log alone, NO `MergeRecorded`); `planFrontierAll`'s product iteration
-  (`src/plan/plan-frontier-all.ts:24-26` — `for (const productKey of s.products.keys())`); the P6
-  `wake` op (`src/ops.ts:489-506` — appends `WakeFired`, returns `{ fired, frontier }` where
-  `frontier = planFrontierAll(s, nowMs).map(toNextItem)`); the FOUNDRY_PRODUCT vestigial-but-kept
-  carve-out (ADR-247 §"What becomes vestigial" — orchestrator-driven, outside `foundry_next`).
+  leaf filter + ProductState synthesis (`src/plan/frontier.ts:44`, `:76-89` — only `kind === 'work-item'`
+  leaves become foldable items; an un-registered product's `ProductState` is SYNTHESIZED from the tree
+  root, the load-bearing fact that lets the workflow advance WITHOUT a `ProductRegistered`); the bootstrap
+  done-pair encoding (`instances/foundry-bootstrap.ts` — `claimAcquired` + `claimReleased(outcome:'done')`
+  makes `itemDone()` true from the log alone); `planFrontierAll`'s product iteration with NO exclusion
+  (`src/plan/plan-frontier-all.ts:24-26` — `for (const productKey of s.products.keys())`, untouched by
+  this slice). CRITICAL CORRECTION (vs the original draft): there is NO `CONDUCTOR_EXCLUDED` set in
+  `planFrontierAll`, and FOUNDRY_PRODUCT is NOT excluded from the conductor (P3/ADR-254 made it a real,
+  conductor-driven product). So isolation is by NON-REGISTRATION (the workflow key never reaching
+  `s.products`), which needs no exclusion code at all.
 
 ---
 
@@ -102,7 +112,7 @@ advances the SAME way:
 | | The product tree (the WHAT) | The workflow tree (the HOW) |
 |---|---|---|
 | **Order** | `dependsOn` between work-items (a leaf depends on another leaf). | TODAY: nowhere (the arrows are a comment). Slice 3: `dependsOn` between SIBLING stages. |
-| **Ready set** | `planFrontier(treeFromQueue(p), state, now)` — claimable = queued ∧ deps-done ∧ scope-disjoint (`frontier.ts:96`, `state.ts:498`). | Slice 3: `workflowFrontier = planFrontier(buildCascadeTree(FOUNDRY_WORKFLOW), state, now)` — the SAME fold. |
+| **Ready set** | `planFrontier(treeFromQueue(p), state, now)` — claimable = queued ∧ deps-done ∧ scope-disjoint (`frontier.ts:96`, `state.ts:498`). | Slice 3: `workflowFrontier = planFrontier(workflowTree(), state, now)` — the SAME fold over a work-item projection of the stages. |
 | **Completion** | `MergeRecorded` OR `ClaimReleased(outcome:'done')` → `itemDone()` true (`state.ts:124`). | Slice 3: the SAME `ClaimReleased(outcome:'done')` done-event (the bootstrap encoding). |
 | **Advance** | Re-derive the frontier over the log (deterministic, idempotent); poked by scheduled-wake (P6). | Slice 3: re-derive `workflowFrontier` over the log; poked by the SAME scheduled-wake. |
 
@@ -115,14 +125,16 @@ the clock is EXTERNAL, the due-set is DERIVED. The workflow advances on the same
 
 ---
 
-## 2. OQ-1 RESOLVED — reuse `planFrontier`, via a registered-but-excluded product-of-stages
+## 2. OQ-1 RESOLVED — reuse `planFrontier`, isolated BY NON-REGISTRATION
 
 ADR-263 OQ-1, verbatim: *"Does the workflow's own frontier reuse `planFrontier(buildCascadeTree(
 FOUNDRY_WORKFLOW), state, now)` directly, or does it need a distinct fold (the workflow nodes are
 pipeline STAGES, not claimable work-items)?"*
 
 **Verdict: REUSE `planFrontier`. No distinct fold, no second claimability rule.** The resolution has
-two parts — the rule, and the foldability mechanism the rule needs.
+two parts — the rule, and the foldability mechanism the rule needs. (This section was reconciled from an
+original draft that prescribed a *register-as-product + `CONDUCTOR_EXCLUDED` carve-out* — the implementer's
+recon found that needless against the live code; see §2.2.)
 
 ### 2.1 The rule is ALREADY the right rule — reuse it (the ADR-247 one-encoding principle)
 
@@ -141,82 +153,84 @@ would be a second encoding to drift (the exact M1 review lesson). So `workflowFr
 wrapper, not a fold:
 
 ```ts
-// src/workflow/frontier.ts (new) — NO new fold. ONE-encoding (ADR-247 M1).
-import { buildCascadeTree } from '../plan/cascade.js';
-import { planFrontier } from '../plan/frontier.js';
-import { FOUNDRY_WORKFLOW } from '../instances/foundry-workflow.js';
-import type { DerivedState, ItemState } from '../state.js';
+// src/plan/workflow-frontier.ts (new) — NO new fold. ONE-encoding (ADR-247 M1).
+// workflowTree() projects FOUNDRY_WORKFLOW's stages into a work-item PlanTree (root
+// carries the productKey; each stage → a work-item leaf whose itemId is the stage key,
+// carrying the authored dependsOn + the disjoint WORKFLOW_STAGE_REPO scope) so
+// planFrontier reads STRUCTURE from the tree and STATUS from the log-derived state.
 
 /** The READY workflow stage(s): the stage whose dependsOn are all done and which is
- *  not itself done. REUSES planFrontier over the workflow tree — the SAME fold the
- *  product frontier uses (ADR-247 M1: one claimability encoding, no second rule). */
+ *  not itself done. REUSES planFrontier over the projected workflow tree — the SAME
+ *  fold the product frontier uses (ADR-247 M1: one claimability encoding, no second rule). */
 export function workflowFrontier(state: DerivedState, nowMs: number): ItemState[] {
-  return planFrontier(buildCascadeTree(FOUNDRY_WORKFLOW), state, nowMs);
+  return planFrontier(workflowTree(), state, nowMs);
 }
 ```
 
-### 2.2 The foldability mechanism — register the workflow as a product-of-stages, EXCLUDE it from the conductor
+### 2.2 The foldability mechanism — build-from-spec + foldable-done, ISOLATED BY NON-REGISTRATION
 
 `planFrontier` reads STATUS (`claims`, `merged`, `dependsOn`) from `DerivedState.items`, and
 `projectTreeState` only turns `kind === 'work-item'` leaves into foldable items
 (`frontier.ts:44` — `if (n.kind !== 'work-item') continue`). So for `planFrontier` to evaluate
 stage reachability, the stages must be FOLDABLE — tracked in `state.items` with a status that can become
-"done". The cleanest way to make that true, with the LEAST new surface, is the mechanism the foundry
-ALREADY uses for its own meta-product:
+"done". The shipped mechanism makes that true with the LEAST new surface — and isolates the workflow from
+the product conductor BY CONSTRUCTION, needing ZERO exclusion code:
 
-**RECOMMENDATION — register `FOUNDRY_WORKFLOW` as a product-of-stages (stages = work-items carrying
-`dependsOn`) in the log, EXCLUDED from `planFrontierAll`'s conductor-driving set.** Concretely:
+**SHIPPED — build the frontier from the authored spec; make stage-done foldable by queuing ONLY
+work-items (NO `ProductRegistered`); isolate by non-registration.** Concretely:
 
-1. **Stages become work-item leaves.** Each stage node carries `meta.itemId` (e.g.
-   `foundry-workflow/intake`) and `meta.dependsOn` (the pipeline order between SIBLINGS). The
-   `kind` stays the same single-parent FLAT topology from Slice 1 (the stages hang off the one root); the
-   ordering is the `dependsOn`, NOT tree depth (ADR-263 D1 — "stage ORDERING comes from a derived
-   `dependsOn`, never from tree depth"). For `projectTreeState` to fold them, the leaf `kind` is
-   `'work-item'` (or `projectTreeState`'s filter is widened to include `'stage'` — but reusing the
-   existing `'work-item'` filter is the smaller diff, so the stage spec leaves carry
-   `kind: 'work-item'` with their stage identity preserved in `meta`).
-2. **A bootstrap write path registers the product + queues the stages.** A pure
-   `foundryWorkflowBootstrapEvents(state, ts)` mirrors `foundryBootstrapEvents`
-   (`instances/foundry-bootstrap.ts:26-95`): it emits one `ProductRegistered({ productKey:
-   'foundry-workflow', … })` + one `WorkItemQueued` per stage (carrying `dependsOn`). This makes
-   stage-status FOLD via the NORMAL machinery — no new event, no new fold case.
-3. **Stage completion is the EXISTING done-event.** A stage is marked done exactly as the bootstrap
-   already marks a done item — a `claimAcquired` + `claimReleased(outcome:'done')` pair
-   (`foundry-bootstrap.ts:87-91`), making `itemDone()` true from the log alone (no `MergeRecorded`
-   needed). NO new event type.
-4. **The workflow product is EXCLUDED from the conductor's all-product union.** `planFrontierAll`
-   iterates `s.products.keys()` (`plan-frontier-all.ts:24-26`), so a naively-registered workflow product
-   would IMMEDIATELY enter the conductor's frontier — wrong: the conductor must not claim workflow
-   stages as if they were product work-items until Slice 4 deliberately wires it. So `planFrontierAll`
-   skips a `CONDUCTOR_EXCLUDED` set containing `'foundry-workflow'` — exactly the FOUNDRY_PRODUCT
-   "vestigial-but-kept, orchestrator-driven, outside `foundry_next`" carve-out (ADR-247
-   §"What becomes vestigial"). The workflow frontier is read EXPLICITLY via `workflowFrontier` (which
-   calls `planFrontier` scoped to the workflow `productKey`), and stays ISOLATED from the product
-   conductor.
+1. **STRUCTURE comes from the spec; the projection makes stages foldable.** `workflowTree()`
+   (`src/plan/workflow-frontier.ts`) reads which stages exist + their `dependsOn` from the authored
+   `FOUNDRY_WORKFLOW` spec and projects each into a `kind: 'work-item'` leaf whose `itemId` IS the stage
+   key, carrying the authored `dependsOn` (the SIBLING order) + the disjoint `WORKFLOW_STAGE_REPO` scope.
+   `projectTreeState` takes the gating edges FROM THE TREE — dropping a `dependsOn` edge in the spec
+   ungates a downstream stage prematurely (acid (c) bite). The FLAT single-parent topology stays (Slice
+   1); the ordering is the `dependsOn`, NOT tree depth (ADR-263 D1).
+2. **A bootstrap write path queues the stages — NO `ProductRegistered`.** A pure
+   `workflowBootstrapEvents(state, ts)` (and its op `bootstrapWorkflow`, `ops.ts:576-590`) emits ONLY one
+   `WorkItemQueued` per stage (carrying `dependsOn`, under `WORKFLOW_PRODUCT_KEY`), reusing the EXISTING
+   `itemQueued` event + the `foundryBootstrapEvents` shape. A stage is foldable only once it is QUEUED
+   (claim/release need `s.items.get(itemId)`). Crucially there is **NO `ProductRegistered`** — the
+   workflow key never enters `s.products`.
+3. **Stage completion is the EXISTING done-event.** A stage is marked done by the EXISTING
+   `claimAcquired` + `claimReleased(outcome:'done')` pair (or `MergeRecorded`), making `itemDone()` true
+   from the log alone. NO new event type.
+4. **Isolation is STRUCTURAL — non-registration, not an exclusion list.** `planFrontierAll` iterates
+   `s.products.keys()` (`plan-frontier-all.ts:24-26`) with **NO exclusion of any kind** — there is no
+   `CONDUCTOR_EXCLUDED` set in the code. Because the workflow product is NEVER registered in `s.products`
+   (step 2 queued only work-items), `planFrontierAll` cannot iterate it: the product conductor is
+   unaffected BY CONSTRUCTION, ZERO lines added. `projectTreeState` SYNTHESIZES the workflow
+   `ProductState` from the tree root (`frontier.ts:76-89` — the "never queue-registered" path) so
+   `workflowFrontier` resolves priority/repo without a product registration. The frontier is read
+   EXPLICITLY via `workflowFrontier` (scoped to `WORKFLOW_PRODUCT_KEY`); the disjoint `WORKFLOW_STAGE_REPO`
+   keeps the queued stage items out of any real product's cross-product active-claim check.
 
 This **maximally reuses the existing fold** (no new fold, no new event, no second claimability rule),
-adds the **least new surface** (one thin wrapper + one bootstrap + one exclusion-set entry + the
-`dependsOn`/`itemId` on the existing stage nodes), and keeps the **workflow frontier isolated** from the
-product conductor until Slice 4.
+adds the **least new surface** (one thin projection + frontier wrapper + one bootstrap that queues
+work-items + the `dependsOn` on the existing stage nodes — and ZERO lines to `planFrontierAll`), and
+keeps the **workflow frontier isolated** from the product conductor until Slice 4.
 
-### 2.3 The rejected alternative — build-from-spec + a lightweight done-signal
+### 2.3 The rejected alternatives
 
-The alternative is to NOT register the workflow in the log, and instead compute the frontier purely
-from the static `FOUNDRY_WORKFLOW` spec plus a SEPARATE done-signal (e.g. a small `Set<stageKey>` of
-completed stages, or a bespoke `WorkflowStageDone` event the fold tracks in its OWN map).
+Two alternatives were rejected. The shipped path (§2.2) reads STRUCTURE from the spec (`workflowTree()`)
+but queues stage WORK-ITEMS so STATUS folds via the EXISTING `itemDone` — keeping ONE claimability
+encoding while isolating the workflow by non-registration.
 
-| | Recommended: registered-but-excluded product-of-stages | Rejected: build-from-spec + lightweight done-signal |
-|---|---|---|
-| **Fold** | REUSES `claimableItems` / `depsSatisfied` / `itemDone` verbatim. | Needs a SECOND status source (a new `WorkflowStageDone` event + a new fold map, OR an out-of-band `Set`). |
-| **Encoding** | ONE claimability encoding (ADR-247 M1). | TWO encodings of "done" — `itemDone` for products, a bespoke one for stages → drift risk (the exact M1 lesson). |
-| **New surface** | A bootstrap (mirrors the existing one) + one exclusion-set entry. | A new event type + a new fold case + a new derive path. |
-| **Isolation from conductor** | The exclusion-set carve-out (proven pattern, ADR-247). | Free (never registered), but at the cost of the second status source. |
+| | SHIPPED: build-from-spec + foldable work-items, non-registered | Rejected A: register-as-product + `CONDUCTOR_EXCLUDED` | Rejected B: build-from-spec + a lightweight done-signal |
+|---|---|---|---|
+| **Fold** | REUSES `claimableItems` / `depsSatisfied` / `itemDone` verbatim. | REUSES the same fold — but as a registered product. | Needs a SECOND status source (a new `WorkflowStageDone` event + a new fold map, OR an out-of-band `Set`). |
+| **Encoding** | ONE claimability encoding (ADR-247 M1). | ONE encoding. | TWO encodings of "done" → drift risk (the exact M1 lesson). |
+| **New surface** | A projection + a bootstrap (queues work-items) + the `dependsOn` on the stages. ZERO conductor-driver lines. | A bootstrap that ALSO registers the product + an explicit `CONDUCTOR_EXCLUDED` set inside `planFrontierAll`. | A new event type + a new fold case + a new derive path. |
+| **Isolation from conductor** | STRUCTURAL — the workflow key never enters `s.products`, so `planFrontierAll` (iterating `s.products.keys()`) cannot pick it up. No exclusion code. | An explicit opt-out list that must stay in sync, with NO FOUNDRY_PRODUCT carve-out precedent (ADR-254 made FOUNDRY_PRODUCT conductor-driven). | Free (never registered), but at the cost of the second status source. |
 
-The rejected path is **worse on the decisive axis**: it needs a **second status source**. `planFrontier`
-reads status from `state.items` via `itemDone`; a build-from-spec path that does not register the
-stages cannot use `itemDone`, so it must invent a parallel done-tracking — a second encoding of "done",
-which ADR-244/247's M1 principle exists to forbid. The registered-but-excluded path pays a tiny
-bootstrap cost to keep ONE encoding. **Recommended path chosen.**
+**Rejected A** (the originally-drafted prescription) is worse because it needs an EXPLICIT exclusion list
+in `planFrontierAll` — new conductor-driver code, a set to keep in sync, a leak risk if an exclusion is
+ever forgotten — and the FOUNDRY_PRODUCT "carve-out" it claimed to reuse does NOT exist (P3/ADR-254 made
+FOUNDRY_PRODUCT a real, conductor-driven product). **Rejected B** is worse because it needs a SECOND
+status source: a spec-only path that does not queue the stages cannot use `itemDone`, so it must invent a
+parallel done-tracking — a second encoding of "done" the M1 principle forbids. The shipped path pays a
+tiny bootstrap cost to keep ONE encoding AND isolates by non-registration with ZERO conductor-driver
+lines. **Shipped path chosen.**
 
 ---
 
@@ -224,32 +238,33 @@ bootstrap cost to keep ONE encoding. **Recommended path chosen.**
 
 ### KD-1 — The workflow ADVANCES by DERIVATION (the SAME fold), ONE claimability encoding
 
-The workflow frontier is `planFrontier(buildCascadeTree(FOUNDRY_WORKFLOW), state, now)` — the SAME fold
+The workflow frontier is `planFrontier(workflowTree(), state, now)` — the SAME fold
 the product frontier uses (`frontier.ts:96`), the SAME `claimableItems` rule (`state.ts:498`), the SAME
-`depsSatisfied` reachability (`state.ts:404`). There is NO new fold and NO second claimability rule
+`depsSatisfied` reachability (`state.ts:404`); `workflowTree()` projects `FOUNDRY_WORKFLOW`'s stages into
+work-item leaves so the fold can read them. There is NO new fold and NO second claimability rule
 (ADR-247 M1). Advancing the workflow is RE-DERIVING this frontier over the log — deterministic
 (same `(state, now)` → same frontier) and idempotent (re-deriving never mutates). A `workflowFrontier`
-wrapper (§2.1) is the only new function; it computes, it does not store.
+wrapper (§2.1) is the only new frontier function; it computes, it does not store.
 
 ### KD-2 — `dependsOn` encodes the pipeline ORDER between SIBLING stages, NOT parent nesting
 
-The pipeline order (`intake → gate → build-path → conduct → ship`) is encoded as `dependsOn` edges
-BETWEEN SIBLING stages — `gate dependsOn intake`, `build-path dependsOn gate`, `conduct dependsOn
-build-path`, `ship dependsOn conduct`. The stages STAY a flat fan-out under one root (each stage's
-single parent is the workflow root, Slice 1's topology, `foundry-workflow.ts:48-104`). This is exactly
-the "ordering is a derived `dependsOn`, not tree depth" note Slice 1 left
-(`foundry-workflow.ts:4-6`; ADR-263 D1). Tree depth expresses DECOMPOSITION (a stage belongs to the
+The pipeline order (`intake → gate-greenlight → build-path → conduct → ship`) is encoded as `dependsOn`
+edges BETWEEN SIBLING stages — `stage-gate-greenlight dependsOn stage-intake`, `stage-build-path dependsOn
+stage-gate-greenlight`, `stage-conduct dependsOn stage-build-path`, `stage-ship dependsOn stage-conduct`
+(the shipped stage keys). The stages STAY a flat fan-out under one root (each stage's single parent is the
+workflow root, Slice 1's topology, `foundry-workflow.ts:48-120`). This is exactly the "ordering is a
+derived `dependsOn`, not tree depth" note Slice 1 left (`foundry-workflow.ts:1-16`; ADR-263 D1). Tree depth expresses DECOMPOSITION (a stage belongs to the
 workflow); `dependsOn` expresses SEQUENCING (a stage runs after another) — two different relations, per
 ADR-244 §Context ("Parentage expresses decomposition; the `dependsOn` DAG expresses sequencing"). The
 sequence is NEVER a parent chain.
 
 ### KD-3 — Control flow is DERIVED, NOT callbacks (ADR-263 D4)
 
-Stage completion is an EVENT (`ClaimReleased` outcome `done`); the next stage's reachability is DERIVED
-(`depsSatisfied` becomes true once the predecessor is done); advancing is RE-DERIVATION over the log,
-POKED by scheduled-wake (P6's external clock, `dueWakes` / `wake`, `wake.ts:22` / `ops.ts:489`). There
-is **no registered in-memory continuation, no callback, no stored next-pointer.** Why not a callback —
-the ADR-263 D4 reasons, applied here:
+Stage completion is an EVENT (`ClaimReleased` outcome `done` / `MergeRecorded`); the next stage's
+reachability is DERIVED (`depsSatisfied` becomes true once the predecessor is done); advancing is
+RE-DERIVATION over the log, POKED by scheduled-wake (P6's external clock, `dueWakes` / `wake`,
+`wake.ts:22` / `ops.ts:497`). There is **no registered in-memory continuation, no callback, no stored
+next-pointer.** Why not a callback — the ADR-263 D4 reasons, applied here:
 
 - **Invisible to replay / reproducibility** (a kernel concern, ADR-127 §1.4). A callback is a live
   closure not in the log; a replay cannot reconstruct "gate was scheduled to open when intake finished".
@@ -264,85 +279,99 @@ the ADR-263 D4 reasons, applied here:
   to avoid an in-process timer / continuation. This slice extends the SAME `wake` to ALSO return the
   workflow frontier (KD-4 below).
 
-### KD-4 — The workflow frontier is ISOLATED from the product conductor until Slice 4
+### KD-4 — The workflow frontier is ISOLATED from the product conductor BY NON-REGISTRATION until Slice 4
 
-The workflow product is EXCLUDED from `planFrontierAll`'s conductor-driving union (a `CONDUCTOR_EXCLUDED`
-set, the FOUNDRY_PRODUCT vestigial-but-kept carve-out, ADR-247). The conductor's `nextItems` /
-`foundry_next` therefore NEVER surfaces a workflow stage as a claimable product work-item. The workflow
-frontier is read ONLY through `workflowFrontier` (an explicit, separate read). P6's `wake` is extended
-to return it ALONGSIDE the product frontier — `{ fired, frontier, workflowFrontier }` — so the external
-clock POKES the re-derivation, but the two frontiers stay SEPARATE channels. Slice 4 is where the
-conductor deliberately walks the workflow frontier and `actuate`s each ready stage's `metadata.action`
-(Slice 1's mechanism). Until then, advancement is observable (via `wake` / a direct read) but not
-conductor-driven.
+The workflow is isolated from `planFrontierAll`'s conductor-driving union BY CONSTRUCTION: `bootstrapWorkflow`
+queues the stage work-items but emits NO `ProductRegistered`, so the workflow key is NEVER in `s.products`,
+and `planFrontierAll` (which iterates ALL `s.products.keys()` with NO exclusion) structurally cannot pick
+it up. There is NO `CONDUCTOR_EXCLUDED` set — `planFrontierAll` is UNTOUCHED. The conductor's `nextItems`
+/ `foundry_next` therefore NEVER surfaces a workflow stage as a claimable product work-item. The workflow
+frontier is read ONLY through `workflowFrontier` (an explicit, separate read; `projectTreeState`
+synthesizes its `ProductState` from the tree root, `frontier.ts:76-89`). P6's `wake` is extended to return
+it ALONGSIDE the product frontier — `{ fired, frontier, workflowFrontier }` (the raw `ItemState[]`, since
+the workflow product is not in `s.products`) — so the external clock POKES the re-derivation, but the two
+frontiers stay SEPARATE channels. Slice 4 is where the conductor deliberately walks the workflow frontier
+and `actuate`s each ready stage's `metadata.action` (Slice 1's mechanism). Until then, advancement is
+observable (via `wake` / a direct read) but not conductor-driven.
 
 ### KD-5 — ADR-176 PACK-LEVEL: pure REUSE, zero kernel change, (ideally) no new event type
 
 The workflow tree is the EXISTING plan-tree primitive (`buildCascadeTree`); `dependsOn` is EXISTING
 (`projectTreeState` already reads `metadata.dependsOn`, `frontier.ts:60`); `planFrontier` is EXISTING
-(`frontier.ts:96`); stage-done REUSES the EXISTING `ClaimReleased(outcome:'done')` event (the bootstrap
-encoding, `foundry-bootstrap.ts:90`) — **no new event type**. `workflowFrontier` + the bootstrap + the
-exclusion-set entry are pack code. Both ADR-176 inclusion-test legs fail (the workflow frontier is not a
+(`frontier.ts:96`); stage-done REUSES the EXISTING `ClaimReleased(outcome:'done')` / `MergeRecorded` event
+— **no new event type**. `workflowTree` + `workflowFrontier` + `workflowBootstrapEvents` /
+`bootstrapWorkflow` are pack code; `planFrontierAll` is UNTOUCHED. Both ADR-176 inclusion-test legs fail
+(the workflow frontier is not a
 new kernel concern — it is the existing plan-tree-frontier derivation; single consumer
 `domains/foundry`) → pack territory. **Zero kernel change.** (§6.)
 
 ---
 
-## 4. The mechanism — `workflowFrontier` + the bootstrap + the exclusion + the wake extension
+## 4. The mechanism — `workflowTree` + `workflowFrontier` + `bootstrapWorkflow` + the wake extension
 
-### 4.1 The stage spec gains `dependsOn` + `itemId` (the pipeline order, flat topology preserved)
+### 4.1 The stage spec gains `dependsOn` (the pipeline order, flat topology preserved)
 
 ```ts
 // src/instances/foundry-workflow.ts (extend) — flat fan-out preserved; ORDER = dependsOn.
-// Each stage: single parent = the workflow root (Slice 1); kind = 'work-item' so projectTreeState
-// folds it (frontier.ts:44); meta.itemId binds the foldable item; meta.dependsOn = the SIBLING order.
-//   stage-intake      : itemId 'foundry-workflow/intake'     , dependsOn []
-//   stage-gate        : itemId 'foundry-workflow/gate'       , dependsOn ['foundry-workflow/intake']
-//   stage-build-path  : itemId 'foundry-workflow/build-path' , dependsOn ['foundry-workflow/gate']
-//   stage-conduct     : itemId 'foundry-workflow/conduct'    , dependsOn ['foundry-workflow/build-path']
-//   stage-ship        : itemId 'foundry-workflow/ship'       , dependsOn ['foundry-workflow/conduct']
+// Each stage: single parent = the workflow root (Slice 1); kind = 'stage'. The dependsOn names the
+// prior stage's KEY, which becomes that stage's work-item itemId in the workflowTree() projection (§4.2).
+//   stage-intake          : dependsOn []
+//   stage-gate-greenlight : dependsOn ['stage-intake']
+//   stage-build-path      : dependsOn ['stage-gate-greenlight']
+//   stage-conduct         : dependsOn ['stage-build-path']
+//   stage-ship            : dependsOn ['stage-conduct']
 // meta.action / effects from Slice 1/2 ride alongside, UNTOUCHED (declaration ⊥ actuation ⊥ ordering).
+// WORKFLOW_PRODUCT_KEY = 'foundry-workflow'; WORKFLOW_STAGE_REPO = 'de-braighter/foundry-workflow' (disjoint).
 ```
 
-### 4.2 The bootstrap registers the product + queues the stages (mirrors `foundryBootstrapEvents`)
+### 4.2 The projection + the bootstrap — `workflowTree()` makes stages foldable; the bootstrap queues them (NO `ProductRegistered`)
 
 ```ts
-// src/instances/foundry-workflow-bootstrap.ts (new) — mirrors foundry-bootstrap.ts:26-95.
-// IDEMPOTENT: re-running against a state that already has these events emits []. Registers
-// ProductRegistered({ productKey: 'foundry-workflow', … }) + one WorkItemQueued per stage
-// (carrying dependsOn). This is the write path that makes stage-status FOLDABLE.
-export function foundryWorkflowBootstrapEvents(state: DerivedState, ts: string): DomainEventEnvelope[] {
-  // …same shape as foundryBootstrapEvents: register product if absent; for each stage leaf not in
-  // state, emit itemQueued({ itemId, productKey: 'foundry-workflow', dependsOn, scope, … }).
+// src/plan/workflow-frontier.ts (new). workflowTree() projects FOUNDRY_WORKFLOW's stages into a
+// work-item PlanTree (root carries the productKey; each stage → a work-item leaf whose itemId IS the
+// stage key, carrying scope = WORKFLOW_STAGE_REPO + the authored dependsOn). planFrontier reads the
+// gating edges FROM THE TREE; STATUS folds from the log.
+export function workflowTree(): PlanTree { /* root product node + one work-item leaf per stage */ }
+
+// The bootstrap write path that makes stage-status FOLDABLE: emit ONLY WorkItemQueued per stage —
+// NO ProductRegistered. So the workflow key never enters s.products (isolation by construction).
+// IDEMPOTENT: a stage already in state emits nothing.
+export function workflowBootstrapEvents(state: DerivedState, ts: string): DomainEventEnvelope[] {
+  // for each stage leaf not in state: emit itemQueued({ itemId, productKey: WORKFLOW_PRODUCT_KEY,
+  //   scope: { repo: WORKFLOW_STAGE_REPO }, dependsOn, … }). NO productRegistered.
 }
 ```
 
-### 4.3 The exclusion keeps the workflow OUT of the conductor union
+### 4.3 Isolation is BY NON-REGISTRATION — `planFrontierAll` is UNTOUCHED
 
 ```ts
-// src/plan/plan-frontier-all.ts (extend) — the workflow product is conductor-EXCLUDED (ADR-247 carve-out).
-const CONDUCTOR_EXCLUDED: ReadonlySet<string> = new Set(['foundry-workflow']);
-
+// src/plan/plan-frontier-all.ts — UNCHANGED by this slice. It iterates ALL s.products.keys() with NO
+// exclusion. Because bootstrapWorkflow emits NO ProductRegistered, the workflow key is never in
+// s.products, so planFrontierAll structurally cannot iterate it — ZERO exclusion code needed.
 export function planFrontierAll(s: DerivedState, nowMs: number): ItemState[] {
   const items: ItemState[] = [];
-  for (const productKey of s.products.keys()) {
-    if (CONDUCTOR_EXCLUDED.has(productKey)) continue; // workflow frontier is read via workflowFrontier
+  for (const productKey of s.products.keys()) {          // workflow key is NEVER here
     const frontier = planFrontier(treeFromQueue(productKey, s), s, nowMs);
     items.push(...frontier);
   }
   // …existing global sort, unchanged…
 }
+
+// The bootstrap op (src/ops.ts) — appends workflowBootstrapEvents so the stages become foldable.
+export function bootstrapWorkflow(deps: FoundryDeps): { queued: string[] } { /* append; return queued */ }
 ```
 
 ### 4.4 `wake` ALSO returns the workflow frontier (P6's external clock pokes the re-derivation)
 
 ```ts
-// src/ops.ts (extend wake, ops.ts:489-506) — return the workflow frontier ALONGSIDE the product frontier.
-export function wake(deps, input = {}): { fired: DueWake[]; frontier: NextItem[]; workflowFrontier: NextItem[] } {
+// src/ops.ts (extend wake, ops.ts:497-518) — return the workflow frontier ALONGSIDE the product frontier.
+// workflowFrontier is the RAW ItemState[]: the workflow product is not in s.products, so toNextItem
+// can't map it (no synthesized NextItem). The two frontiers stay SEPARATE channels.
+export function wake(deps, input = {}): { fired: DueWake[]; frontier: NextItem[]; workflowFrontier: ItemState[] } {
   return withStoreLock(deps.dataDir, () => {
     // …existing: append WakeFired per due tick; frontier = planFrontierAll(s, nowMs).map(toNextItem)…
-    const workflowFrontier = workflowFrontier_(s, nowMs).map((i) => toNextItem(s, i));
-    return { fired: due, frontier, workflowFrontier };
+    const workflowReady = workflowFrontier(s, nowMs);    // pure re-derivation, poked by this wake
+    return { fired: due, frontier, workflowFrontier: workflowReady };
   });
 }
 ```
@@ -363,53 +392,57 @@ stage completion is the existing done-event, and advancing is re-derivation poke
 
 | # | Touch-point | What |
 |---|---|---|
-| 1 | `src/instances/foundry-workflow.ts` (extend) | The 5 stage nodes gain `meta.itemId` + `meta.dependsOn` (the SIBLING pipeline order, §4.1); `kind: 'work-item'` so `projectTreeState` folds them (`frontier.ts:44`). Flat single-parent topology preserved (Slice 1). `meta.action` / `effects` ride alongside untouched. |
-| 2 | `src/workflow/frontier.ts` (new) | `workflowFrontier(state, now)` = `planFrontier(buildCascadeTree(FOUNDRY_WORKFLOW), state, now)` (`frontier.ts:96`). NO new fold. |
-| 3 | `src/instances/foundry-workflow-bootstrap.ts` (new) | `foundryWorkflowBootstrapEvents(state, ts)` — registers the product + queues each stage (mirrors `foundry-bootstrap.ts:26-95`). Idempotent. The foldability write path. |
-| 4 | `src/plan/plan-frontier-all.ts` (extend) | `CONDUCTOR_EXCLUDED = new Set(['foundry-workflow'])`; `planFrontierAll` skips it (`plan-frontier-all.ts:24-26`). The ADR-247 carve-out. |
-| 5 | `src/ops.ts` (extend `wake`) | `wake` returns `{ fired, frontier, workflowFrontier }` (`ops.ts:489-506`). The external clock pokes the re-derivation. |
+| 1 | `src/instances/foundry-workflow.ts` (extend) | The 5 stage nodes gain `meta.dependsOn` (the SIBLING pipeline order, §4.1); they stay `kind: 'stage'` (the projection re-keys them to work-items). Flat single-parent topology preserved (Slice 1). `meta.action` / `effects` ride alongside untouched. Exports `WORKFLOW_PRODUCT_KEY` + `WORKFLOW_STAGE_REPO`. |
+| 2 | `src/plan/workflow-frontier.ts` (new) | `workflowTree()` projects the stages into a work-item `PlanTree`; `workflowFrontier(state, now)` = `planFrontier(workflowTree(), state, now)` (`frontier.ts:96`), NO new fold; `workflowBootstrapEvents(state, ts)` queues each stage as a `WorkItemQueued` — NO `ProductRegistered`. |
+| 3 | `src/ops.ts` (extend) | `bootstrapWorkflow(deps)` (`ops.ts:576-590`) appends `workflowBootstrapEvents` (idempotent — the foldability write path). |
+| 4 | `src/plan/plan-frontier-all.ts` | **UNTOUCHED** — isolation is by non-registration (the workflow key is never in `s.products`); NO `CONDUCTOR_EXCLUDED` set. |
+| 5 | `src/ops.ts` (extend `wake`) | `wake` returns `{ fired, frontier, workflowFrontier }` (`ops.ts:497-518`; `workflowFrontier` is the raw `ItemState[]`). The external clock pokes the re-derivation. |
 | 6 | `test/workflow-advance.acid.test.ts` (new) | The acid battery (§5.2), every acid against a TEMP log. |
 
-The kernel, `substrate-contracts`, the conductor's claim/launch flow, and the dashboard are UNTOUCHED in
-Slice 3 (the conductor wiring is Slice 4).
+The kernel, `substrate-contracts`, `planFrontierAll`, the conductor's claim/launch flow, and the dashboard
+are UNTOUCHED in Slice 3 (the conductor wiring is Slice 4).
 
 ### 5.2 Acid battery — each must BITE
 
 Committed + deterministic, run unconditionally in `ci:local`. Every acid runs against a TEMP log —
 NEVER the live one. `now` is pinned via `FoundryDeps.now`.
 
-**(a) Initial state → only the first stage is ready.** Bootstrap the workflow into a temp log (register
-the product + queue all 5 stages, NONE done). `workflowFrontier(state, now)` returns EXACTLY the first
-stage (`foundry-workflow/intake`, `dependsOn []`); all downstream stages are GATED (gate/build-path/
-conduct/ship absent from the frontier — their `dependsOn` are not done). **MUTATION → RED:** give
-`intake` a phantom `dependsOn ['foundry-workflow/gate']` → `depsSatisfied(intake)` is false → the
-frontier is EMPTY → the "intake is ready" assertion fails. (The reachability gate bites.)
+**(a) Initial state → only the first stage is ready.** Bootstrap the workflow into a temp log
+(`bootstrapWorkflow` queues all 5 stages as work-items — NO product registration — NONE done).
+`workflowFrontier(state, now)` returns EXACTLY the first stage (`stage-intake`, `dependsOn []`); all
+downstream stages are GATED (gate-greenlight/build-path/conduct/ship absent from the frontier — their
+`dependsOn` are not done). **MUTATION → RED:** give `stage-intake` a phantom `dependsOn
+['stage-gate-greenlight']` → `depsSatisfied(stage-intake)` is false → the frontier is EMPTY → the
+"intake is ready" assertion fails. (The reachability gate bites.)
 
 **(b) Record intake-done → re-derive → the frontier ADVANCES; a FRESH fold reproduces it.** Append the
-done-pair for `intake` (`claimAcquired` + `claimReleased(outcome:'done')`, the bootstrap encoding) →
-re-`fold` the temp log → `workflowFrontier(state, now)` now returns `gate` (its sole `dependsOn`,
-`intake`, is done) and intake is gone (done items are not claimable). Downstream (build-path/conduct/
-ship) STAY gated. **BITE (the no-callback proof):** `fold` the temp log FROM SCRATCH (a fresh
-`fold(readEnvelopes(logPath))`, no prior in-memory state) → assert the fresh-fold `workflowFrontier`
-DEEP-EQUALS the advanced frontier (`gate`). If advancement were a callback or a stored next-pointer, a
-fold-from-scratch would NOT advance (the pointer would be absent / the closure not in the log) → the
-fresh-fold-equals-advanced assertion fails → RED. Advancement is pure re-derivation over the log.
+done-pair for `stage-intake` (`claimAcquired` + `claimReleased(outcome:'done')`, the bootstrap encoding)
+→ re-`fold` the temp log → `workflowFrontier(state, now)` now returns `stage-gate-greenlight` (its sole
+`dependsOn`, `stage-intake`, is done) and intake is gone (done items are not claimable). Downstream
+(build-path/conduct/ship) STAY gated. **BITE (the no-callback proof):** `fold` the temp log FROM SCRATCH
+(a fresh `fold(readEnvelopes(logPath))`, no prior in-memory state) → assert the fresh-fold
+`workflowFrontier` DEEP-EQUALS the advanced frontier (`stage-gate-greenlight`). If advancement were a
+callback or a stored next-pointer, a fold-from-scratch would NOT advance (the pointer would be absent /
+the closure not in the log) → the fresh-fold-equals-advanced assertion fails → RED. Advancement is pure
+re-derivation over the log.
 
 **(c) Walk the WHOLE pipeline in order; out-of-order completion does NOT ungate.** Mark
-intake → gate → build-path → conduct done in order, re-deriving after each → the frontier advances
-stage-by-stage (`gate`, then `build-path`, then `conduct`, then `ship`), ending at `ship` after conduct
-is done. SEPARATELY: from the initial state, mark `build-path` done WITHOUT marking gate done →
-`workflowFrontier` STILL returns only `intake` (build-path's `dependsOn ['…/gate']` is unsatisfied, so
-marking build-path done does not ungate `conduct`, and build-path itself was never ready). **BITE:**
-DROP the `dependsOn ['foundry-workflow/gate']` edge from the `build-path` stage → with intake done,
-`build-path` is now exposed PREMATURELY (it has no unmet dep) → it appears in the frontier alongside/
-before `gate` → the "out-of-order does not ungate" assertion fails → RED. (The dependency edge is
-load-bearing; dropping it exposes a downstream stage early.)
+intake → gate-greenlight → build-path → conduct done in order, re-deriving after each → the frontier
+advances stage-by-stage (`stage-gate-greenlight`, then `stage-build-path`, then `stage-conduct`, then
+`stage-ship`), ending at `stage-ship` after conduct is done. SEPARATELY: from the initial state, mark
+`stage-build-path` done WITHOUT marking gate done → `workflowFrontier` STILL returns only `stage-intake`
+(build-path's `dependsOn ['stage-gate-greenlight']` is unsatisfied, so marking build-path done does not
+ungate `stage-conduct`, and build-path itself was never ready). **BITE:** DROP the `dependsOn
+['stage-gate-greenlight']` edge from the `stage-build-path` stage → with intake done, `build-path` is now
+exposed PREMATURELY (it has no unmet dep) → it appears in the frontier alongside/before
+`stage-gate-greenlight` → the "out-of-order does not ungate" assertion fails → RED. (The dependency edge
+is load-bearing; dropping it exposes a downstream stage early.)
 
 **(d) Poked by the external re-check, not a callback — `wake`'s workflow frontier === a direct
 re-derivation.** After (b)'s intake-done, schedule a wake (`scheduleWake`) and call `wake(deps)` at a
 due `now` → assert `wake(deps).workflowFrontier` DEEP-EQUALS `workflowFrontier(fold(readEnvelopes(
-logPath)), now).map(toNextItem)` — the SAME advanced stage (`gate`), computed two independent ways
+logPath)), now)` (both raw `ItemState[]` — the workflow product is not in `s.products`, so `wake` returns
+the unmapped frontier) — the SAME advanced stage (`stage-gate-greenlight`), computed two independent ways
 (through the wake op and through a direct re-derivation). Call `wake` TWICE at the same `now` → the
 `workflowFrontier` is IDENTICAL across calls (deterministic, idempotent — no in-memory continuation
 accumulates). **BITE:** if `wake` returned a stale cached frontier (a stored continuation rather than a
@@ -417,13 +450,13 @@ fresh re-derivation), the wake-vs-direct deep-equal would diverge after intake-d
 a poke that triggers re-derivation, not a callback that fires.)
 
 **(e) ONE encoding — `workflowFrontier` reuses `planFrontier`/`claimableItems`; no second rule
-(ADR-247 retirement-guard style).** A source-scan acid asserting `src/workflow/frontier.ts` calls
+(ADR-247 retirement-guard style).** A source-scan acid asserting `src/plan/workflow-frontier.ts` calls
 `planFrontier` (and does NOT re-implement `claimableItems` / `depsSatisfied` / a bespoke "deps-done"
 loop) — the ADR-247 §Acid-test #3b retirement-guard pattern (a source-level check that no second
 claimability encoding was introduced). PLUS a behavioral assertion: for a hand-authored multi-stage
-state, `workflowFrontier(state, now)` ⊆ `claimableItems(projectTreeState(buildCascadeTree(
-FOUNDRY_WORKFLOW), state), now)` filtered to the workflow productKey — i.e. it IS `planFrontier`, byte
-for byte (the wrapper adds nothing). **BITE:** replace the `workflowFrontier` body with a hand-rolled
+state, `workflowFrontier(state, now)` ⊆ `claimableItems(projectTreeState(workflowTree(), state), now)`
+filtered to `WORKFLOW_PRODUCT_KEY` — i.e. it IS `planFrontier(workflowTree(), …)`, byte for byte (the
+wrapper adds nothing). **BITE:** replace the `workflowFrontier` body with a hand-rolled
 `state.items.filter(deps-done ∧ not-done)` loop (a second encoding) → the source-scan guard fails
 (`planFrontier` no longer called) AND a divergence between the hand-rolled set and `planFrontier`
 (e.g. on a scope-conflict the hand-rolled loop ignores) flips the ⊆ assertion → RED.
@@ -432,8 +465,9 @@ for byte (the wrapper adds nothing). **BITE:** replace the `workflowFrontier` bo
 
 - It does NOT wire the conductor to WALK the workflow frontier and `actuate` ready stages (Slice 4) —
   the workflow frontier is read by the acid / `wake`, proving the derivation; the conductor's
-  `nextItems` still excludes it (KD-4).
-- It does NOT add a new event type — stage-done reuses the EXISTING `ClaimReleased(outcome:'done')`.
+  `nextItems` never surfaces it because the workflow is not in `s.products` (KD-4).
+- It does NOT add a new event type — stage-done reuses the EXISTING `ClaimReleased(outcome:'done')` /
+  `MergeRecorded`.
 - It does NOT add a kernel shape — `dependsOn` / `planFrontier` / the done-event are all existing.
 - It does NOT surface the workflow frontier on the dashboard (a later rung, reusing ADR-261).
 
@@ -448,9 +482,9 @@ legs must hold for a thing to be kernel):
 - **(a) Is "derived workflow advancement" one of the four kernel concerns?** No new kernel shape. The
   plan tree IS a kernel concern (recurse the plan, ADR-127 §1.1), but the workflow tree is the EXISTING
   plan-tree primitive; `dependsOn` is EXISTING (`projectTreeState` already reads it); `planFrontier` is
-  EXISTING; the done-event is EXISTING. `workflowFrontier` is a pack-level THIN wrapper, the bootstrap
-  is pack code mirroring an existing one, the exclusion-set is pack code. Nothing new is added to the
-  kernel.
+  EXISTING; the done-event is EXISTING. `workflowTree`/`workflowFrontier` are pack-level THIN wrappers,
+  the bootstrap is pack code reusing the existing `itemQueued` event, and `planFrontierAll` is untouched.
+  Nothing new is added to the kernel.
 - **(b) Is the workflow frontier / its advancement needed by ≥2 packs as shared infrastructure the
   kernel must validate / query / version?** No. Single consumer (`domains/foundry`), over foundry's own
   pipeline. No second pack needs the foundry workflow frontier; the kernel must not validate/version a
@@ -469,8 +503,8 @@ next-pointer or a live continuation. **Zero kernel change; zero design-system ch
 |---|---|---|
 | **1 (shipped)** | A workflow intervention actuates a real action. | `FOUNDRY_WORKFLOW` tree + `actuate`/`actuateNode` + the `ACTION_REGISTRY`. |
 | **2 (shipped)** | A workflow intervention SPAWNS a product tree across trees. | `build-path` handler reusing the ADR-249 generate path; cross-link a DERIVED `PlanNodeId` reference. Resolves ADR-263 OQ-2. |
-| **3 (this)** | The workflow tree ADVANCES itself by derivation, not callbacks. | Stages gain `dependsOn` (sibling order); `workflowFrontier = planFrontier(buildCascadeTree(FOUNDRY_WORKFLOW), …)` (ONE encoding, ADR-247 M1); stage-done is the EXISTING `ClaimReleased(done)`; advancing is re-derivation poked by scheduled-wake (ADR-256), never a callback (ADR-263 D4). Registered-but-EXCLUDED product-of-stages (the FOUNDRY_PRODUCT carve-out). Resolves ADR-263 **OQ-1**. |
-| **4 (next)** | The conductor WALKS the workflow tree. | The conductor pulls `workflowFrontier` (Slice 3) and, for each ready stage with a `metadata.action`, calls `actuate` (Slice 1) — advancing the pipeline autonomously. The `CONDUCTOR_EXCLUDED` carve-out is deliberately LIFTED (or a dedicated workflow-conductor loop is added) so the workflow frontier drives. |
+| **3 (this)** | The workflow tree ADVANCES itself by derivation, not callbacks. | Stages gain `dependsOn` (sibling order); `workflowFrontier = planFrontier(workflowTree(), …)` (ONE encoding, ADR-247 M1); stage-done is the EXISTING `ClaimReleased(done)` / `MergeRecorded`; advancing is re-derivation poked by scheduled-wake (ADR-256), never a callback (ADR-263 D4). Isolated by NON-REGISTRATION (the bootstrap queues stage work-items, emits NO `ProductRegistered`, so the workflow key never enters `s.products`). Resolves ADR-263 **OQ-1**. |
+| **4 (next)** | The conductor WALKS the workflow tree. | The conductor pulls `workflowFrontier` (Slice 3) and, for each ready stage with a `metadata.action`, calls `actuate` (Slice 1) — advancing the pipeline autonomously. Either a dedicated workflow-conductor loop (preserving the Slice-3 non-registration), or the workflow is deliberately registered so it enters `planFrontierAll`. |
 | **5** | T0/T2 variants + the cockpit drives the workflow. | Sibling `FOUNDRY_WORKFLOW` variants; the dashboard (ADR-261/262) surfaces the ready stage + its action as a confirm-gated button. |
 
 Slice 4 (the conductor walks the workflow tree) is the natural next rung: once the workflow can SPAWN
@@ -484,45 +518,47 @@ action, the HOW now autonomous the way the WHAT already is.
 - **No kernel contract.** `@de-braighter/substrate-contracts` is byte-unchanged — the workflow tree is
   the EXISTING plan-tree primitive, `dependsOn` rides the EXISTING `metadata` (read by
   `projectTreeState`, `frontier.ts:60`), `planFrontier` is EXISTING, and stage-done reuses the EXISTING
-  `ClaimReleased` event (no new event type).
-- **No design-system change.** Slice 3 has no UI; `workflowFrontier` + the bootstrap + the exclusion are
+  `ClaimReleased` / `MergeRecorded` event (no new event type).
+- **No design-system change.** Slice 3 has no UI; `workflowTree` + `workflowFrontier` + the bootstrap are
   pure pack code.
 - **No second claimability encoding.** `workflowFrontier` is a thin wrapper over `planFrontier` (ADR-247
   M1; the source-scan acid (e) guards it).
-- **The conductor's claim/launch flow is untouched in Slice 3.** `planFrontierAll` EXCLUDES the workflow
-  product, so `nextItems` / `foundry_next` never surfaces a stage; the workflow frontier is a separate
-  read (`workflowFrontier` / `wake`'s new field) until Slice 4 wires the conductor.
+- **`planFrontierAll` is untouched.** Isolation is by non-registration — the workflow key is never in
+  `s.products`, so `nextItems` / `foundry_next` never surfaces a stage; the workflow frontier is a
+  separate read (`workflowFrontier` / `wake`'s new field) until Slice 4 wires the conductor. NO
+  `CONDUCTOR_EXCLUDED` set exists.
 
 ---
 
 ## 9. Slice scope
 
-- **foundry:** extend `src/instances/foundry-workflow.ts` (the 5 stage nodes gain `meta.itemId` +
-  `meta.dependsOn` — the SIBLING pipeline order; `kind: 'work-item'` for foldability; flat topology
-  preserved), add `src/workflow/frontier.ts` (`workflowFrontier` = `planFrontier` over the workflow
-  tree — NO new fold), add `src/instances/foundry-workflow-bootstrap.ts`
-  (`foundryWorkflowBootstrapEvents` — registers the product + queues the stages, mirrors
-  `foundry-bootstrap.ts:26`), extend `src/plan/plan-frontier-all.ts` (the `CONDUCTOR_EXCLUDED` carve-out
-  skipping `'foundry-workflow'`), extend `src/ops.ts` `wake` (return `workflowFrontier` alongside
-  `frontier`), and add the acids in `test/workflow-advance.acid.test.ts`
-  (initial-only-first-stage-ready · record-done-advances-and-fresh-fold-reproduces ·
-  walk-the-whole-pipeline-out-of-order-does-not-ungate · wake-workflow-frontier-equals-direct-rederivation ·
-  one-encoding-reuses-planFrontier). It REUSES `planFrontier` (`frontier.ts:96`), `claimableItems` /
-  `depsSatisfied` / `itemDone` (`state.ts:498,404,124`), `buildCascadeTree` (`cascade.ts:24`), the
-  `ClaimReleased(done)` event (the bootstrap encoding, `foundry-bootstrap.ts:90`), `planFrontierAll`
-  (`plan-frontier-all.ts:24`), and the P6 `wake` op (`ops.ts:489`). **No `@de-braighter/*` change.**
+- **foundry (as SHIPPED, commit `418f566`, 4 files):** extend `src/instances/foundry-workflow.ts` (the 5
+  stage nodes gain `meta.dependsOn` — the SIBLING pipeline order; flat topology preserved; export
+  `WORKFLOW_PRODUCT_KEY` + `WORKFLOW_STAGE_REPO`), add `src/plan/workflow-frontier.ts` (`workflowTree()`
+  projection + `workflowFrontier` = `planFrontier` over it — NO new fold + `workflowBootstrapEvents` —
+  queues the stages, NO `ProductRegistered`), extend `src/ops.ts` with `bootstrapWorkflow` (appends
+  `workflowBootstrapEvents`) and `wake` (return `workflowFrontier` alongside `frontier`), and add the
+  acids in `test/workflow-advance.acid.test.ts` (initial-only-first-stage-ready ·
+  record-done-advances-and-fresh-fold-reproduces · walk-the-whole-pipeline-out-of-order-does-not-ungate ·
+  wake-workflow-frontier-equals-direct-rederivation · one-encoding-reuses-planFrontier). `planFrontierAll`
+  is UNTOUCHED (isolation by non-registration). It REUSES `planFrontier` (`frontier.ts:96`),
+  `claimableItems` / `depsSatisfied` / `itemDone` (`state.ts:498,404,124`), `buildCascadeTree`
+  (`cascade.ts:24`), the `ClaimReleased(done)` / `MergeRecorded` event, `projectTreeState`'s ProductState
+  synthesis (`frontier.ts:76-89`), the `itemQueued` event, and the P6 `wake` op (`ops.ts:497`). **No
+  `@de-braighter/*` change.**
 - **specs:** ADR-265 — codifies the five key decisions: (KD-1) the workflow advances by DERIVATION
-  (the SAME `planFrontier` fold, ONE claimability encoding — no second rule, no new fold); (KD-2)
-  `dependsOn` encodes the pipeline order between SIBLING stages, NOT parent nesting; (KD-3) control flow
-  is DERIVED not callbacks (completion is an event, reachability is derived, advancing is re-derivation
-  poked by scheduled-wake, ADR-263 D4 + ADR-256); (KD-4) the workflow frontier is ISOLATED from the
-  product conductor (the FOUNDRY_PRODUCT carve-out, ADR-247) until Slice 4; (KD-5) ADR-176 PACK-LEVEL,
-  pure REUSE, zero kernel change, no new event type. Resolves ADR-263 **OQ-1**.
+  (the SAME `planFrontier` fold over a `workflowTree()` projection, ONE claimability encoding — no second
+  rule, no new fold); (KD-2) `dependsOn` encodes the pipeline order between SIBLING stages, NOT parent
+  nesting; (KD-3) control flow is DERIVED not callbacks (completion is an event, reachability is derived,
+  advancing is re-derivation poked by scheduled-wake, ADR-263 D4 + ADR-256); (KD-4) the workflow frontier
+  is ISOLATED from the product conductor BY NON-REGISTRATION (the bootstrap emits no `ProductRegistered`,
+  so the key never enters `s.products`; `planFrontierAll` untouched) until Slice 4; (KD-5) ADR-176
+  PACK-LEVEL, pure REUSE, zero kernel change, no new event type. Resolves ADR-263 **OQ-1**.
 
 This slice depends only on the existing plan-tree frontier (`planFrontier`), the existing
-`dependsOn`/`itemDone` machinery, the existing `ClaimReleased(done)` event, the existing bootstrap
-pattern, and the P6 `wake` op. It is the realization of ADR-263 D4 — the workflow tree advancing itself
-by derivation, the SAME fold as the product frontier, poked by the same external clock, never a
-callback.
+`dependsOn`/`itemDone` machinery, the existing `ClaimReleased(done)` / `MergeRecorded` event, the existing
+`itemQueued` bootstrap pattern, and the P6 `wake` op. It is the realization of ADR-263 D4 — the workflow
+tree advancing itself by derivation, the SAME fold as the product frontier, poked by the same external
+clock, never a callback.
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
