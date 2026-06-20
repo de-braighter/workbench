@@ -48,7 +48,9 @@ duplication, AI rework cost, net flow efficiency) maps onto the same PR/commit l
 ### Backlog
 Concrete twin extension tracked against the self-improving-SDLC arc (M2): add the paired
 **net-flow-efficiency** verdict + **AI rework cost** + **<14d churn / rework ratio** to the twin's
-indicator set (all git-derived / self-observing). See the devloop tracking issue.
+indicator set (all git-derived / self-observing). Held as a backlog item in the self-improving-SDLC arc
+(subordinate to oncology per product priority); a public devloop tracking issue can be filed when it's
+greenlit for work.
 
 ---
 
