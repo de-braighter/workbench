@@ -21,19 +21,30 @@
 > (which throws on the orphan workflow product) — safe because the stage was pulled from
 > `workflowFrontier` (already `dependsOn`-gated) and the conductor walks stages SERIALLY. A re-entrant
 > store-lock deadlock found in TDD is avoided by SEPARATING the done-marking lock scope from the
-> actuation (the actuation's op self-locks). **Zero kernel change** — `founderGated` rides `metadata`, the
-> done-pair reuses existing events, both ADR-176 legs fail → pack territory.
+> actuation (the actuation's op self-locks) — so the actuate-then-mark-done is NON-ATOMIC, but the
+> conductor is CRASH-RECOVERABLE (a partial step is RE-RUNNABLE, never WEDGED): `build-path` actuation is
+> IDEMPOTENT (exact-replay-or-throw), `markStageDone` does a REAL under-lock readiness re-check (no
+> double-mark), and a crash mid done-marking is RECOVERED by completing the conductor's OWN dangling
+> claim (never a lying `idle`, never a foreign claim). **Zero kernel change** — `founderGated` rides
+> `metadata`, the done-pair reuses existing events, both ADR-176 legs fail → pack territory.
 
 - **Date:** 2026-06-20
-- **Scope (as SHIPPED — `domains/foundry` branch `feat-workflow-conduct`, HEAD `6e5e037`):**
+- **Scope (as SHIPPED — `domains/foundry` branch `feat-workflow-conduct`, HEAD `3dcf09c` — the walk
+  `6e5e037` + the two crash-recovery hardening commits `c37305f` + `3dcf09c`):**
   `domains/foundry` — a small composition over the Slice-1/2/3 workflow surface:
   - `src/plan/workflow-conductor.ts` (new) — the whole slice. Holds `conductWorkflowStep(deps):
     ConductResult`, `authorizeWorkflowStage(deps, stageItemId)`, the `ConductResult` /
-    `ConductStatus` types, and two private helpers: `stageNode(stageKey)` (reads the AUTHORED
+    `ConductStatus` types, and the private helpers: `stageNode(stageKey)` (reads the AUTHORED
     `FOUNDRY_WORKFLOW` stage node — carrying `metadata.action` / `metadata.actionArgs` /
     `metadata.founderGated` — via `buildCascadeTree`, because `workflowTree()` DROPS those fields when it
-    re-keys the stages to work-item leaves) and `markStageDone(deps, stageKey, sessionId)` (the direct
-    done-pair under `withStoreLock`).
+    re-keys the stages to work-item leaves), `markStageDone(deps, stageKey, sessionId)` (the direct
+    done-pair under `withStoreLock`, with a REAL under-lock readiness re-check that no-ops if the stage
+    already folded done), and `danglingOwnStage` / `recoverDanglingStage` (the crash-recovery: detect +
+    complete the conductor's OWN dangling claim left by a crash mid done-marking).
+  - `src/workflow/actions.ts` (extend) — the `build-path` handler gains an IDEMPOTENT exact-replay-or-throw
+    guard: a re-actuation under the same `newKey` with the same item set returns the existing product
+    (a no-op), a divergent/foreign/partial/superset item set throws. This is what makes a partial
+    conduct-step RE-RUNNABLE rather than permanently wedged.
   - `src/instances/foundry-workflow.ts` (extend) — the `stage-gate-greenlight` node gains
     `meta.founderGated: true` (`foundry-workflow.ts:79`). Additive metadata; the node's Slice-1
     `action: 'reprioritize-product'` + `effects` still ride alongside (proving declaration ⊥ actuation ⊥
@@ -42,14 +53,15 @@
   - `src/mcp/tools.ts` (extend) + `src/mcp/server.ts` (register) — the `foundry_conduct_workflow` MCP
     tool (`tools.ts:104`): the operator trigger that steps/walks the conductor, with an optional
     `authorizeStage` to authorize a founder-gated stage BEFORE stepping.
-  - `test/workflow-conduct.acid.test.ts` (new) — the acid battery (a)–(f) below, EVERY acid against a
-    TEMP log (`mkdtempSync`/`tmpdir`), `now` pinned via `FoundryDeps.now`.
+  - `test/workflow-conduct.acid.test.ts` (new) — the acid battery (a)–(f) plus the crash-recovery
+    coverage (the WEDGE / FIX-1 / FIX-3 groups, §5.2 below), EVERY acid against a TEMP log
+    (`mkdtempSync`/`tmpdir`), `now` pinned via `FoundryDeps.now`.
   - It REUSES `workflowFrontier` (`src/plan/workflow-frontier.ts`, Slice 3), `actuateNode`
-    (`src/workflow/actions.ts`, Slice 1), `buildCascadeTree` (`src/plan/cascade.ts`), the
-    `claimAcquired` / `claimReleased` event constructors (`src/events.ts`), `withStoreLock`
-    (`src/store-lock.ts`), `fold` (`src/state.ts`), and `readEnvelopes` / `append` (`src/log.ts`).
-    `planFrontierAll`, `claimableItems`, the kernel, `@de-braighter/substrate-contracts`, and the
-    design-system are UNTOUCHED.
+    (`src/workflow/actions.ts`, Slice 1 — extended with the `build-path` idempotency guard),
+    `buildCascadeTree` (`src/plan/cascade.ts`), the `claimAcquired` / `claimReleased` event constructors
+    (`src/events.ts`), `withStoreLock` (`src/store-lock.ts`), `fold` (`src/state.ts`), and `readEnvelopes`
+    / `append` (`src/log.ts`). `planFrontierAll`, `claimableItems`, the kernel,
+    `@de-braighter/substrate-contracts`, and the design-system are UNTOUCHED.
 - **Predecessors / boundary:**
   [ADR-265](../../../layers/specs/adr/adr-265-foundry-workflow-derived-advancement.md) (Slice 3 — the
   `workflowFrontier` this conductor pulls; the isolation-by-non-registration this walk preserves),
@@ -66,27 +78,35 @@
   inclusion test — §6, both legs fail → pack territory),
   [ADR-127](../../../layers/specs/adr/adr-127-kernel-substrate-v1.md) (the four kernel concerns; the plan
   tree is §1.1, reproducibility §1.4 — the reason the walk must be reconstructable from the log).
-- **Provenance.** Recon-confirmed against the SHIPPED foundry source (HEAD `6e5e037`):
-  `conductWorkflowStep(deps)` (`src/plan/workflow-conductor.ts:92-113`) — pulls
-  `workflowFrontier(fold(readEnvelopes(deps.logPath)), nowMs)[0]`, short-circuits on
-  `isFounderGated(node)` → `{ status: 'awaiting-founder', stage, frontier }`, else `actuateNode` (if
-  `hasAction`) + `markStageDone` → `{ status: 'advanced', stage, frontier }`, `{ status: 'idle' }` when
-  empty; `authorizeWorkflowStage(deps, stageItemId)` (`workflow-conductor.ts:120-135`) — the founder act
-  that throws if the stage is not the ready stage or not founder-gated, else `markStageDone`;
-  `markStageDone` (`workflow-conductor.ts:75-82`) — the direct `claimAcquired` + `claimReleased(outcome:
-  'done')` pair appended under `withStoreLock`, BYPASSING `claim`/`release`/`leaseSlot`; `stageNode`
-  (`workflow-conductor.ts:53-58`) — reads the authored `FOUNDRY_WORKFLOW` node via
-  `buildCascadeTree(FOUNDRY_WORKFLOW)` (because `workflowTree()` drops `metadata.action`/`founderGated`);
-  `isFounderGated`/`hasAction` (`workflow-conductor.ts:60-64`) — the `metadata.founderGated === true` /
-  `typeof metadata.action === 'string'` predicates; `meta.founderGated: true` on the gate
-  (`src/instances/foundry-workflow.ts:79`); `foundry_conduct_workflow`
-  (`src/mcp/tools.ts:104-110`) — `authorizeStage?` then `conductWorkflowStep`; `withStoreLock` is NOT
-  re-entrant (`src/store-lock.ts:131-135` — "NOT reentrant — never nest") which is why the done-marking
-  lock scope is separated from the actuation; `actuateNode` (`src/workflow/actions.ts:95-103`) reads
-  `metadata.action`/`metadata.actionArgs` and runs the registry handler under its OWN store lock;
-  `leaseSlotIndex` throws on an un-registered product (the orphan workflow product is never in
-  `s.products` — Slice 3's non-registration). Implementation: commit `6e5e037` (`domains/foundry` branch
-  `feat-workflow-conduct`).
+- **Provenance.** Recon-confirmed against the FINAL SHIPPED foundry source (HEAD `3dcf09c`):
+  `conductWorkflowStep(deps)` (`src/plan/workflow-conductor.ts:162-203`) — pulls
+  `workflowFrontier(fold(readEnvelopes(deps.logPath)), nowMs)[0]`; on an EMPTY frontier RECOVERS a
+  dangling OWN-stage (`recoverDanglingStage` → `{ status: 'advanced', stage, frontier }`) before falling
+  back to `{ status: 'idle' }` (never a lying idle); else short-circuits on `isFounderGated(node)` →
+  `{ status: 'awaiting-founder', stage, frontier }`, else `actuateNode` (if `hasAction`) + `markStageDone`
+  → `{ status: 'advanced', stage, frontier }`; `authorizeWorkflowStage(deps, stageItemId)`
+  (`workflow-conductor.ts:210-225`) — the founder act that throws if the stage is not the ready stage or
+  not founder-gated, else `markStageDone`; `markStageDone` (`workflow-conductor.ts:90-110`) — a REAL
+  under-lock readiness re-check (re-folds + re-derives `workflowFrontier`, no-ops if the stage already
+  dropped out) THEN the direct `claimAcquired` + `claimReleased(outcome:'done')` pair appended under
+  `withStoreLock`, BYPASSING `claim`/`release`/`leaseSlot`; `danglingOwnStage` / `recoverDanglingStage`
+  (`workflow-conductor.ts:117-152`) — the crash-recovery: detect the conductor's OWN dangling claim
+  (`conduct-<stage>`, session `conductor`) and append the missing `claimReleased(done)`; foreign claims
+  never auto-completed; the IDEMPOTENT `build-path` actuation (`src/workflow/actions.ts:64-98`) —
+  `before.products.has(newKey)` + an exact-id match returns the existing product (a no-op), a
+  divergent/foreign/partial/superset item set throws; `stageNode` (`workflow-conductor.ts:59-64`) — reads
+  the authored `FOUNDRY_WORKFLOW` node via `buildCascadeTree(FOUNDRY_WORKFLOW)` (because `workflowTree()`
+  drops `metadata.action`/`founderGated`); `isFounderGated`/`hasAction` (`workflow-conductor.ts:66-70`) —
+  the `metadata.founderGated === true` / `typeof metadata.action === 'string'` predicates;
+  `meta.founderGated: true` on the gate (`src/instances/foundry-workflow.ts:79`);
+  `foundry_conduct_workflow` (`src/mcp/tools.ts:104-110`) — `authorizeStage?` then `conductWorkflowStep`;
+  `withStoreLock` is NOT re-entrant (`src/store-lock.ts:131-135` — "NOT reentrant — never nest") which is
+  why the done-marking lock scope is separated from the actuation; `actuateNode`
+  (`src/workflow/actions.ts:128-136`) reads `metadata.action`/`metadata.actionArgs` and runs the registry
+  handler under its OWN store lock; `leaseSlotIndex` throws on an un-registered product (the orphan
+  workflow product is never in `s.products` — Slice 3's non-registration). Implementation: commits
+  `6e5e037` (the walk) + `c37305f` + `3dcf09c` (the crash-recovery hardening) on `domains/foundry` branch
+  `feat-workflow-conduct`.
 
 ---
 
@@ -166,7 +186,7 @@ Slice 5 surfaces the halt as the founder-clickable button (§7).
 
 ---
 
-## 3. The five key decisions
+## 3. The key decisions
 
 ### KD-1 — The conductor COMPOSES Slices 1–3; no new claimability rule, no new fold
 
@@ -182,7 +202,7 @@ conductor reuses it verbatim.
 
 The load-bearing decision. Without it, the conductor would auto-actuate the gate's
 `reprioritize-product` action and auto-advance past the greenlight — auto-greenlighting + auto-spawning
-a product with no founder authorization. The founder-gate short-circuit (`workflow-conductor.ts:101`) is
+a product with no founder authorization. The founder-gate short-circuit (`workflow-conductor.ts:191`) is
 checked BEFORE actuation, so a founder-gated stage is never actuated and never marked done by the
 conductor. `authorizeWorkflowStage` is the only path past it. This threads ADR-262's founder-gated model
 into the machine: automation auto-walks the pipeline, governance requires a founder act.
@@ -197,10 +217,17 @@ SERIALLY — it is not dispatching them to parallel warm-pool workers — so it 
 lease/claim cross-session safety. It marks a stage done with the EXISTING done-event encoding directly:
 
 ```ts
-// src/plan/workflow-conductor.ts:75-82 (SHIPPED)
-function markStageDone(deps, stageKey, sessionId): void {
+// src/plan/workflow-conductor.ts:90-110 (SHIPPED) — under-lock re-check THEN the done-pair
+export function markStageDone(deps, stageKey, sessionId): void {
   withStoreLock(deps.dataDir, () => {
+    const ts = nowOf(deps);
+    // Authoritative re-check under the lock (KD-7): re-fold + re-derive the workflow frontier.
+    // A stage already folded done has dropped out → no-op (no double-mark, idempotent).
+    const ready = workflowFrontier(fold(readEnvelopes(deps.logPath)), Date.parse(ts));
+    if (!ready.some((i) => i.itemId === stageKey)) return;
     const claimId = `conduct-${stageKey}`;
+    // CRASH WINDOW (honest): a crash BETWEEN these two appends leaves a dangling OWN-claim,
+    // closed by recovery (KD-8), not by expiry (ttlMinutes is a minimal placeholder).
     append(claimAcquired({ claimId, itemId: stageKey, sessionId, ttlMinutes: 1, ts }), deps.logPath);
     append(claimReleased({ claimId, itemId: stageKey, sessionId, outcome: 'done', ts }), deps.logPath);
   });
@@ -211,7 +238,9 @@ This is the `foundryBootstrapEvents` shape (the same `claimAcquired` + `claimRel
 P3/ADR-254 uses to mark historically-done items done) — NO new event type, NO second claimability rule
 (`workflowFrontier` is reused verbatim). The done-marking is SAFE because the stage was pulled from
 `workflowFrontier`, which already gated it by `dependsOn` (a stage is only marked done if it was
-genuinely ready). No `SlotLeased` event is ever appended during the walk (acid (e)).
+genuinely ready), AND because the under-lock re-check (KD-7) makes it idempotent — two conductors that
+both pass the lock-free pre-check land EXACTLY ONE done-pair. No `SlotLeased` event is ever appended
+during the walk (acid (e)).
 
 ### KD-4 — The actuation and the done-marking take the store lock SEPARATELY (the re-entrant-deadlock fix)
 
@@ -227,15 +256,18 @@ The fix is to keep the two lock scopes SEPARATE, never nested. `conductWorkflowS
 the stage done in `markStageDone`'s OWN lock scope:
 
 ```ts
-// src/plan/workflow-conductor.ts:108-109 (SHIPPED) — actuate (self-locks) THEN mark done (separate lock)
+// src/plan/workflow-conductor.ts:198-199 (SHIPPED) — actuate (self-locks) THEN mark done (separate lock)
 if (hasAction(node)) actuateNode(deps, node);   // its op takes + releases the store lock
-markStageDone(deps, head.itemId, `conduct-${head.itemId}`);   // a SEPARATE lock scope
+markStageDone(deps, head.itemId, 'conductor');  // a SEPARATE lock scope (sessionId 'conductor')
 ```
 
 The frontier read (`workflowFrontier`) is lock-free advisory (like `nextItems`/`wake`); the done-marking
-is the only part the conductor itself locks. As a bonus the ordering is fail-safe: a broken handler
-throws in `actuateNode` BEFORE the done-pair is marked, so a failed actuation leaves the stage
-un-advanced (still ready) — atomic actuation+mark-done (acid (c) MUTATION).
+is the only part the conductor itself locks. The ordering is fail-safe FORWARD: a broken handler throws
+in `actuateNode` BEFORE the done-pair is marked, so a failed actuation leaves the stage un-advanced (still
+ready) — acid (c) MUTATION. But the two lock scopes are NOT nested, so the actuate-then-mark-done is
+HONESTLY NON-ATOMIC: a crash BETWEEN a landed actuation and the done-pair leaves a partial step. That
+partial step is RE-RUNNABLE, not a permanent wedge — closed by KD-6 (idempotent `build-path`), KD-7 (the
+under-lock re-check) and KD-8 (dangling-own-claim recovery), the three robustness decisions added below.
 
 ### KD-5 — ADR-176 PACK-LEVEL: pack code composing existing primitives; zero kernel change
 
@@ -248,6 +280,79 @@ inclusion-test legs fail (a workflow conductor is not one of the four kernel con
 emits events, replay FOLDS them and never re-runs the handler, so the whole walk is reconstructable from
 the log alone (acid (d)). **Store generators, derive graphs** is upheld (ADR-176 §4) — the workflow
 structure + the done-events live in the log; the frontier is a derived view re-computed on read.
+
+### KD-6 — `build-path` actuation is IDEMPOTENT (exact-replay-or-throw) — the WEDGE FIX
+
+The verifier wave found a BLOCKING bug. Because the conduct-step is non-atomic (KD-4), a partial step —
+`build-path` already spawned the product, but the done-pair did NOT land (a crash or a concurrent race) —
+leaves `stage-build-path` STILL the ready stage. Re-conducting RE-ACTUATES `build-path`. In the pre-fix
+code, `build-path` called `queuePush` unconditionally, which THREW `items already queued` on the
+already-spawned itemIds — so the partial step PERMANENTLY WEDGED the pipeline at `stage-build-path`: every
+retry threw forever, the stage could never be marked done. The shipped code FIXES this with an
+exact-replay-or-throw idempotency guard (`src/workflow/actions.ts:64-98`):
+
+```ts
+// src/workflow/actions.ts:78-91 (SHIPPED) — exact-replay-or-throw
+const before = fold(readEnvelopes(deps.logPath));
+const expectedIds = input.items.map((i) => i.itemId);
+if (before.products.has(newKey)) {
+  const exactMatch = expectedIds.length > 0
+    && expectedIds.every((id) => before.items.get(id)?.productKey === newKey);
+  if (exactMatch) {                                   // idempotent NO-OP: return the existing product
+    return { productKey: newKey, rootNodeId: uuidv5('cascade:' + newKey), queued: expectedIds };
+  }
+  throw new Error(`build-path re-actuation under key '${newKey}' does not exactly replay …`); // STRICT
+}
+// newKey NOT registered → fresh spawn (fall through to queuePush)
+```
+
+- **`newKey` not registered** → fresh spawn (the normal first actuation).
+- **`newKey` registered, EXACT match** (every expected id belongs to `newKey`) → idempotent NO-OP returning
+  the existing product. This makes a partial conduct-step RE-RUNNABLE: the re-actuation is a no-op, then
+  the done-pair finally lands.
+- **`newKey` registered, item set DIVERGES** (any id missing, foreign-owned, or a disjoint SUPERSET with
+  new ids) → THROWS. STRICT on purpose: a partial/superset re-spawn must NEVER silently merge half a
+  product (`queuePush` only throws on OVERLAP, so a disjoint superset would otherwise merge — this guard
+  closes that). No silent merge, no data-loss. The only idempotent case is an EXACT replay of THIS spawn.
+
+### KD-7 — `markStageDone` does a REAL under-lock readiness re-check (no double-mark)
+
+The earlier docstring CLAIMED an under-lock re-check, but the code did NOT do one — it appended the
+done-pair unconditionally inside the lock. The shipped code makes the re-check REAL (the `markStageDone`
+block in KD-3): UNDER the store lock it re-folds, re-derives `workflowFrontier`, and confirms the stage is
+STILL ready BEFORE appending the done-pair; if a concurrent/retried conductor already marked it done — it
+has dropped out of the frontier — `markStageDone` NO-OPs. So two conductors that both pass the lock-free
+pre-check land EXACTLY ONE done-pair, never two.
+
+### KD-8 — Crash-recovery via dangling-OWN-claim completion (never a lying `idle`)
+
+The done-marking is two appends. A crash BETWEEN them leaves the conductor's OWN dangling claim (`claimId
+conduct-<stage>`, session `conductor`, acquired but not released, item not done). Within its `ttlMinutes`
+the stage folds to `claimed` and DROPS OUT of `workflowFrontier`, so a NAIVE `conductWorkflowStep` on an
+empty frontier would return a LYING `{ status: 'idle' }` (STALLED mid-done, not exhausted). A lone
+`claimReleased(done)` is a fold NO-OP (the fold's `findClaim` needs the prior `claimAcquired` in
+`s.items`), so a single crash-atomic append is impossible without a new claimability rule — which the
+conductor MUST NOT add (KD-1). The fix RECOVERS (`src/plan/workflow-conductor.ts:162-179`): on an empty
+frontier, `conductWorkflowStep` detects a dangling OWN-claim (`recoverDanglingStage`) and COMPLETES it by
+appending the missing `claimReleased(done)` — the SAME `claimId`, so the fold pairs it and the stage folds
+done — then re-derives and reports `{ status: 'advanced', stage }`, NEVER a lying `idle`:
+
+```ts
+// src/plan/workflow-conductor.ts:166-178 (SHIPPED) — empty frontier is ambiguous; recover first
+const recoveredStage = recoverDanglingStage(deps);   // completes the conductor's OWN dangling claim
+if (recoveredStage != null) {
+  const recovered = workflowFrontier(fold(readEnvelopes(deps.logPath)), nowMs);
+  return { status: 'advanced', stage: recoveredStage, frontier: recovered };
+}
+return { status: 'idle', frontier: ready };          // a TRUE idle — no dangling own-stage
+```
+
+ONLY the conductor's OWN claims are auto-completed (`danglingOwnStage` matches `conduct-<stage>` + session
+`conductor` + unreleased + not-handed-off). A FOREIGN claim is NEVER auto-completed — the conductor returns
+a real `idle`, leaving it to its owner/TTL. So the non-atomic done-marking is CRASH-RECOVERABLE: a crash
+leaves the pipeline RE-RUNNABLE, not wedged or silently stalled. The crash window is closed by RECOVERY,
+not by claim expiry (the `ttlMinutes:1` is a minimal placeholder — there is NO "never expires" claim and
+no reliance on TTL to heal the window).
 
 ---
 
@@ -262,7 +367,7 @@ and the founder-gate flag, the conductor reads the AUTHORED `FOUNDRY_WORKFLOW` n
 `_cascadeKey`:
 
 ```ts
-// src/plan/workflow-conductor.ts:53-58 (SHIPPED)
+// src/plan/workflow-conductor.ts:59-64 (SHIPPED)
 function stageNode(stageKey: string): PlanNode {
   const tree = buildCascadeTree(FOUNDRY_WORKFLOW);
   const node = tree.nodes.find((n) => n.metadata['_cascadeKey'] === stageKey);
@@ -278,19 +383,26 @@ conductor.
 ### 4.2 The step loop — pull, halt-or-actuate, mark, advance
 
 ```ts
-// src/plan/workflow-conductor.ts:92-113 (SHIPPED) — the whole step.
+// src/plan/workflow-conductor.ts:162-203 (SHIPPED) — the whole step.
 export function conductWorkflowStep(deps: FoundryDeps): ConductResult {
   const nowMs = Date.parse(nowOf(deps));
   const ready = workflowFrontier(fold(readEnvelopes(deps.logPath)), nowMs);   // Slice 3, lock-free
   const head = ready[0];
-  if (!head) return { status: 'idle', frontier: ready };                       // pipeline exhausted
+  if (!head) {                                                                  // empty frontier is AMBIGUOUS
+    const recoveredStage = recoverDanglingStage(deps);                          // KD-8 crash-recovery
+    if (recoveredStage != null) {
+      const recovered = workflowFrontier(fold(readEnvelopes(deps.logPath)), nowMs);
+      return { status: 'advanced', stage: recoveredStage, frontier: recovered };
+    }
+    return { status: 'idle', frontier: ready };                                 // a TRUE idle (no dangling own-stage)
+  }
 
   const node = stageNode(head.itemId);                                          // authored node (§4.1)
   if (isFounderGated(node)) {                                                   // KD-2 governance HALT
     return { status: 'awaiting-founder', stage: head.itemId, frontier: ready };
   }
   if (hasAction(node)) actuateNode(deps, node);                                 // Slice 1, self-locks (KD-4)
-  markStageDone(deps, head.itemId, `conduct-${head.itemId}`);                   // direct done-pair (KD-3)
+  markStageDone(deps, head.itemId, 'conductor');                               // direct done-pair + re-check (KD-3/7)
 
   const frontier = workflowFrontier(fold(readEnvelopes(deps.logPath)), nowMs);  // re-derive — advanced
   return { status: 'advanced', stage: head.itemId, frontier };
@@ -320,20 +432,22 @@ conduct → ship`.
 
 ---
 
-## 5. Slice 4 — "the conductor walks the workflow tree, halts at founder gates"
+## 5. Slice 4 — "the conductor walks the workflow tree, halts at founder gates, and is crash-recoverable"
 
 The thinnest falsifiable slice: a step pulls the ready stage, halts at a founder gate or actuates +
-marks done, and a full walk runs the pipeline end-to-end with each handler firing once (replay-safe).
+marks done, and a full walk runs the pipeline end-to-end with each handler firing once (replay-safe). The
+two hardening commits add the recovery floor: a partial conduct-step RE-RUNS to completion, never wedges.
 
 ### 5.1 Mechanism + file:line touch-points
 
 | # | Touch-point | What |
 |---|---|---|
-| 1 | `src/plan/workflow-conductor.ts` (new) | The whole slice: `conductWorkflowStep` (`:92`), `authorizeWorkflowStage` (`:120`), `markStageDone` (`:75`, the direct done-pair), `stageNode` (`:53`), `isFounderGated`/`hasAction` (`:60`), the `ConductResult`/`ConductStatus` types. |
-| 2 | `src/instances/foundry-workflow.ts` (extend) | `stage-gate-greenlight` gains `meta.founderGated: true` (`:79`). Additive metadata; the Slice-1 `action`/`effects` ride alongside, untouched. |
-| 3 | `src/mcp/tools.ts` (`:104`) + `src/mcp/server.ts` | The `foundry_conduct_workflow` MCP tool — step the conductor; `authorizeStage?` authorizes a founder-gated stage before stepping. |
-| 4 | `test/workflow-conduct.acid.test.ts` (new) | The acid battery (a)–(f) below, every acid against a TEMP log. |
-| 5 | `src/plan/workflow-frontier.ts`, `src/workflow/actions.ts`, `src/plan/plan-frontier-all.ts`, the kernel | **UNTOUCHED** — the conductor COMPOSES them; `planFrontierAll` and `claimableItems` are not changed (Slice-3 isolation preserved). |
+| 1 | `src/plan/workflow-conductor.ts` (new) | The whole slice: `conductWorkflowStep` (`:162`), `authorizeWorkflowStage` (`:210`), `markStageDone` (`:90`, direct done-pair + under-lock re-check KD-7), `danglingOwnStage`/`recoverDanglingStage` (`:117`/`:140`, crash-recovery KD-8), `stageNode` (`:59`), `isFounderGated`/`hasAction` (`:66`), the `ConductResult`/`ConductStatus` types. |
+| 2 | `src/workflow/actions.ts` (extend) | The `build-path` handler gains the exact-replay-or-throw idempotency guard (`:64-98`, KD-6) — what makes a partial conduct-step re-runnable. |
+| 3 | `src/instances/foundry-workflow.ts` (extend) | `stage-gate-greenlight` gains `meta.founderGated: true` (`:79`). Additive metadata; the Slice-1 `action`/`effects` ride alongside, untouched. |
+| 4 | `src/mcp/tools.ts` (`:104`) + `src/mcp/server.ts` | The `foundry_conduct_workflow` MCP tool — step the conductor; `authorizeStage?` authorizes a founder-gated stage before stepping. |
+| 5 | `test/workflow-conduct.acid.test.ts` (new) | The acid battery (a)–(f) below + the crash-recovery groups (WEDGE / FIX-1 / FIX-3), every acid against a TEMP log. |
+| 6 | `src/plan/workflow-frontier.ts`, `src/plan/plan-frontier-all.ts`, the kernel | **UNTOUCHED** — the conductor COMPOSES them; `planFrontierAll` and `claimableItems` are not changed (Slice-3 isolation preserved). |
 
 ### 5.2 Acid battery — each must BITE
 
@@ -367,7 +481,8 @@ authorize it (`authorizeWorkflowStage(deps, 'stage-gate-greenlight')`) → the f
 includes an item under `SPAWNED_KEY/`) and `state.products.has(SPAWNED_KEY)`. **The bite (MUTATION):**
 drop the `build-path` entry from `ACTION_REGISTRY` → conducting `stage-build-path` throws `/unknown
 action/`, NO product is spawned, and the stage stays un-advanced (still
-`['stage-build-path']`) — proving actuation-before-mark-done is atomic (KD-4) → RED.
+`['stage-build-path']`) — proving the actuate-BEFORE-mark-done ordering is forward fail-safe (a thrown
+actuation never half-marks the stage done, KD-4) → RED.
 
 **(d) Walk the WHOLE pipeline; each handler fires once; replay-safe.** A `walkPipeline` helper steps the
 conductor until idle, authorizing a founder-gated stage whenever it halts. The advanced stages are
@@ -396,6 +511,36 @@ advances IS exactly the head of `workflowFrontier`. **The bite:** replace the fr
 hand-rolled `state.items.filter(deps-done ∧ not-done)` loop (a second encoding) → the source-scan guard
 fails (the regex matches the re-implemented rule) AND the advanced-stage-is-the-frontier-head assertion
 can diverge → RED (the ADR-247 M1 one-encoding principle, source-guarded).
+
+**(g) WEDGE: a crashed/partial conduct-step RE-RUNS to completion (KD-6 — `build-path` idempotent).** Walk
+to the ready `stage-build-path`, then actuate `build-path` DIRECTLY (product spawned) WITHOUT marking the
+stage done — exactly the crash state (stage still ready, product already queued). Re-conduct →
+`conductWorkflowStep` re-actuates `build-path`, which idempotent-RETURNS the existing product (NOT `items
+already queued`), then marks done and advances; exactly ONE product spawned. A second variant conducts the
+same ready build-path stage TWICE → one product, no throw, no wedge. **The bite (MUTATION):** restore a
+non-idempotent `build-path` handler (always `queuePush`) → the recovery re-conduct throws `/already
+queued/` → RED (the pre-fix permanent wedge made visible).
+
+**(h) FIX-1: a crash mid done-marking is RECOVERED (KD-8 — dangling-own-claim).** Append ONLY the
+conductor's `claimAcquired` for `stage-intake` (the first of `markStageDone`'s two appends) — the crash
+window; the stage folds to `claimed` and drops out of `workflowFrontier` (`[]`). `conductWorkflowStep`
+does NOT return a lying `idle` — it COMPLETES the dangling own-stage and reports `advanced`; the stage is
+genuinely done and the frontier advances to the gate. Recovery is exactly-once (one `ClaimReleased(done)`).
+**The bite (MUTATION):** remove the recovery → `conductWorkflowStep` returns the lying `idle` and the
+pipeline STALLS → RED. **OWN-only:** a FOREIGN claim on a stage is NEVER auto-completed — the conductor
+returns a real `idle`, not a spurious advance.
+
+**(i) FIX-3: the under-lock readiness re-check prevents a double done-mark (KD-7).** Call the exported
+`markStageDone` TWICE for the same ready `stage-intake` (two conductors past the lock-free pre-check) →
+EXACTLY ONE done-pair lands; the second re-folds under the lock, finds intake gone, no-ops. **The bite
+(MUTATION):** a no-guard `markStageDone` (re-check removed) called twice lands TWO done-pairs → RED; the
+real guarded one lands ONE.
+
+Two further committed checks pin the founder-gate semantics: `authorizeWorkflowStage` REJECTS a
+non-founder-gated ready stage (`/not founder-gated/`) and a not-ready/already-done stage (`/not ready for
+authorization/`); and the founder-gate's `reprioritize-product` action NEVER fires across the
+authorize+conduct path (the `foundry` priority is unchanged — the gate is passed by AUTHORIZATION, not by
+actuating its action).
 
 ### 5.3 What Slice 4 deliberately does NOT do
 
@@ -446,7 +591,7 @@ substrate, built not marketed (the north-star Option A framing).
 | **1 (shipped)** | A workflow intervention actuates a real action. | `FOUNDRY_WORKFLOW` tree + `actuate`/`actuateNode` + the `ACTION_REGISTRY`. |
 | **2 (shipped)** | A workflow intervention SPAWNS a product tree across trees. | `build-path` handler reusing the ADR-249 generate path; cross-link a DERIVED `PlanNodeId` reference. Resolves ADR-263 OQ-2. |
 | **3 (shipped)** | The workflow tree ADVANCES itself by derivation. | Stages gain `dependsOn`; `workflowFrontier = planFrontier(workflowTree(), …)` (ONE encoding); stage-done is the EXISTING done-event; advancing is re-derivation poked by scheduled-wake, never a callback. Isolated by NON-REGISTRATION. Resolves ADR-263 OQ-1. |
-| **4 (this)** | The conductor WALKS the workflow tree; the workflow RUNS, halts at founder gates. | `conductWorkflowStep` pulls `workflowFrontier` (Slice 3), `actuateNode`s the ready stage's action (Slice 1 — `build-path` spawns a product, Slice 2), marks it done via a DIRECT done-pair BYPASSING `leaseSlot` (serial walk; orphan product), and HALTS at founder-gated stages (the governance invariant); `authorizeWorkflowStage` is the founder act. Re-entrant-lock deadlock avoided by separating the done-marking lock from the actuation. COMPOSES Slices 1–3; ZERO kernel change. |
+| **4 (this)** | The conductor WALKS the workflow tree; the workflow RUNS, halts at founder gates, and is CRASH-RECOVERABLE. | `conductWorkflowStep` pulls `workflowFrontier` (Slice 3), `actuateNode`s the ready stage's action (Slice 1 — `build-path` spawns a product, Slice 2), marks it done via a DIRECT done-pair BYPASSING `leaseSlot` (serial walk; orphan product), and HALTS at founder-gated stages (the governance invariant); `authorizeWorkflowStage` is the founder act. Re-entrant-lock deadlock avoided by separating the done-marking lock from the actuation → the step is NON-ATOMIC but RECOVERABLE: idempotent `build-path` (KD-6), under-lock re-check (KD-7), dangling-own-claim recovery (KD-8) → a partial step RE-RUNS, never wedges. COMPOSES Slices 1–3; ZERO kernel change. |
 | **5 (next)** | The dashboard surfaces the halt + T0/T2 variants. | The cockpit (ADR-261/262) renders an `awaiting-founder` stage as a founder-clickable AUTHORIZE button (reusing the served-mode + confirm-gated pattern); sibling `FOUNDRY_WORKFLOW` T0/T2 variants the conductor walks the same way (off `riskTier` / a selector). |
 
 Slice 5 (the dashboard surfaces the halt as a founder-clickable button + T0/T2 variants) is the natural
@@ -475,27 +620,35 @@ the same walk over a sibling tree.
 
 ## 9. Slice scope
 
-- **foundry (as SHIPPED, branch `feat-workflow-conduct` HEAD `6e5e037`):** add
-  `src/plan/workflow-conductor.ts` (`conductWorkflowStep` + `authorizeWorkflowStage` + `markStageDone`
-  the direct done-pair + `stageNode` + the `ConductResult`/`ConductStatus` types), extend
-  `src/instances/foundry-workflow.ts` (`stage-gate-greenlight` gains `meta.founderGated: true`,
-  `:79`), add the `foundry_conduct_workflow` MCP tool (`src/mcp/tools.ts:104` + `src/mcp/server.ts`,
-  the operator trigger), and add the acids in `test/workflow-conduct.acid.test.ts`
-  (conduct-advances-first-stage · halts-at-founder-gate · authorize-unblocks-build-path-spawn ·
-  walk-whole-pipeline-each-handler-once-replay-safe · no-leaseSlot-in-the-walk ·
-  composes-workflowFrontier-and-actuate). It REUSES `workflowFrontier` (`src/plan/workflow-frontier.ts`),
-  `actuateNode` (`src/workflow/actions.ts`), `buildCascadeTree` (`src/plan/cascade.ts`), the
-  `claimAcquired`/`claimReleased` events (`src/events.ts`), `withStoreLock` (`src/store-lock.ts`), `fold`
-  (`src/state.ts`), `readEnvelopes`/`append` (`src/log.ts`). `planFrontierAll`, `claimableItems`, the
-  kernel, and the design-system are UNTOUCHED. **No `@de-braighter/*` change.**
-- **specs:** ADR-266 — codifies the five key decisions: (KD-1) the conductor COMPOSES Slices 1–3 (no new
+- **foundry (as SHIPPED, branch `feat-workflow-conduct` HEAD `3dcf09c` — the walk `6e5e037` + the
+  crash-recovery hardening `c37305f` + `3dcf09c`):** add `src/plan/workflow-conductor.ts`
+  (`conductWorkflowStep` + `authorizeWorkflowStage` + `markStageDone` the direct done-pair with the
+  under-lock re-check + `danglingOwnStage`/`recoverDanglingStage` the crash-recovery + `stageNode` + the
+  `ConductResult`/`ConductStatus` types), extend `src/workflow/actions.ts` (the `build-path`
+  exact-replay-or-throw idempotency guard, `:64-98`), extend `src/instances/foundry-workflow.ts`
+  (`stage-gate-greenlight` gains `meta.founderGated: true`, `:79`), add the `foundry_conduct_workflow` MCP
+  tool (`src/mcp/tools.ts:104` + `src/mcp/server.ts`, the operator trigger), and add the acids in
+  `test/workflow-conduct.acid.test.ts` (conduct-advances-first-stage · halts-at-founder-gate ·
+  authorize-unblocks-build-path-spawn · walk-whole-pipeline-each-handler-once-replay-safe ·
+  no-leaseSlot-in-the-walk · composes-workflowFrontier-and-actuate · wedge-partial-conduct-re-runs ·
+  crash-mid-done-recovered · under-lock-re-check-no-double-mark). It REUSES `workflowFrontier`
+  (`src/plan/workflow-frontier.ts`), `actuateNode` (`src/workflow/actions.ts`), `buildCascadeTree`
+  (`src/plan/cascade.ts`), the `claimAcquired`/`claimReleased` events (`src/events.ts`), `withStoreLock`
+  (`src/store-lock.ts`), `fold` (`src/state.ts`), `readEnvelopes`/`append` (`src/log.ts`).
+  `planFrontierAll`, `claimableItems`, the kernel, and the design-system are UNTOUCHED. **No
+  `@de-braighter/*` change.**
+- **specs:** ADR-266 — codifies the key decisions: (KD-1) the conductor COMPOSES Slices 1–3 (no new
   claimability rule, no new fold, no new event type); (KD-2) THE GOVERNANCE INVARIANT — the conductor
   HALTS at founder-gated stages, `authorizeWorkflowStage` is the founder act, threading ADR-262's
   founder-gated model into the machine; (KD-3) the mark-done BYPASSES `leaseSlot` (a direct done-pair
   under the store lock; serial walk; safe because frontier-gated); (KD-4) the actuation and the
-  done-marking take the store lock SEPARATELY (the re-entrant-deadlock fix); (KD-5) ADR-176 PACK-LEVEL,
-  pack code composing existing primitives, `founderGated` rides `metadata`, zero kernel change, no new
-  event type.
+  done-marking take the store lock SEPARATELY (the re-entrant-deadlock fix → the step is NON-ATOMIC but
+  RECOVERABLE); (KD-5) ADR-176 PACK-LEVEL, pack code composing existing primitives, `founderGated` rides
+  `metadata`, zero kernel change, no new event type; plus the three RECOVERY/ROBUSTNESS decisions that
+  make the conductor crash-recoverable: (KD-6) `build-path` actuation is IDEMPOTENT (exact-replay-or-throw
+  — re-runnable, no silent merge); (KD-7) `markStageDone` does a REAL under-lock readiness re-check (no
+  double-mark); (KD-8) crash-recovery completes the conductor's OWN dangling claim (never a lying `idle`,
+  never a foreign claim). (In ADR-266 these land as decision invariants D1–D8 and Alternatives 1–4.)
 
 This slice depends only on the existing workflow frontier (`workflowFrontier`, Slice 3), the existing
 action registry (`actuateNode`, Slice 1), the existing done-event (`claimReleased(done)`), the existing
