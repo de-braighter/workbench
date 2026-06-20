@@ -16,44 +16,73 @@
 > over a `workflowTree()` PROJECTION of `FOUNDRY_WORKFLOW`'s stages into work-item leaves; stage
 > completion is the EXISTING done-event (`ClaimReleased` outcome `done` / `MergeRecorded`, the encoding
 > P3/ADR-254's bootstrap already uses); and advancing the workflow is pure RE-DERIVATION poked by
-> scheduled-wake — NO callback, NO stored next-pointer. The workflow stays ISOLATED from the product
-> conductor BY NON-REGISTRATION — `bootstrapWorkflow` queues the stage work-items but emits NO
-> `ProductRegistered`, so the workflow key is never in `s.products` and `planFrontierAll` (which iterates
-> ALL `s.products.keys()` with NO exclusion) cannot pick it up. **Zero kernel change** — the workflow
-> tree is the existing plan-tree primitive, `dependsOn` is existing, `planFrontier` is existing, the
-> done-event is existing (ADR-176 NOT triggered, both legs fail → pack territory).
+> scheduled-wake — NO callback, NO stored next-pointer. The workflow stays ISOLATED from product-facing
+> work by THREE mechanisms (the wave fix-up `34e9fce` made the isolation REAL — non-registration alone
+> was not enough once the stages live in `s.items`): (a) NON-REGISTRATION — `bootstrapWorkflow` queues
+> the stage work-items but emits NO `ProductRegistered`, so the workflow key is never in `s.products` and
+> `planFrontierAll` (which iterates ALL `s.products.keys()` with NO exclusion) cannot pick it up; (b) a
+> `productKey === WORKFLOW_PRODUCT_KEY` FILTER excluding the stages from the product-facing `s.items`
+> derivations (the dashboard KPIs/pulse/in-flight in `render.ts`, the ACTIVE CLAIMS/STALE/BUILT board
+> sections in `status.ts`); (c) excluding workflow-stage items from the cross-product scope-disjointness
+> scan in `claimableItems` (`state.ts`), so a stage neither blocks nor is blocked by a real product
+> sharing its repo (the disjoint `WORKFLOW_STAGE_REPO` scope is now belt-and-suspenders, NOT the
+> claim-check guarantee). The operator trigger is the `foundry_bootstrap_workflow` MCP tool (mirrors
+> `foundry_bootstrap`); `wake` returns the workflow frontier alongside `planFrontierAll`. **Zero kernel
+> change** — the workflow tree is the existing plan-tree primitive, `dependsOn` is existing, `planFrontier`
+> is existing, the done-event is existing (ADR-176 NOT triggered, both legs fail → pack territory).
 
 - **Date:** 2026-06-20
-- **Scope (as SHIPPED — commit `418f566`, branch `feat-workflow-advance`, 4 files):** `domains/foundry`
-  — extend the Slice-1/2 workflow module:
+- **Scope (as SHIPPED — branch `feat-workflow-advance`, HEAD `34e9fce`; derivation core in `418f566`,
+  the isolation made REAL in the wave fix-up `34e9fce`):** `domains/foundry` — extend the Slice-1/2
+  workflow module:
   - `src/instances/foundry-workflow.ts` (extend) — the existing stage nodes gain `meta.dependsOn`
     (the pipeline ORDER, between SIBLING stages: `gate-greenlight dependsOn intake`, `build-path
     dependsOn gate-greenlight`, `conduct dependsOn build-path`, `ship dependsOn conduct`; the shipped
     stage keys are `stage-intake`, `stage-gate-greenlight`, `stage-build-path`, `stage-conduct`,
-    `stage-ship`), keeping the FLAT single-parent topology from Slice 1 (`foundry-workflow.ts:48-120`).
-    The stable `WORKFLOW_PRODUCT_KEY` (`'foundry-workflow'`) + `WORKFLOW_STAGE_REPO`
-    (`'de-braighter/foundry-workflow'`, a disjoint scope) are exported from this file.
+    `stage-ship`), keeping the FLAT single-parent topology from Slice 1 (`foundry-workflow.ts:49-121`).
+    `WORKFLOW_PRODUCT_KEY` (`'foundry-workflow'`) + `WORKFLOW_STAGE_REPO` (`'de-braighter/foundry-workflow'`,
+    a disjoint repo) are DEFINED in the new import-free `src/instances/workflow-keys.ts` leaf and
+    RE-EXPORTED from `foundry-workflow.ts` for the existing call sites.
+  - `src/instances/workflow-keys.ts` (new, import-free leaf) — holds `WORKFLOW_PRODUCT_KEY` +
+    `WORKFLOW_STAGE_REPO` with ZERO imports, so `state.ts` (the fold + the `claimableItems` scope scan) and
+    `foundry-workflow.ts` (which imports `state.ts`'s fold at module load) can both read them WITHOUT a
+    `state.ts ↔ foundry-workflow.ts` module-load cycle.
   - `src/plan/workflow-frontier.ts` (new) — holds three pure functions: `workflowTree()` projects
     `FOUNDRY_WORKFLOW`'s stages into a work-item `PlanTree` (root carries the `productKey`; each stage →
     a `kind: 'work-item'` leaf whose `itemId` IS the stage key, carrying the authored `dependsOn` + the
     `WORKFLOW_STAGE_REPO` scope); `workflowFrontier(state, now): ItemState[]` is a THIN wrapper —
-    `planFrontier(workflowTree(), state, now)` (`plan/frontier.ts:96`), returning the ready stage(s), NO
-    new fold, NO second claimability rule; `workflowBootstrapEvents(state, ts)` emits ONLY a
-    `WorkItemQueued` (the EXISTING `itemQueued` event) per stage — NO `ProductRegistered`.
+    `planFrontier(workflowTree(), state, now)`, returning the ready stage(s), NO new fold, NO second
+    claimability rule; `workflowBootstrapEvents(state, ts)` emits ONLY a `WorkItemQueued` (the EXISTING
+    `itemQueued` event) per stage — NO `ProductRegistered`.
+  - `src/state.ts` (extend) — `isWorkflowStage(i) = i.productKey === WORKFLOW_PRODUCT_KEY` (`state.ts:499`)
+    and `claimableItems` (`state.ts:512`) EXCLUDES workflow-stage items from the cross-product
+    scope-disjointness scan: a stage is dropped from `actives` (so it never BLOCKS a real product) AND its
+    own `scopesDisjoint` test is skipped (`isWorkflowStage(i) || actives.every(...)`, so it is never
+    BLOCKED). The workflow's OWN `dependsOn` gating (`depsSatisfied`) is untouched — only the CROSS-product
+    coupling is removed (FIX B). This is what makes the isolation REAL.
+  - `src/dashboard/render.ts` + `src/status.ts` (extend) — the product-facing `s.items` derivations gain a
+    `productKey === WORKFLOW_PRODUCT_KEY` filter (FIX A): in `render.ts` the KPIs / pulse / in-flight pill
+    walk a filtered `allItems` (`render.ts:114`, with `stale`/`inFlight`/`merges` likewise filtered); in
+    `status.ts` the `isProductItem` predicate (`status.ts:13`) keeps the stages out of the ACTIVE CLAIMS /
+    STALE / BUILT board sections. Without these a stage would surface as product work with no matching
+    product row.
   - `src/ops.ts` (extend) — `bootstrapWorkflow(deps)` (`ops.ts:576-590`) appends the
     `workflowBootstrapEvents` (idempotent; queues each stage so its done-status is FOLDABLE — claim/
     release need `s.items.get(itemId)`). And `wake` (`ops.ts:497-518`) ALSO returns the workflow frontier
     (`{ fired, frontier, workflowFrontier }`, the raw `ItemState[]` — the workflow product is not in
     `s.products`, so `toNextItem` can't map it), so P6's external clock POKES the re-derivation. No new
     write machinery — `wake` already appends `WakeFired` + re-projects; this adds one read.
-  - `src/plan/plan-frontier-all.ts` is **UNTOUCHED** — there is NO `CONDUCTOR_EXCLUDED` set; isolation is
-    by NON-REGISTRATION (the workflow key is never in `s.products`, which `planFrontierAll` iterates), so
-    ZERO lines are added to the sole conductor driver.
+  - `src/mcp/tools.ts` + `src/mcp/server.ts` (extend) — the `foundry_bootstrap_workflow` MCP tool
+    (`tools.ts:99`, registered `server.ts:45`) — the OPERATOR trigger that calls `ops.bootstrapWorkflow`
+    to queue the stages into the log so `wake().workflowFrontier` has a feed. Mirrors `foundry_bootstrap`.
+  - `src/plan/plan-frontier-all.ts` is **UNTOUCHED** — there is NO `CONDUCTOR_EXCLUDED` set; isolation for
+    the conductor ITERATION is by NON-REGISTRATION (the workflow key is never in `s.products`, which
+    `planFrontierAll` iterates), so ZERO lines are added to the sole conductor driver.
   - `test/workflow-advance.acid.test.ts` (new) — the five acids below, every one against a TEMP log.
-  - It REUSES `planFrontier` (`src/plan/frontier.ts:96`), `claimableItems` / `depsSatisfied` /
-    `itemDone` (`src/state.ts:498,404,124`), `buildCascadeTree` (`src/plan/cascade.ts:24`), the
+  - It REUSES `planFrontier` (`src/plan/frontier.ts`), `claimableItems` / `depsSatisfied` /
+    `itemDone` (`src/state.ts:512,405,125`), `buildCascadeTree` (`src/plan/cascade.ts`), the
     `ClaimReleased` done-event / `MergeRecorded`, `projectTreeState`'s ProductState synthesis for an
-    un-registered product (`src/plan/frontier.ts:76-89`), the `itemQueued` event (`src/events.ts`), and
+    un-registered product (`src/plan/frontier.ts`), the `itemQueued` event (`src/events.ts`), and
     the P6 `wake` op (`src/ops.ts:497`). **No `@de-braighter/substrate-*` change. No
     `@de-braighter/design-system-*` change.**
 - **Predecessors / boundary:**
@@ -78,23 +107,32 @@
   inclusion test — §6, both legs fail → pack territory),
   [ADR-127](../../../layers/specs/adr/adr-127-kernel-substrate-v1.md) (the four kernel concerns; the
   plan tree is §1.1, reproducibility §1.4 — the reason advancement must be DERIVED not callback).
-- **Provenance.** Recon-confirmed against the live foundry source: the frontier composition
-  (`planFrontier(tree, s, nowMs) = claimableItems(projectTreeState(tree, s), nowMs)` filtered to the
-  tree's `productKey`, `src/plan/frontier.ts:96-99`); the claimability rule
-  (`claimableItems`, `src/state.ts:498-510` — `itemStatus === 'queued' ∧ depsSatisfied ∧
-  scope-disjoint`); `depsSatisfied` (`src/state.ts:404-408` — `dependsOn.every(d => itemDone(dep))`,
-  the EXACT deps-done reachability rule); `itemDone` (`src/state.ts:124-126` — `merged != null ∨
+- **Provenance.** Recon-confirmed against the live foundry source (HEAD `34e9fce`): the frontier
+  composition (`planFrontier(tree, s, nowMs) = claimableItems(projectTreeState(tree, s), nowMs)` filtered
+  to the tree's `productKey`, `src/plan/frontier.ts`); the claimability rule (`claimableItems`,
+  `src/state.ts:512` — `itemStatus === 'queued' ∧ depsSatisfied ∧ (isWorkflowStage ∨ scope-disjoint)`);
+  the workflow-stage predicate `isWorkflowStage(i) = i.productKey === WORKFLOW_PRODUCT_KEY`
+  (`src/state.ts:499`) that EXCLUDES stages from the cross-product scope scan (FIX B); `depsSatisfied`
+  (`src/state.ts:405` — `dependsOn.every(d => itemDone(dep))`, the EXACT deps-done reachability rule,
+  UNTOUCHED so the workflow's own ordering is intact); `itemDone` (`src/state.ts:125` — `merged != null ∨
   claims.some(c => c.released?.outcome === 'done')`, the done-event encoding); the `projectTreeState`
-  leaf filter + ProductState synthesis (`src/plan/frontier.ts:44`, `:76-89` — only `kind === 'work-item'`
-  leaves become foldable items; an un-registered product's `ProductState` is SYNTHESIZED from the tree
-  root, the load-bearing fact that lets the workflow advance WITHOUT a `ProductRegistered`); the bootstrap
-  done-pair encoding (`instances/foundry-bootstrap.ts` — `claimAcquired` + `claimReleased(outcome:'done')`
-  makes `itemDone()` true from the log alone); `planFrontierAll`'s product iteration with NO exclusion
-  (`src/plan/plan-frontier-all.ts:24-26` — `for (const productKey of s.products.keys())`, untouched by
-  this slice). CRITICAL CORRECTION (vs the original draft): there is NO `CONDUCTOR_EXCLUDED` set in
-  `planFrontierAll`, and FOUNDRY_PRODUCT is NOT excluded from the conductor (P3/ADR-254 made it a real,
-  conductor-driven product). So isolation is by NON-REGISTRATION (the workflow key never reaching
-  `s.products`), which needs no exclusion code at all.
+  leaf filter + ProductState synthesis (`src/plan/frontier.ts` — only `kind === 'work-item'` leaves become
+  foldable items; an un-registered product's `ProductState` is SYNTHESIZED from the tree root, the
+  load-bearing fact that lets the workflow advance WITHOUT a `ProductRegistered`); the product-facing
+  `productKey` filters (FIX A — `src/dashboard/render.ts:114` for the KPIs/pulse/in-flight, `isProductItem`
+  at `src/status.ts:13` for the ACTIVE CLAIMS / STALE / BUILT board sections); the bootstrap done-pair
+  encoding (`instances/foundry-bootstrap.ts` — `claimAcquired` + `claimReleased(outcome:'done')` makes
+  `itemDone()` true from the log alone); `planFrontierAll`'s product iteration with NO exclusion
+  (`src/plan/plan-frontier-all.ts` — `for (const productKey of s.products.keys())`, untouched by this
+  slice); the `foundry_bootstrap_workflow` MCP tool (`src/mcp/tools.ts:99`, registered `src/mcp/server.ts:45`);
+  the import-free `WORKFLOW_PRODUCT_KEY`/`WORKFLOW_STAGE_REPO` leaf (`src/instances/workflow-keys.ts`).
+  CRITICAL CORRECTION (vs the original draft): there is NO `CONDUCTOR_EXCLUDED` set in `planFrontierAll`,
+  and FOUNDRY_PRODUCT is NOT excluded from the conductor (P3/ADR-254 made it a real, conductor-driven
+  product). The isolation story is THREE mechanisms, NOT non-registration alone: (a) non-registration
+  keeps the workflow out of `planFrontierAll`'s iteration; (b) a `productKey` filter keeps it out of the
+  product-facing `s.items` views (dashboard/status); (c) the `claimableItems` scope-scan exclusion makes a
+  stage scope-INERT in the cross-product claim check. The disjoint `WORKFLOW_STAGE_REPO` scope is now
+  belt-and-suspenders, NOT the claim-check guarantee (mechanism (c) is).
 
 ---
 
@@ -171,13 +209,15 @@ export function workflowFrontier(state: DerivedState, nowMs: number): ItemState[
 
 `planFrontier` reads STATUS (`claims`, `merged`, `dependsOn`) from `DerivedState.items`, and
 `projectTreeState` only turns `kind === 'work-item'` leaves into foldable items
-(`frontier.ts:44` — `if (n.kind !== 'work-item') continue`). So for `planFrontier` to evaluate
-stage reachability, the stages must be FOLDABLE — tracked in `state.items` with a status that can become
-"done". The shipped mechanism makes that true with the LEAST new surface — and isolates the workflow from
-the product conductor BY CONSTRUCTION, needing ZERO exclusion code:
+(`if (n.kind !== 'work-item') continue`). So for `planFrontier` to evaluate stage reachability, the
+stages must be FOLDABLE — tracked in `state.items` with a status that can become "done". But the stages
+being live in `s.items` is exactly why non-registration ALONE is not enough: the reviewer proved the
+stages would otherwise leak into every derivation that walks `s.items`. The shipped mechanism makes the
+stages foldable with the LEAST new surface AND isolates them by THREE mechanisms:
 
 **SHIPPED — build the frontier from the authored spec; make stage-done foldable by queuing ONLY
-work-items (NO `ProductRegistered`); isolate by non-registration.** Concretely:
+work-items (NO `ProductRegistered`); isolate by non-registration + a productKey-filter + a scope-scan
+exclusion.** Concretely:
 
 1. **STRUCTURE comes from the spec; the projection makes stages foldable.** `workflowTree()`
    (`src/plan/workflow-frontier.ts`) reads which stages exist + their `dependsOn` from the authored
@@ -191,24 +231,39 @@ work-items (NO `ProductRegistered`); isolate by non-registration.** Concretely:
    `WorkItemQueued` per stage (carrying `dependsOn`, under `WORKFLOW_PRODUCT_KEY`), reusing the EXISTING
    `itemQueued` event + the `foundryBootstrapEvents` shape. A stage is foldable only once it is QUEUED
    (claim/release need `s.items.get(itemId)`). Crucially there is **NO `ProductRegistered`** — the
-   workflow key never enters `s.products`.
+   workflow key never enters `s.products`. The operator triggers this via the `foundry_bootstrap_workflow`
+   MCP tool (`src/mcp/tools.ts` + `server.ts`, mirroring `foundry_bootstrap`).
 3. **Stage completion is the EXISTING done-event.** A stage is marked done by the EXISTING
    `claimAcquired` + `claimReleased(outcome:'done')` pair (or `MergeRecorded`), making `itemDone()` true
    from the log alone. NO new event type.
-4. **Isolation is STRUCTURAL — non-registration, not an exclusion list.** `planFrontierAll` iterates
-   `s.products.keys()` (`plan-frontier-all.ts:24-26`) with **NO exclusion of any kind** — there is no
-   `CONDUCTOR_EXCLUDED` set in the code. Because the workflow product is NEVER registered in `s.products`
-   (step 2 queued only work-items), `planFrontierAll` cannot iterate it: the product conductor is
-   unaffected BY CONSTRUCTION, ZERO lines added. `projectTreeState` SYNTHESIZES the workflow
-   `ProductState` from the tree root (`frontier.ts:76-89` — the "never queue-registered" path) so
-   `workflowFrontier` resolves priority/repo without a product registration. The frontier is read
-   EXPLICITLY via `workflowFrontier` (scoped to `WORKFLOW_PRODUCT_KEY`); the disjoint `WORKFLOW_STAGE_REPO`
-   keeps the queued stage items out of any real product's cross-product active-claim check.
+4. **Isolation is THREE mechanisms — non-registration (iteration) + a productKey-filter (product-facing
+   views) + a scope-scan exclusion (cross-product claims).**
+   - **(a) Non-registration for ITERATION.** `planFrontierAll` iterates `s.products.keys()`
+     (`plan-frontier-all.ts`) with **NO exclusion of any kind** — there is no `CONDUCTOR_EXCLUDED` set in
+     the code. Because the workflow product is NEVER registered in `s.products` (step 2 queued only
+     work-items), `planFrontierAll` cannot iterate it: the product conductor is unaffected BY
+     CONSTRUCTION, ZERO lines added. `projectTreeState` SYNTHESIZES the workflow `ProductState` from the
+     tree root (the "never queue-registered" path) so `workflowFrontier` resolves priority/repo without a
+     product registration. The frontier is read EXPLICITLY via `workflowFrontier` (scoped to
+     `WORKFLOW_PRODUCT_KEY`).
+   - **(b) productKey-FILTER for product-facing `s.items` derivations (FIX A).** Every derivation that
+     surfaces `s.items` as product work EXCLUDES `productKey === WORKFLOW_PRODUCT_KEY`: the dashboard
+     KPIs/pulse/in-flight (`render.ts`) and the ACTIVE CLAIMS / STALE / BUILT board sections
+     (`isProductItem`, `status.ts`). Without this a stage would show as e.g. `0/6` with no matching
+     product row.
+   - **(c) Scope-scan EXCLUSION in `claimableItems` (FIX B).** Workflow-stage items are EXCLUDED from the
+     cross-product scope-disjointness scan (`state.ts:512`, `isWorkflowStage`) — a stage is scope-INERT
+     (out of `actives` as a blocker AND its own `scopesDisjoint` test skipped), so a real product whose
+     item scopes the workflow repo stays claimable while a stage holds its claim, and a stage stays
+     claimable regardless of a real product's active claim. The workflow's OWN `dependsOn` gating is
+     untouched. The disjoint `WORKFLOW_STAGE_REPO` scope is now belt-and-suspenders, NOT the claim-check
+     guarantee — mechanism (c) is.
 
 This **maximally reuses the existing fold** (no new fold, no new event, no second claimability rule),
 adds the **least new surface** (one thin projection + frontier wrapper + one bootstrap that queues
-work-items + the `dependsOn` on the existing stage nodes — and ZERO lines to `planFrontierAll`), and
-keeps the **workflow frontier isolated** from the product conductor until Slice 4.
+work-items + the `dependsOn` on the existing stage nodes + the productKey filters / scope-scan exclusion
+— and ZERO lines to `planFrontierAll`), and keeps the **workflow frontier isolated** from product-facing
+work until Slice 4.
 
 ### 2.3 The rejected alternatives
 
@@ -221,7 +276,7 @@ encoding while isolating the workflow by non-registration.
 | **Fold** | REUSES `claimableItems` / `depsSatisfied` / `itemDone` verbatim. | REUSES the same fold — but as a registered product. | Needs a SECOND status source (a new `WorkflowStageDone` event + a new fold map, OR an out-of-band `Set`). |
 | **Encoding** | ONE claimability encoding (ADR-247 M1). | ONE encoding. | TWO encodings of "done" → drift risk (the exact M1 lesson). |
 | **New surface** | A projection + a bootstrap (queues work-items) + the `dependsOn` on the stages. ZERO conductor-driver lines. | A bootstrap that ALSO registers the product + an explicit `CONDUCTOR_EXCLUDED` set inside `planFrontierAll`. | A new event type + a new fold case + a new derive path. |
-| **Isolation from conductor** | STRUCTURAL — the workflow key never enters `s.products`, so `planFrontierAll` (iterating `s.products.keys()`) cannot pick it up. No exclusion code. | An explicit opt-out list that must stay in sync, with NO FOUNDRY_PRODUCT carve-out precedent (ADR-254 made FOUNDRY_PRODUCT conductor-driven). | Free (never registered), but at the cost of the second status source. |
+| **Isolation from conductor** | THREE mechanisms: (a) the workflow key never enters `s.products`, so `planFrontierAll` (iterating `s.products.keys()`) cannot pick it up — no exclusion code; (b) a `productKey` filter keeps the stages out of the dashboard/status product views; (c) `claimableItems` excludes stages from the cross-product scope scan. | An explicit opt-out list that must stay in sync, with NO FOUNDRY_PRODUCT carve-out precedent (ADR-254 made FOUNDRY_PRODUCT conductor-driven). | Free (never registered), but at the cost of the second status source. |
 
 **Rejected A** (the originally-drafted prescription) is worse because it needs an EXPLICIT exclusion list
 in `planFrontierAll` — new conductor-driver code, a set to keep in sync, a leak risk if an exclusion is
@@ -279,20 +334,33 @@ next-pointer.** Why not a callback — the ADR-263 D4 reasons, applied here:
   to avoid an in-process timer / continuation. This slice extends the SAME `wake` to ALSO return the
   workflow frontier (KD-4 below).
 
-### KD-4 — The workflow frontier is ISOLATED from the product conductor BY NON-REGISTRATION until Slice 4
+### KD-4 — The workflow frontier is ISOLATED from product-facing work by THREE mechanisms until Slice 4
 
-The workflow is isolated from `planFrontierAll`'s conductor-driving union BY CONSTRUCTION: `bootstrapWorkflow`
-queues the stage work-items but emits NO `ProductRegistered`, so the workflow key is NEVER in `s.products`,
-and `planFrontierAll` (which iterates ALL `s.products.keys()` with NO exclusion) structurally cannot pick
-it up. There is NO `CONDUCTOR_EXCLUDED` set — `planFrontierAll` is UNTOUCHED. The conductor's `nextItems`
-/ `foundry_next` therefore NEVER surfaces a workflow stage as a claimable product work-item. The workflow
-frontier is read ONLY through `workflowFrontier` (an explicit, separate read; `projectTreeState`
-synthesizes its `ProductState` from the tree root, `frontier.ts:76-89`). P6's `wake` is extended to return
-it ALONGSIDE the product frontier — `{ fired, frontier, workflowFrontier }` (the raw `ItemState[]`, since
-the workflow product is not in `s.products`) — so the external clock POKES the re-derivation, but the two
-frontiers stay SEPARATE channels. Slice 4 is where the conductor deliberately walks the workflow frontier
-and `actuate`s each ready stage's `metadata.action` (Slice 1's mechanism). Until then, advancement is
-observable (via `wake` / a direct read) but not conductor-driven.
+The stages live in `s.items` (so their done-status folds), so isolation is THREE mechanisms — the wave
+fix-up made it REAL after the reviewer proved non-registration ALONE leaks the stages:
+
+- **(a) Non-registration for ITERATION.** `bootstrapWorkflow` queues the stage work-items but emits NO
+  `ProductRegistered`, so the workflow key is NEVER in `s.products`, and `planFrontierAll` (which iterates
+  ALL `s.products.keys()` with NO exclusion) structurally cannot pick it up. There is NO `CONDUCTOR_EXCLUDED`
+  set — `planFrontierAll` is UNTOUCHED. The conductor's `nextItems` / `foundry_next` therefore NEVER
+  surfaces a workflow stage as a claimable product work-item. `projectTreeState` synthesizes the workflow's
+  `ProductState` from the tree root, so `workflowFrontier` still resolves priority/repo.
+- **(b) productKey-FILTER for product-facing `s.items` derivations (FIX A).** The dashboard KPIs / pulse /
+  in-flight (`render.ts`) and the ACTIVE CLAIMS / STALE / BUILT board sections (`isProductItem`,
+  `status.ts`) EXCLUDE `productKey === WORKFLOW_PRODUCT_KEY`, so a stage never appears as product work with
+  no matching product row.
+- **(c) Scope-scan EXCLUSION in `claimableItems` (FIX B).** Workflow stages are excluded from the
+  cross-product scope-disjointness scan (`state.ts`), so a stage neither blocks nor is blocked by a real
+  product sharing its repo. The disjoint `WORKFLOW_STAGE_REPO` scope is belt-and-suspenders, NOT the
+  claim-check guarantee.
+
+The workflow frontier is read ONLY through `workflowFrontier` (an explicit, separate read). P6's `wake` is
+extended to return it ALONGSIDE the product frontier — `{ fired, frontier, workflowFrontier }` (the raw
+`ItemState[]`, since the workflow product is not in `s.products`) — so the external clock POKES the
+re-derivation, but the two frontiers stay SEPARATE channels. The operator trigger that seeds the stages is
+the `foundry_bootstrap_workflow` MCP tool (mirrors `foundry_bootstrap`). Slice 4 is where the conductor
+deliberately walks the workflow frontier and `actuate`s each ready stage's `metadata.action` (Slice 1's
+mechanism). Until then, advancement is observable (via `wake` / a direct read) but not conductor-driven.
 
 ### KD-5 — ADR-176 PACK-LEVEL: pure REUSE, zero kernel change, (ideally) no new event type
 
@@ -342,12 +410,13 @@ export function workflowBootstrapEvents(state: DerivedState, ts: string): Domain
 }
 ```
 
-### 4.3 Isolation is BY NON-REGISTRATION — `planFrontierAll` is UNTOUCHED
+### 4.3 Isolation — `planFrontierAll` UNTOUCHED (non-registration) + a productKey-filter + a scope-scan exclusion
 
 ```ts
 // src/plan/plan-frontier-all.ts — UNCHANGED by this slice. It iterates ALL s.products.keys() with NO
 // exclusion. Because bootstrapWorkflow emits NO ProductRegistered, the workflow key is never in
-// s.products, so planFrontierAll structurally cannot iterate it — ZERO exclusion code needed.
+// s.products, so planFrontierAll structurally cannot iterate it — ZERO exclusion code needed (FIX: the
+// ITERATION mechanism).
 export function planFrontierAll(s: DerivedState, nowMs: number): ItemState[] {
   const items: ItemState[] = [];
   for (const productKey of s.products.keys()) {          // workflow key is NEVER here
@@ -357,7 +426,26 @@ export function planFrontierAll(s: DerivedState, nowMs: number): ItemState[] {
   // …existing global sort, unchanged…
 }
 
+// src/state.ts — the stages DO live in s.items, so claimableItems EXCLUDES them from the cross-product
+// scope scan (FIX B): a workflow stage is scope-INERT — out of `actives` (never a blocker) AND its own
+// scopesDisjoint test skipped (never blocked). Its OWN dependsOn gating (depsSatisfied) is untouched.
+const isWorkflowStage = (i: ItemState): boolean => i.productKey === WORKFLOW_PRODUCT_KEY;
+export function claimableItems(s: DerivedState, nowMs: number): ItemState[] {
+  const actives = [...s.items.values()].filter((i) => !itemDone(i) && activeClaim(i, nowMs) && !isWorkflowStage(i));
+  const claimable = [...s.items.values()].filter((i) =>
+    itemStatus(i, nowMs) === 'queued'
+    && depsSatisfied(s, i)
+    && (isWorkflowStage(i) || actives.every((a) => scopesDisjoint(i.scope, a.scope))));
+  // …existing priority/queue-order sort, unchanged…
+}
+
+// src/dashboard/render.ts + src/status.ts — the product-facing s.items walks filter the stages out by
+// productKey (FIX A), so they never surface as product work with no matching product row.
+const allItems = [...state.items.values()].filter((i) => i.productKey !== WORKFLOW_PRODUCT_KEY);     // render.ts
+const isProductItem = (i: ItemState): boolean => i.productKey !== WORKFLOW_PRODUCT_KEY;               // status.ts
+
 // The bootstrap op (src/ops.ts) — appends workflowBootstrapEvents so the stages become foldable.
+// Triggered by the foundry_bootstrap_workflow MCP tool (src/mcp/tools.ts + server.ts).
 export function bootstrapWorkflow(deps: FoundryDeps): { queued: string[] } { /* append; return queued */ }
 ```
 
@@ -392,12 +480,16 @@ stage completion is the existing done-event, and advancing is re-derivation poke
 
 | # | Touch-point | What |
 |---|---|---|
-| 1 | `src/instances/foundry-workflow.ts` (extend) | The 5 stage nodes gain `meta.dependsOn` (the SIBLING pipeline order, §4.1); they stay `kind: 'stage'` (the projection re-keys them to work-items). Flat single-parent topology preserved (Slice 1). `meta.action` / `effects` ride alongside untouched. Exports `WORKFLOW_PRODUCT_KEY` + `WORKFLOW_STAGE_REPO`. |
-| 2 | `src/plan/workflow-frontier.ts` (new) | `workflowTree()` projects the stages into a work-item `PlanTree`; `workflowFrontier(state, now)` = `planFrontier(workflowTree(), state, now)` (`frontier.ts:96`), NO new fold; `workflowBootstrapEvents(state, ts)` queues each stage as a `WorkItemQueued` — NO `ProductRegistered`. |
-| 3 | `src/ops.ts` (extend) | `bootstrapWorkflow(deps)` (`ops.ts:576-590`) appends `workflowBootstrapEvents` (idempotent — the foldability write path). |
-| 4 | `src/plan/plan-frontier-all.ts` | **UNTOUCHED** — isolation is by non-registration (the workflow key is never in `s.products`); NO `CONDUCTOR_EXCLUDED` set. |
-| 5 | `src/ops.ts` (extend `wake`) | `wake` returns `{ fired, frontier, workflowFrontier }` (`ops.ts:497-518`; `workflowFrontier` is the raw `ItemState[]`). The external clock pokes the re-derivation. |
-| 6 | `test/workflow-advance.acid.test.ts` (new) | The acid battery (§5.2), every acid against a TEMP log. |
+| 1 | `src/instances/foundry-workflow.ts` (extend) | The 5 stage nodes gain `meta.dependsOn` (the SIBLING pipeline order, §4.1); they stay `kind: 'stage'` (the projection re-keys them to work-items). Flat single-parent topology preserved (Slice 1). `meta.action` / `effects` ride alongside untouched. RE-EXPORTS `WORKFLOW_PRODUCT_KEY` + `WORKFLOW_STAGE_REPO` (from the leaf below). |
+| 2 | `src/instances/workflow-keys.ts` (new) | Import-free leaf holding `WORKFLOW_PRODUCT_KEY` + `WORKFLOW_STAGE_REPO` — so `state.ts` reads them without a `state.ts ↔ foundry-workflow.ts` module-load cycle. |
+| 3 | `src/plan/workflow-frontier.ts` (new) | `workflowTree()` projects the stages into a work-item `PlanTree`; `workflowFrontier(state, now)` = `planFrontier(workflowTree(), state, now)`, NO new fold; `workflowBootstrapEvents(state, ts)` queues each stage as a `WorkItemQueued` — NO `ProductRegistered`. |
+| 4 | `src/state.ts` (extend) | `isWorkflowStage` predicate + `claimableItems` (`state.ts:512`) EXCLUDES workflow stages from the cross-product scope scan (FIX B): scope-INERT (neither blocks nor blocked). `depsSatisfied` untouched. |
+| 5 | `src/dashboard/render.ts` + `src/status.ts` (extend) | A `productKey === WORKFLOW_PRODUCT_KEY` filter (FIX A) keeps the stages out of the dashboard KPIs/pulse/in-flight (`render.ts:114`) and the ACTIVE CLAIMS/STALE/BUILT board sections (`isProductItem`, `status.ts:13`). |
+| 6 | `src/ops.ts` (extend) | `bootstrapWorkflow(deps)` (`ops.ts:576-590`) appends `workflowBootstrapEvents` (idempotent — the foldability write path). |
+| 7 | `src/mcp/tools.ts` + `src/mcp/server.ts` (extend) | The `foundry_bootstrap_workflow` MCP tool (`tools.ts:99`, registered `server.ts:45`) — the operator trigger that calls `ops.bootstrapWorkflow`. Mirrors `foundry_bootstrap`. |
+| 8 | `src/plan/plan-frontier-all.ts` | **UNTOUCHED** — isolation for the conductor ITERATION is by non-registration (the workflow key is never in `s.products`); NO `CONDUCTOR_EXCLUDED` set. |
+| 9 | `src/ops.ts` (extend `wake`) | `wake` returns `{ fired, frontier, workflowFrontier }` (`ops.ts:497-518`; `workflowFrontier` is the raw `ItemState[]`). The external clock pokes the re-derivation. |
+| 10 | `test/workflow-advance.acid.test.ts` (new) | The acid battery (§5.2), every acid against a TEMP log. |
 
 The kernel, `substrate-contracts`, `planFrontierAll`, the conductor's claim/launch flow, and the dashboard
 are UNTOUCHED in Slice 3 (the conductor wiring is Slice 4).
@@ -523,37 +615,48 @@ action, the HOW now autonomous the way the WHAT already is.
   pure pack code.
 - **No second claimability encoding.** `workflowFrontier` is a thin wrapper over `planFrontier` (ADR-247
   M1; the source-scan acid (e) guards it).
-- **`planFrontierAll` is untouched.** Isolation is by non-registration — the workflow key is never in
-  `s.products`, so `nextItems` / `foundry_next` never surfaces a stage; the workflow frontier is a
-  separate read (`workflowFrontier` / `wake`'s new field) until Slice 4 wires the conductor. NO
-  `CONDUCTOR_EXCLUDED` set exists.
+- **`planFrontierAll` is untouched.** Isolation for the conductor ITERATION is by non-registration — the
+  workflow key is never in `s.products`, so `nextItems` / `foundry_next` never surfaces a stage; the
+  workflow frontier is a separate read (`workflowFrontier` / `wake`'s new field) until Slice 4 wires the
+  conductor. NO `CONDUCTOR_EXCLUDED` set exists. (The two further isolation mechanisms — the `productKey`
+  filter in `render.ts`/`status.ts` and the scope-scan exclusion in `claimableItems` — DO touch those
+  files; they are additive guards, not changes to the frontier rule.)
 
 ---
 
 ## 9. Slice scope
 
-- **foundry (as SHIPPED, commit `418f566`, 4 files):** extend `src/instances/foundry-workflow.ts` (the 5
-  stage nodes gain `meta.dependsOn` — the SIBLING pipeline order; flat topology preserved; export
-  `WORKFLOW_PRODUCT_KEY` + `WORKFLOW_STAGE_REPO`), add `src/plan/workflow-frontier.ts` (`workflowTree()`
-  projection + `workflowFrontier` = `planFrontier` over it — NO new fold + `workflowBootstrapEvents` —
-  queues the stages, NO `ProductRegistered`), extend `src/ops.ts` with `bootstrapWorkflow` (appends
-  `workflowBootstrapEvents`) and `wake` (return `workflowFrontier` alongside `frontier`), and add the
-  acids in `test/workflow-advance.acid.test.ts` (initial-only-first-stage-ready ·
+- **foundry (as SHIPPED, branch `feat-workflow-advance` HEAD `34e9fce`; derivation core `418f566`, the
+  isolation made REAL in the wave fix-up `34e9fce`):** extend `src/instances/foundry-workflow.ts` (the 5
+  stage nodes gain `meta.dependsOn` — the SIBLING pipeline order; flat topology preserved; re-export
+  `WORKFLOW_PRODUCT_KEY` + `WORKFLOW_STAGE_REPO`), add the import-free `src/instances/workflow-keys.ts`
+  leaf (holds the two keys so `state.ts` reads them without a module-load cycle), add
+  `src/plan/workflow-frontier.ts` (`workflowTree()` projection + `workflowFrontier` = `planFrontier` over
+  it — NO new fold + `workflowBootstrapEvents` — queues the stages, NO `ProductRegistered`), extend
+  `src/state.ts` (the `isWorkflowStage` predicate + the `claimableItems` scope-scan exclusion, FIX B),
+  extend `src/dashboard/render.ts` + `src/status.ts` (the `productKey` filter keeping stages out of the
+  product-facing views, FIX A), extend `src/ops.ts` with `bootstrapWorkflow` (appends
+  `workflowBootstrapEvents`) and `wake` (return `workflowFrontier` alongside `frontier`), add the
+  `foundry_bootstrap_workflow` MCP tool (`src/mcp/tools.ts` + `server.ts`, the operator trigger), and add
+  the acids in `test/workflow-advance.acid.test.ts` (initial-only-first-stage-ready ·
   record-done-advances-and-fresh-fold-reproduces · walk-the-whole-pipeline-out-of-order-does-not-ungate ·
   wake-workflow-frontier-equals-direct-rederivation · one-encoding-reuses-planFrontier). `planFrontierAll`
-  is UNTOUCHED (isolation by non-registration). It REUSES `planFrontier` (`frontier.ts:96`),
-  `claimableItems` / `depsSatisfied` / `itemDone` (`state.ts:498,404,124`), `buildCascadeTree`
-  (`cascade.ts:24`), the `ClaimReleased(done)` / `MergeRecorded` event, `projectTreeState`'s ProductState
-  synthesis (`frontier.ts:76-89`), the `itemQueued` event, and the P6 `wake` op (`ops.ts:497`). **No
-  `@de-braighter/*` change.**
+  is UNTOUCHED (isolation for the conductor iteration is by non-registration). It REUSES `planFrontier`
+  (`frontier.ts`), `claimableItems` / `depsSatisfied` / `itemDone` (`state.ts:512,405,125`),
+  `buildCascadeTree` (`cascade.ts`), the `ClaimReleased(done)` / `MergeRecorded` event, `projectTreeState`'s
+  ProductState synthesis (`frontier.ts`), the `itemQueued` event, and the P6 `wake` op (`ops.ts:497`).
+  **No `@de-braighter/*` change.**
 - **specs:** ADR-265 — codifies the five key decisions: (KD-1) the workflow advances by DERIVATION
   (the SAME `planFrontier` fold over a `workflowTree()` projection, ONE claimability encoding — no second
   rule, no new fold); (KD-2) `dependsOn` encodes the pipeline order between SIBLING stages, NOT parent
   nesting; (KD-3) control flow is DERIVED not callbacks (completion is an event, reachability is derived,
   advancing is re-derivation poked by scheduled-wake, ADR-263 D4 + ADR-256); (KD-4) the workflow frontier
-  is ISOLATED from the product conductor BY NON-REGISTRATION (the bootstrap emits no `ProductRegistered`,
-  so the key never enters `s.products`; `planFrontierAll` untouched) until Slice 4; (KD-5) ADR-176
-  PACK-LEVEL, pure REUSE, zero kernel change, no new event type. Resolves ADR-263 **OQ-1**.
+  is ISOLATED from product-facing work by THREE mechanisms — (a) NON-REGISTRATION (the bootstrap emits no
+  `ProductRegistered`, so the key never enters `s.products`; `planFrontierAll` untouched), (b) a
+  `productKey` filter excluding the stages from the dashboard/status product views, and (c) a scope-scan
+  exclusion in `claimableItems` — until Slice 4; (KD-5) ADR-176 PACK-LEVEL, pure REUSE, zero kernel
+  change, no new event type. The operator trigger is the `foundry_bootstrap_workflow` MCP tool. Resolves
+  ADR-263 **OQ-1**.
 
 This slice depends only on the existing plan-tree frontier (`planFrontier`), the existing
 `dependsOn`/`itemDone` machinery, the existing `ClaimReleased(done)` / `MergeRecorded` event, the existing
