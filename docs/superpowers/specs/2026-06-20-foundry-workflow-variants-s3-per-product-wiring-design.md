@@ -2,7 +2,7 @@
 
 - **Date:** 2026-06-20
 - **Scope:** `domains/foundry` (single consumer) — pack-level, ZERO kernel change
-- **Status:** proposed (S1+S2 merged: foundry#35, ADR-269; this is the wiring slice)
+- **Status:** SHIPPED 2026-06-21 — S3a foundry#36, S3b #37, S3c #38 (all merged, each verifier-wave + opus-capstone verified); ADR-272 ratified (specs#357), reconciled to the final code. ZERO kernel change end-to-end; OQ-D (build-path advance-vs-spawn) deferred (demonstrator spawn kept).
 - **Predecessor:** `2026-06-20-foundry-workflow-t0-t2-variants-design.md` (§5 S3); ADR-269 OQ-C/OQ-D
 - **Scope decision (founder, 2026-06-20):** **wiring only** — run the SELECTED variant per product; KEEP the demonstrator `build-path` (spawns a sample). The spawn-vs-advance semantics (OQ-D) is a SEPARATE later slice.
 
