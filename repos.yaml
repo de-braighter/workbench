@@ -22,3 +22,7 @@ repos:
     - gridiron        # NFL 4th-down what-if — inference showcase on real nflverse data
     - agri-ecosystem-twin  # regenerative-farm digital twin — A-vs-B ecological counterfactuals (Foundry T0)
     - studio          # plan-tree authoring studio seed — Angular app over the published board-kit brick (private)
+    - foundry         # the Foundry control plane — claim-MCP server for the multi-product machine (queue + atomic claims + founder gates + warm pool); ADR-241
+    - health          # health domain — FHIR R5 projection lib + PHI data layer (B1 field-encryption); ADR-222 / ADR-204
+    - scenario-lab    # domain-agnostic synthetic-scenario engine over the survival-inference substrate (Studio seeds off this)
+    - whales-and-bubbles   # single-player-first economic-strategy game on the substrate (T0 prototype)
