@@ -100,13 +100,17 @@ Tier-derived obligations (T0: wave **standard**, auto-merge OK). These become
 
 ## Gate schedule
 
-Per the T0 row (greenlight + ship):
+> **Founder directive 2026-06-21: fully-autonomous operation.** The founder waived
+> the downstream founder gates for this T0 product — the slice builds, merges, and
+> ships autonomously on green verifier waves. Gate 1 (greenlight) remains the
+> historical record of authorization. This waiver is **scoped to this T0 product
+> only**; it does NOT extend to any T2/regulated product's gates.
 
 | Gate | When | Status |
 |---|---|---|
 | **Gate 1 — greenlight** | Brief approved | ✅ approved `d2d3f338-d7f6-4316-be57-330cf4d28f55` (2026-06-21) |
-| **Founder checkpoint — push goes live** | Before the push actuator is wired to the real Foundry queue (the one-way door) | pending — not a formal gate, but the actuator item carries `push-actuator-review`; founder confirms before live actuation |
-| **Gate — ship** | Slice complete (bridge proven end-to-end: charter → visual draft → disjointness-validated → pushed) | pending (`foundry_gate_request gateType: "ship"` at completion) |
+| **Founder checkpoint — push goes live** | Before the push actuator is wired to the real Foundry queue | **WAIVED** (founder, 2026-06-21) — `push-actuator-review` stays as an *engineering* review focus (idempotency + disjointness-blocks-push), but no founder confirmation gates it |
+| **Gate — ship** | Slice complete | **WAIVED** (founder, 2026-06-21) — the slice auto-merges/auto-ships on a green verifier wave; no founder ship gate |
 
 ## Repo plan
 

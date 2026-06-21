@@ -82,9 +82,11 @@ ADR-240 govern; no new ADR is reserved. An apparent kernel need surfacing mid-bu
 is a **charter design smell to escalate to the founder**, not a build-path edit.
 
 **Gates:** Gate 1 greenlight ✅ (`d2d3f338-d7f6-4316-be57-330cf4d28f55`). No Gate 2
-(T0). A **founder checkpoint** precedes wiring E5 to the live Foundry queue (the
-one-way door — carried as the `push-actuator-review` obligation). A **ship gate**
-(`foundry_gate_request gateType: "ship"`) closes the slice on E6.
+(T0). **Downstream founder gates WAIVED** (founder directive 2026-06-21, fully-autonomous
+operation): the E5 push-actuator checkpoint and the slice ship gate are waived — the slice
+auto-merges/auto-ships on green verifier waves. `push-actuator-review` remains as an
+*engineering* review focus on E5 (idempotency + disjointness-blocks-push), not a founder gate.
+Waiver scoped to this T0 product only — NOT to any T2/regulated product.
 
 ## Quality battery config
 
