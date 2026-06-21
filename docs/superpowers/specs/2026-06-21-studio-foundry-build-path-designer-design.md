@@ -1,13 +1,15 @@
-# Studio Foundry Build Path Designer — Design Note (Slice 1)
+# System Builder Studio — Build Path Designer Design Note (Slice 1)
 
 > Status: **draft** (design-first, pre-implementation). Origin: `docs/foundry-studio-fusion-handover.md`.
 > Decision basis: founder locked the three core forks on 2026-06-21 (see §Locked Decisions).
+> **Renamed 2026-06-21:** the product is **System Builder Studio** (Foundry key
+> `system-builder-studio`); the Build Path Designer described here is its **slice 1**.
 
 ## Name
 
-`Studio Foundry Build Path Designer` — a focused authoring surface inside `domains/studio`
-for turning a product charter into a Foundry build path, visually, then pushing it to the
-Foundry queue. **Not** a full IDE.
+**System Builder Studio** — slice 1 is the **Build Path Designer**: a focused authoring
+surface inside `domains/studio` for turning a product charter into a Foundry build path,
+visually, then pushing it to the Foundry queue. **Not** a full IDE.
 
 ## Locked Decisions (founder, 2026-06-21)
 
