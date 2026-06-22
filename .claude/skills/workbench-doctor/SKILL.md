@@ -11,18 +11,16 @@ This skill prints a single briefing on cluster health: manifest-vs-disk drift, p
 ## Read-Only Invariant
 
 **Allowed:**
-- Read `repos.yaml`, `.git/` refs, `domains/foundry/data/events.jsonl`
-- Call `foundry_next`, `foundry_status`, `foundry_gate_status` (read-only MCP queries only)
-- Print briefing to stdout
+- Read: `Read`, `Glob`, `Grep`
+- Bash (read-only only): `git status`, `git log`, `git rev-list`, `git rev-parse`, `git remote get-url`, `ls`, `grep`, `sed`, `comm`, `awk`
+- Foundry MCP (read-only queries only): `foundry_next`, `foundry_status`, `foundry_gate_status`
 
 **Forbidden:**
-- Write to any repository
-- Commit, push, fetch, or pull
-- Switch branches, stash, or restore working-tree files
-- Call any mutating foundry tool (e.g., `foundry_conduct`, `foundry_authorize`)
-- Disturb a concurrent session's working tree
-
-The `stash`/`checkout` ban encodes the wave-agent-stashed-WIP incident: a briefing must never disturb concurrent session work.
+- Any write or commit: `git add`, `git commit`, `git push`
+- Branch/working-tree mutation: `git checkout`, `git switch`, `git stash`, `git restore`
+- Remote sync: `git fetch`, `git pull`, `git reset`
+- Any mutating foundry tool: `foundry_conduct`, `foundry_authorize`, `foundry_reprioritize`, etc.
+- Disturb a concurrent session's working tree (the `git stash`/`git checkout` ban encodes the wave-agent-stashed-WIP incident: a briefing must never touch a sibling session's tree)
 
 ## Offline
 
