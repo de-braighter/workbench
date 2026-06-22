@@ -117,8 +117,10 @@ Rituals:     owed (heuristic): exercir#314, studio#28   ·  else clean
 Named explicitly in the skill so the procedure cannot drift into mutation:
 
 - **Allowed:** Read / Glob / Grep; read-only Bash (`git status` / `log` /
-  `rev-list` / `rev-parse`, `ls`, `grep`, `sed`); read-only Foundry MCP
-  (`foundry_next` / `foundry_status` / `foundry_gate_status`).
+  `rev-list` / `rev-parse` / `remote get-url`, `ls`, `grep`, `sed`, `comm`,
+  `awk`); read-only Foundry MCP (`foundry_next` / `foundry_status` /
+  `foundry_gate_status`). Anomalies are rendered as `WARN` in the skill output
+  (the spec's example uses `⚠`; they mean the same thing).
 - **Forbidden, by name:** any write / commit / push; `git checkout` /
   `switch` / `stash` / `add` / `fetch` / `reset`; and every mutating
   `foundry_*` tool. The `stash` / `checkout` ban encodes the wave-agent

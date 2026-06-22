@@ -33,7 +33,7 @@ This skill operates **entirely on local state** — no network calls except to t
 Run this to detect drift between `repos.yaml` and actual clones under `layers/` and `domains/`:
 
 ```bash
-manifest=$(sed -n '/^  layers:/,/^[^ ]/p; /^  domains:/,/^[^ ]/p' repos.yaml | grep -oE '^    - [a-z0-9-]+' | sed 's/^    - //' | sort -u)
+manifest=$(sed -n '/^  layers:/,/^  [a-z]/p; /^  domains:/,/^  [a-z]/p' repos.yaml | grep -oE '^    - [a-z0-9-]+' | sed 's/^    - //' | sort -u)
 disk=$(for g in layers domains; do for d in "$g"/*/; do n=$(basename "$d"); [ -e "$d/.git" ] && echo "$n"; done; done | sort -u)
 echo "unlisted on disk:"; comm -13 <(echo "$manifest") <(echo "$disk") | tr '\n' ' '; echo
 echo "missing on disk:";  comm -23 <(echo "$manifest") <(echo "$disk") | tr '\n' ' '; echo
@@ -56,6 +56,7 @@ status_repo () { local r="$1" br dirty cnt ab
   br=$(git -C "$r" rev-parse --abbrev-ref HEAD 2>/dev/null); [ "$br" = "HEAD" ] && br="DETACHED"
   cnt=$(git -C "$r" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
   dirty=$([ "$cnt" -gt 0 ] && echo "dirty($cnt)" || echo "clean")
+  git -C "$r" rev-parse --verify -q origin/main >/dev/null 2>&1 || { ab="n/a (no origin/main)"; printf '  %-28s %-9s %-10s %s\n' "$r" "$br" "$dirty" "$ab"; return; }
   ab=$(git -C "$r" rev-list --left-right --count origin/main...HEAD 2>/dev/null | awk '{print $2"^ "$1"v"}')
   printf '  %-28s %-9s %-10s %s\n' "$r" "$br" "$dirty" "$ab"; }
 status_repo "."
@@ -96,12 +97,19 @@ Run this to detect merged PRs on `origin/main` not yet recorded in the foundry e
 EV=domains/foundry/data/events.jsonl
 owed_for () { local repo="$1" ref="$2" owed="" prs name
   name=$(basename -s .git "$(git -C "$repo" remote get-url origin 2>/dev/null)")
+  [ -z "$name" ] && return
+  git -C "$repo" rev-parse --verify -q origin/main >/dev/null 2>&1 || { printf '  %-24s owed:%s\n' "$name" " n/a (no origin/main)"; return; }
   prs=$(git -C "$repo" log --oneline -n 10 "$ref" 2>/dev/null | grep -oE '\(#[0-9]+\)' | grep -oE '[0-9]+' | sort -un)
   for n in $prs; do
     grep -qE "\"repo\":\"de-braighter/$name\",\"pr\":$n[,}]" "$EV" 2>/dev/null || owed="$owed #$n"
   done
   printf '  %-24s owed:%s\n' "$name" "${owed:- none}"; }
-for r in . layers/*/ domains/*/; do owed_for "${r%/}" "origin/main"; done
+for r in . layers/*/ domains/*/; do
+  name=$(basename "${r%/}")
+  [ -z "$name" ] && continue
+  [ -e "${r%/}/.git" ] || [ "${r%/}" = "." ] || continue
+  owed_for "${r%/}" "origin/main"
+done
 ```
 
 **Report:** this is a **heuristic** — `{recent merges on origin/main} − {refs already in the foundry event log}`. Window is the last 10 merges per repo (session-recent scope; older un-ingested history is a backlog concern, not a session-start one). Accuracy depends on local refs being current; a stale clone under-reports. Label the output `owed (heuristic)`. If `events.jsonl` is absent, print `Rituals: event log unavailable`.
