@@ -17,7 +17,7 @@
 - **18 repos**, **~2,200 commits**, **~1,300 merged PRs**, **272 ADRs** (architecture decision records), **652 spec/concept docs**, **48 skills + 23 agents**.
 - **~1.05M authored lines** (~658k code, ~366k prose, ~25k structured data) — plus ~181k generated lockfiles → ~1.4M tracked.
 - **More than a third of everything authored is prose** — design reasoning, not code. The "not only code" claim is now a number.
-- **Conservative human-effort floor: ~38 person-years.** The standard parametric model (COCOMO) puts the realistic figure at **120–360 person-years**.
+- **Conservative human-effort floor: ~38 person-years.** The standard parametric model (COCOMO) puts the realistic figure at **180–360 person-years**.
 - **Economics, audit-proof:** even discounting output 10× *and* charging full freight for the founder's own quarter, it lands at **15–150× cost efficiency**. The headline-grabbing 1,000×+ number needs the subscription-only framing and should not be used.
 
 The honest framing is **not** "AI did 38 years of work for \$600." It is: **AI turned one expert into a team's worth of output**, at a cost dominated by that one expert's own time. The amplifier did its work *because* the base — the founder's expertise plus the blueprints, ADRs, and verifier-wave around the AI — was strong.
@@ -125,7 +125,7 @@ Docs:   924 documents × 0.75 day = 693 days ÷ 220 ≈ 3 person-years
 
 ```text
 Organic mode:        2.4 × 658^1.05  = 2,185 person-months ≈ 182 person-years
-Semi-detached mode:  3.0 × 658^1.12  = 4,311 person-months ≈ 359 person-years
+Semi-detached mode:  3.0 × 658^1.12  = 4,301 person-months ≈ 358 person-years
 ```
 
 Substrate is kernel R&D (event-sourcing, Bayesian inference, RLS, FHIR, reproducibility) — squarely *semi-detached*. But even the **organic (easiest) mode says ~180 person-years for the code alone**, before a single ADR. The §6.1 floor of 38 is deliberately ~⅕ of the gentlest standard estimate.
