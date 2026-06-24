@@ -82,6 +82,10 @@ Re-measured cleanly (`cat | wc -l`, lockfiles excluded from "authored"):
 | Generated lockfiles (excluded above) | ~181,178 | — |
 | **Total tracked** | **~1,400,362** | — |
 
+> Authored + lockfiles (~1.23M) is less than total tracked (~1.40M): the ~171k
+> remainder is other tracked files outside these three buckets — SVGs, test
+> snapshots, `.txt`, and miscellaneous config — counted by `cat | wc -l`.
+
 **For every two lines of code there is more than one line of authored design reasoning.** That is the standardisation-infrastructure thesis made literal: the products and the standards that govern them were built in the same window.
 
 ---
