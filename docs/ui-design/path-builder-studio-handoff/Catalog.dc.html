@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/colors_and_type.css">
+<style>
+  html,body{ background:var(--bg-0); margin:0; }
+  .cat-scroll{ scrollbar-width:thin; } .cat-scroll::-webkit-scrollbar{ width:8px; } .cat-scroll::-webkit-scrollbar-thumb{ background:var(--line-2); border-radius:8px; }
+  @keyframes catDrawer{ from{ transform:translateX(18px); opacity:0 } to{ transform:none; opacity:1 } }
+  @media (prefers-reduced-motion: no-preference){ .cat-drawer{ animation:catDrawer .22s var(--ease-out) both } }
+</style>
+</helmet>
+<div data-skin="exercir" style="position:relative;width:100%;height:100vh;background:var(--bg-1);overflow:hidden;font-family:var(--font-body);color:var(--fg-1);display:flex;flex-direction:column;">
+
+  <div style="position:absolute;left:-8%;right:-8%;top:-26%;height:50%;background:radial-gradient(ellipse at 24% 0%, var(--accent-soft), transparent 58%),radial-gradient(ellipse at 88% 4%, rgba(109,240,179,0.05), transparent 54%);filter:blur(40px);pointer-events:none;z-index:0;"></div>
+
+  <!-- TOP BAR -->
+  <header style="position:relative;z-index:3;display:flex;align-items:center;gap:16px;height:58px;padding:0 20px;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--line-1);box-shadow:var(--rim);flex:0 0 auto;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:25px;height:25px;border-radius:8px;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));box-shadow:var(--glow-soft);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border:1.6px solid var(--fg-on-glow);border-radius:2px;transform:rotate(45deg);"></div></div>
+      <div style="display:flex;flex-direction:column;line-height:1.05;"><span style="font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:-0.02em;color:var(--fg-1);">system-builder</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg-3);">studio</span></div>
+      <div style="margin-left:6px;display:flex;gap:3px;padding:3px;background:var(--bg-inset);border:1px solid var(--line-1);border-radius:999px;">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button style="{{ t.style }}" onClick="{{ t.onClick }}">{{ t.label }}</button></sc-for>
+      </div>
+    </div>
+    <div style="flex:1 1 0;"></div>
+    <div style="display:flex;align-items:center;gap:8px;background:var(--bg-inset);border:1px solid var(--line-2);border-radius:9px;padding:7px 11px;width:230px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg-4)" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+      <input type="text" value="{{ query }}" onInput="{{ onSearch }}" placeholder="Search {{ libLabelLower }}…" style="flex:1 1 0;min-width:0;background:none;border:none;outline:none;color:var(--fg-1);font-family:var(--font-body);font-size:13px;">
+    </div>
+    <button style="display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;padding:10px 15px;font-family:var(--font-display);font-weight:600;font-size:13px;cursor:pointer;transition:all 120ms;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));color:var(--fg-on-glow);box-shadow:var(--glow);" style-active="transform:scale(0.98);" onClick="{{ onNew }}">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>{{ newLabel }}
+    </button>
+  </header>
+
+  <div style="position:relative;z-index:1;flex:1 1 0;display:flex;min-height:0;">
+
+    <!-- LEFT RAIL -->
+    <aside class="cat-scroll" style="flex:0 0 244px;display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-right:1px solid var(--line-1);box-shadow:var(--rim);min-height:0;overflow-y:auto;padding:16px 12px;">
+      <div style="padding:2px 8px 13px;margin-bottom:11px;border-bottom:1px solid var(--line-1);">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-4);margin-bottom:9px;">Visibility</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;"><sc-for list="{{ visFilters }}" as="f" hint-placeholder-count="4"><button style="{{ f.style }}" onClick="{{ f.onClick }}">{{ f.label }}</button></sc-for></div>
+      </div>
+      <sc-for list="{{ railSections }}" as="sec" hint-placeholder-count="2">
+        <div style="padding:8px 8px 6px;margin-top:{{ sec.topGap }};font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-4);">{{ sec.title }}</div>
+        <sc-for list="{{ sec.items }}" as="r" hint-placeholder-count="4">
+          <button style="{{ r.style }}" onClick="{{ r.onClick }}" style-hover="opacity:1;">
+            <span style="{{ r.indicatorStyle }}"></span>
+            <span style="{{ r.iconWrap }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><sc-for list="{{ r.iconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg></span>
+            <span style="flex:1 1 0;text-align:left;font-size:13.5px;color:{{ r.labelColor }};font-weight:{{ r.weight }};">{{ r.label }}</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:{{ r.countColor }};">{{ r.count }}</span>
+          </button>
+        </sc-for>
+      </sc-for>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="cat-scroll" style="flex:1 1 0;min-width:0;overflow-y:auto;min-height:0;padding:24px 28px 36px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;">
+        <div style="min-width:0;">
+          <h1 style="font-family:var(--font-display);font-weight:600;font-size:25px;letter-spacing:-0.02em;color:var(--fg-1);">{{ libLabel }}</h1>
+          <p style="margin-top:6px;font-size:13.5px;color:var(--fg-2);line-height:1.5;max-width:620px;text-wrap:pretty;">{{ libIntro }}</p>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:12px;color:var(--fg-3);white-space:nowrap;">{{ resultCount }}</span>
+      </div>
+
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="1">
+        <sc-if value="{{ g.showTitle }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:22px;display:flex;align-items:center;gap:10px;">
+            <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-3);">{{ g.title }}</span>
+            <sc-if value="{{ g.hasSubtitle }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--fg-4);">{{ g.subtitle }}</span></sc-if>
+            <div style="flex:1 1 0;height:1px;background:var(--line-1);"></div>
+          </div>
+        </sc-if>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(296px,1fr));gap:16px;align-items:stretch;">
+          <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="3">
+            <div role="button" tabindex="0" onClick="{{ c.onClick }}" style="{{ c.cardStyle }}" style-hover="border-color:var(--line-3);">
+              <sc-if value="{{ c.featured }}" hint-placeholder-val="{{ false }}"><div style="height:2px;margin:-18px -18px 14px;border-radius:15px 15px 0 0;background:linear-gradient(90deg,transparent,var(--accent),transparent);"></div></sc-if>
+              <div style="display:flex;align-items:flex-start;gap:11px;">
+                <span style="{{ c.iconWrap }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><sc-for list="{{ c.iconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg></span>
+                <div style="min-width:0;flex:1 1 0;">
+                  <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;"><sc-if value="{{ c.hasDomain }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-4);">{{ c.domainLabel }}</span></sc-if><span style="{{ c.visChipStyle }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><sc-for list="{{ c.visIconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg>{{ c.visLabel }}</span></div>
+                  <div style="margin-top:3px;font-family:var(--font-display);font-weight:600;font-size:15.5px;letter-spacing:-0.01em;color:var(--fg-1);line-height:1.2;">{{ c.name }}</div>
+                </div>
+                <sc-if value="{{ c.showTrash }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ c.onTrash }}" title="Drop — not used anywhere" style="flex:0 0 auto;width:27px;height:27px;display:flex;align-items:center;justify-content:center;border-radius:7px;background:var(--bg-inset);border:1px solid var(--line-2);color:var(--fg-4);cursor:pointer;transition:all 120ms;" style-hover="color:var(--err);border-color:var(--err);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+                </sc-if>
+                <sc-if value="{{ c.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="{{ c.badgeStyle }}">{{ c.badgeText }}</span></sc-if>
+              </div>
+              <sc-if value="{{ c.hasDesc }}" hint-placeholder-val="{{ true }}"><p style="margin-top:10px;font-size:12.5px;color:var(--fg-3);line-height:1.5;text-wrap:pretty;min-height:38px;">{{ c.desc }}</p></sc-if>
+              <sc-if value="{{ c.hasBar }}" hint-placeholder-val="{{ false }}"><div style="margin-top:10px;height:6px;border-radius:999px;background:var(--bg-inset);border:1px solid var(--line-2);overflow:hidden;"><div style="{{ c.barStyle }}"></div></div></sc-if>
+              <sc-if value="{{ c.hasMeta }}" hint-placeholder-val="{{ false }}"><div style="margin-top:11px;font-family:var(--font-mono);font-size:11px;color:var(--fg-3);">{{ c.metaText }}</div></sc-if>
+              <sc-if value="{{ c.hasChips }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:11px;display:flex;flex-direction:column;gap:7px;">
+                  <sc-for list="{{ c.chipGroups }}" as="cg" hint-placeholder-count="1">
+                    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                      <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-4);flex:0 0 auto;">{{ cg.label }}</span>
+                      <sc-for list="{{ cg.items }}" as="ch" hint-placeholder-count="2"><span style="{{ ch.style }}">{{ ch.text }}</span></sc-for>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.hasRel }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--line-1);display:flex;align-items:center;gap:8px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ c.relColor }}" stroke-width="1.7" style="flex:0 0 auto;" aria-hidden="true"><sc-for list="{{ c.relIconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg>
+                  <span style="font-size:11.5px;color:{{ c.relTextColor }};line-height:1.35;">{{ c.relText }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ g.showNew }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ onNew }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;box-sizing:border-box;border-radius:15px;border:1px dashed var(--line-3);background:none;padding:20px;min-height:170px;height:100%;cursor:pointer;transition:all 140ms var(--ease-out);" style-hover="border-color:var(--accent-rim);">
+            <span style="width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:var(--bg-2);border:1px solid var(--line-2);color:var(--accent);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
+            <span style="font-size:13.5px;color:var(--fg-2);">{{ newLabel }}</span>
+          </button>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:60px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--fg-4);">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+          <span style="font-size:13.5px;">No {{ libLabelLower }} match “{{ query }}”.</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 880}}">
+class Component extends DCLogic {
+  NAVMAP = { catalog: 'Catalog.dc.html', autorieren: 'Autorieren.dc.html', betrieb: 'Betrieb.dc.html', ergebnisse: 'Reproduzierbarkeit.dc.html' };
+  TABDEFS = [ { key: 'catalog', label: 'Katalog' }, { key: 'betrieb', label: 'Betreiben' }, { key: 'ergebnisse', label: 'Ergebnisse' } ];
+  goShell(key) { if (this.props && this.props.onNavigate) this.props.onNavigate(key); else window.location.href = this.NAVMAP[key]; }
+  goEditor(id) { if (this.props && this.props.onNavigate) this.props.onNavigate('editor', id); else window.location.href = 'Editor.dc.html'; }
+  goItem(lib, id) { if (this.props && this.props.onNavigate) this.props.onNavigate('item', { lib, id }); else window.location.href = 'ItemEditor.dc.html?open=' + encodeURIComponent(lib + ':' + id); }
+  newItem() { if (this.state.lib === 'systems') this.goEditor('new'); else this.goItem(this.state.lib, 'new'); }
+  buildTabs(active) { return this.TABDEFS.map(t => ({ label: t.label, onClick: () => this.goShell(t.key), style: 'display:inline-flex;align-items:center;padding:5px 13px;border-radius:999px;font-size:12.5px;cursor:pointer;border:1px solid transparent;background:none;font-family:var(--font-body);transition:all 120ms;' + (t.key === active ? 'font-weight:500;background:var(--accent-soft);color:var(--accent);border-color:var(--accent-rim);box-shadow:var(--glow-soft);' : 'color:var(--fg-3);') })); }
+  state = { lib: 'systems', query: '', openTier: 'simple', openId: null, removed: [], exactOpen: {}, interventions: null, actions: null, vis: {}, visFilter: 'all' };
+
+  // Per-item visibility: who may use it. private = only you; org = your team; customers = shared externally.
+  VIS_LEVELS = ['private', 'org', 'customers'];
+  VIS_DEFAULT = { 'systems:garden': 'customers', 'systems:drip': 'customers', 'systems:volunteers': 'org', 'interventions:drip': 'customers', 'interventions:mulch': 'org', 'interventions:compost': 'org', 'traits:moisture': 'org', 'traits:yield': 'org', 'traits:stamina': 'org', 'resources:budget': 'org', 'resources:volunteer': 'org', 'actions:notify-team': 'org', 'actions:log-sheet': 'org', 'subjects:bed': 'org', 'subjects:player': 'org', 'phases:springprep': 'org', 'phases:preseason': 'org', 'capabilities:drought': 'customers' };
+  VIS_META = {
+    private:   { label: 'Private',   color: 'var(--fg-3)', bg: 'var(--bg-inset)', border: 'var(--line-2)',          icon: 'lock' },
+    org:       { label: 'Org',       color: 'var(--info)', bg: 'var(--info-bg)', border: 'rgba(109,210,255,0.28)', icon: 'users' },
+    customers: { label: 'Customers', color: 'var(--ok)',   bg: 'var(--ok-bg)',   border: 'rgba(34,211,154,0.28)',  icon: 'globe' }
+  };
+  visLevel(lib, id) { const k = lib + ':' + id; return this.state.vis[k] || this.VIS_DEFAULT[k] || 'private'; }
+  setVis(lib, id, level) { const k = lib + ':' + id; this.setState(s => ({ vis: Object.assign({}, s.vis, { [k]: level }) })); }
+  cycleVis(lib, id) { const i = this.VIS_LEVELS.indexOf(this.visLevel(lib, id)); this.setVis(lib, id, this.VIS_LEVELS[(i + 1) % 3]); }
+  visChipStyle(level, big) { const m = this.VIS_META[level]; return 'display:inline-flex;align-items:center;gap:' + (big ? '5px' : '4px') + ';flex:0 0 auto;font-family:var(--font-mono);font-size:' + (big ? '9.5px' : '8.5px') + ';letter-spacing:0.05em;text-transform:uppercase;border-radius:' + (big ? '6px' : '5px') + ';padding:' + (big ? '4px 9px' : '2px 6px') + ';' + (big ? 'cursor:pointer;transition:all 120ms;' : '') + 'color:' + m.color + ';background:' + m.bg + ';border:1px solid ' + m.border + ';'; }
+
+  ICONS = {
+    users: [{ d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' }, { d: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' }, { d: 'M22 21v-2a4 4 0 0 0-3-3.87' }, { d: 'M16 3.13a4 4 0 0 1 0 7.75' }],
+    lock: [{ d: 'M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z' }, { d: 'M7 11V7a5 5 0 0 1 10 0v4' }],
+    globe: [{ d: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z' }, { d: 'M2 12h20' }, { d: 'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z' }],
+    layers: [{ d: 'm12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z' }, { d: 'm22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65' }, { d: 'm22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65' }],
+    tree: [{ d: 'M21 12h-8' }, { d: 'M21 6H8' }, { d: 'M21 18h-8' }, { d: 'M3 6v4c0 1.1.9 2 2 2h3' }, { d: 'M3 10v6c0 1.1.9 2 2 2h3' }],
+    clock: [{ d: 'M12 6v6l4 2' }, { d: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z' }],
+    target: [{ d: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z' }, { d: 'M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z' }, { d: 'M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z' }],
+    gauge: [{ d: 'm12 14 4-4' }, { d: 'M3.34 19a10 10 0 1 1 17.32 0' }],
+    zap: [{ d: 'M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z' }],
+    package: [{ d: 'M16.5 9.4 7.55 4.24' }, { d: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z' }, { d: 'M3.27 6.96 12 12.01l8.73-5.05' }, { d: 'M12 22.08V12' }],
+    webhook: [{ d: 'M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2' }, { d: 'm6 17 3.13-5.73c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06' }, { d: 'm12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8' }],
+    reuse: [{ d: 'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1' }, { d: 'M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1' }],
+    contain: [{ d: 'M21 12h-8' }, { d: 'M21 6H8' }, { d: 'M21 18h-8' }, { d: 'M3 6v4c0 1.1.9 2 2 2h3' }, { d: 'M3 10v6c0 1.1.9 2 2 2h3' }]
+  };
+
+  LIBS = {
+    systems: { label: 'Systems', singular: 'New system', icon: 'layers', kind: 'System', intro: 'Whole models you build. Each one models its subjects, measures and actions over time — and any system can drop into another as a single action.' },
+    subjects: { label: 'Subjects', singular: 'New subject type', icon: 'tree', kind: 'Subject type', intro: 'The things you model. Subjects nest — a bed holds plant groups, a squad holds players — so a model can be as coarse or fine-grained as you need.' },
+    phases: { label: 'Phases', singular: 'New phase', icon: 'clock', kind: 'Phase', intro: 'Blocks of time. Sequenced, they form the timeline a system moves through — early season to late, intake to discharge.' },
+    capabilities: { label: 'Capabilities', singular: 'New capability', icon: 'target', kind: 'Capability', intro: 'What a subject can do or become. Each capability is read from a handful of traits — get those moving and the capability follows.' },
+    traits: { label: 'Traits', singular: 'New trait', icon: 'gauge', kind: 'Trait', intro: 'The measurable things. Every trait has a unit and a baseline; interventions move them and capabilities are read from them.' },
+    interventions: { label: 'Interventions', singular: 'New intervention', icon: 'zap', kind: 'Intervention', intro: 'The actions you take. Each one changes one or more traits and draws on resources to happen — a treatment, a drill, a watering run.' },
+    resources: { label: 'Resources', singular: 'New resource', icon: 'package', kind: 'Resource', intro: 'What interventions consume. Budget, hours, materials, staff — the real-world limits that keep a plan honest.' },
+    actions: { label: 'Actions', singular: 'New action', icon: 'webhook', kind: 'Action', intro: 'External calls. When an intervention runs it can fire a chain of actions — a webhook, an integration or a script. Defined once here, linked to any intervention.' }
+  };
+
+  SYS = {
+    checkout: { name: 'Checkout-Rewrite v2', domain: 'Software' },
+    garden: { name: 'Greenway Community Garden', domain: 'Horticulture' },
+    football: { name: 'Eastside Youth Football', domain: 'Sports' },
+    clinic: { name: 'Maple Clinic Recovery', domain: 'Health' }
+  };
+
+  // A System IS a plan-tree (the SDLC template you can run). Single-parent, auto-laid-out.
+  // Running one spawns an instance plan-tree whose items become story tickets, treated in Betrieb.
+  TREES = {
+    checkout: [
+      { name: 'Backlog', tag: 'epic', nodes: [ { id: 'EP-01', kind: 'intervention', title: 'Checkout-Rewrite' } ] },
+      { name: 'Build', tag: '2 items', nodes: [ { id: 'AP-03', kind: 'intervention', title: 'Adresse-Validierung' }, { id: 'AP-05', kind: 'intervention', title: 'Zahlungs-Adapter' } ] },
+      { name: 'Review', tag: '2 items', nodes: [ { id: 'AP-07', kind: 'intervention', title: 'Idempotenz-Schlüssel' }, { id: 'AP-09', kind: 'intervention', title: 'Telemetrie-Hooks' } ] },
+      { name: 'Release', tag: 'gate', nodes: [ { id: 'GATE-01', kind: 'gate', title: 'Release-Freigabe' }, { id: 'AP-11', kind: 'intervention', title: 'Lastpfad-Härtung' } ] }
+    ],
+    garden: [
+      { name: 'Spring prep', tag: 'setup', nodes: [ { id: 'N1', kind: 'intervention', title: 'Install drip irrigation' }, { id: 'N2', kind: 'intervention', title: 'Mulch the beds' } ] },
+      { name: 'Peak summer', tag: 'grow', nodes: [ { id: 'N3', kind: 'intervention', title: 'Companion planting' } ] },
+      { name: 'Harvest', tag: 'gate', nodes: [ { id: 'G1', kind: 'gate', title: 'Harvest readiness gate' } ] }
+    ],
+    football: [
+      { name: 'Pre-season', tag: 'base', nodes: [ { id: 'N1', kind: 'intervention', title: 'Interval running' } ] },
+      { name: 'Build', tag: 'load', nodes: [ { id: 'N2', kind: 'intervention', title: 'Strength block' } ] },
+      { name: 'Taper', tag: 'gate', nodes: [ { id: 'G1', kind: 'gate', title: 'Match-fit sign-off' } ] }
+    ],
+    clinic: [
+      { name: 'Acute', tag: 'intake', nodes: [ { id: 'N1', kind: 'intervention', title: 'Physiotherapy' } ] },
+      { name: 'Rehab', tag: 'progress', nodes: [ { id: 'N2', kind: 'intervention', title: 'Strength rehab' } ] },
+      { name: 'Discharge', tag: 'gate', nodes: [ { id: 'G1', kind: 'gate', title: 'Discharge review' } ] }
+    ],
+    drip: [
+      { name: 'Survey', tag: 'plan', nodes: [ { id: 'N1', kind: 'intervention', title: 'Zone survey' } ] },
+      { name: 'Install', tag: 'build', nodes: [ { id: 'N2', kind: 'intervention', title: 'Lay drip lines' } ] },
+      { name: 'Tune', tag: 'gate', nodes: [ { id: 'G1', kind: 'gate', title: 'Flow sign-off' } ] }
+    ],
+    volunteers: [
+      { name: 'Recruit', tag: 'intake', nodes: [ { id: 'N1', kind: 'intervention', title: 'Outreach' } ] },
+      { name: 'Train', tag: 'ramp', nodes: [ { id: 'N2', kind: 'intervention', title: 'Onboarding session' } ] },
+      { name: 'Schedule', tag: 'gate', nodes: [ { id: 'G1', kind: 'gate', title: 'Roster sign-off' } ] }
+    ]
+  };
+
+  DATA = {
+    systems: [
+      { id: 'checkout', _group: 'Models', name: 'Checkout-Rewrite v2', domain: 'Software', desc: 'An AI-built delivery path — epics to release, with a founder gate before production.', ready: 0.8, meta: '4 phases  ·  6 work-items  ·  1 gate', featured: true, rel: 'Runs in Foundry · story tickets in Betrieb', nav: true },
+      { id: 'garden', _group: 'Models', name: 'Greenway Community Garden', domain: 'Horticulture', desc: 'A full growing season across three beds — moisture, yield and pests.', ready: 0.8, meta: '4 stages  ·  3 beds  ·  5 actions', featured: true, rel: 'Includes Drip Irrigation Rollout as an action', nav: true },
+      { id: 'football', _group: 'Models', name: 'Eastside Youth Football', domain: 'Sports', desc: 'Pre-season conditioning for a U16 squad over six weeks.', ready: 0.6, meta: '3 stages  ·  18 players  ·  7 actions', nav: true },
+      { id: 'clinic', _group: 'Models', name: 'Maple Clinic Recovery', domain: 'Health', desc: 'A post-op recovery pathway tracked across twelve weeks.', ready: 0.35, meta: '5 stages  ·  40 patients  ·  9 actions', nav: true },
+      { id: 'drip', _group: 'Reusable', name: 'Drip Irrigation Rollout', domain: 'Horticulture', desc: 'Install and tune drip lines. Reused wherever watering matters.', ready: 0.9, meta: '3 stages  ·  6 zones  ·  4 actions', reuseCount: 2, rel: 'Used in Greenway Garden · City Allotments', nav: true },
+      { id: 'volunteers', _group: 'Reusable', name: 'Volunteer Onboarding', domain: 'Operations', desc: 'Recruit, train and schedule volunteers for a season.', ready: 0.7, meta: '2 stages  ·  12 people  ·  5 actions', reuseCount: 1, rel: 'Used in Greenway Garden', nav: true }
+    ],
+    subjects: [
+      { id: 'bed', name: 'Garden bed', domain: 'Horticulture', desc: 'A planting area. Holds smaller plant groups inside it.', contains: ['plantgroup'], hasTraits: ['moisture'], usedIn: ['garden'] },
+      { id: 'plantgroup', name: 'Plant group', domain: 'Horticulture', desc: 'A set of plants of one kind, sharing the same care.', contains: [], hasTraits: ['yield', 'pest'], usedIn: ['garden'] },
+      { id: 'squad', name: 'Squad', domain: 'Sports', desc: 'A team roster. Holds individual players.', contains: ['player'], hasTraits: [], usedIn: ['football'] },
+      { id: 'player', name: 'Player', domain: 'Sports', desc: 'One athlete, with their own fitness traits.', contains: [], hasTraits: ['stamina', 'sprint', 'recovery'], usedIn: ['football'] },
+      { id: 'cohort', name: 'Patient cohort', domain: 'Health', desc: 'A group of patients moving through one pathway.', contains: ['patient'], hasTraits: [], usedIn: ['clinic'] },
+      { id: 'patient', name: 'Patient', domain: 'Health', desc: 'One individual on the recovery pathway.', contains: [], hasTraits: ['rom', 'pain', 'strength'], usedIn: ['clinic'] },
+      { id: 'shed', name: 'Tool shed', domain: 'Horticulture', desc: 'A store for tools and supplies. Drafted, never wired into a model.', contains: [], hasTraits: [], usedIn: [] }
+    ],
+    phases: [
+      { id: 'springprep', name: 'Spring prep', domain: 'Horticulture', desc: 'Early-season setup — beds, soil, irrigation.', meta: '≈ 4 weeks', usedIn: ['garden'] },
+      { id: 'peaksummer', name: 'Peak summer', domain: 'Horticulture', desc: 'Heat and growth at their highest.', meta: '≈ 8 weeks', usedIn: ['garden'] },
+      { id: 'harvest', name: 'Harvest', domain: 'Horticulture', desc: 'Picking and winding the season down.', meta: '≈ 4 weeks', usedIn: ['garden'] },
+      { id: 'preseason', name: 'Pre-season', domain: 'Sports', desc: 'Conditioning block before competition.', meta: '≈ 6 weeks', usedIn: ['football'] },
+      { id: 'acute', name: 'Acute recovery', domain: 'Health', desc: 'The first weeks after a procedure.', meta: '≈ 2 weeks', usedIn: ['clinic'] },
+      { id: 'rehab', name: 'Rehab', domain: 'Health', desc: 'Progressive return to function.', meta: '≈ 10 weeks', usedIn: ['clinic'] },
+      { id: 'overwinter', name: 'Overwinter', domain: 'Horticulture', desc: 'A dormant cold-season block. Sketched for a future model.', meta: '≈ 12 weeks', usedIn: [] }
+    ],
+    capabilities: [
+      { id: 'drought', name: 'Drought resilience', domain: 'Horticulture', desc: 'How well the planting copes when water is scarce.', readFrom: ['moisture', 'water', 'root'], usedIn: ['garden'] },
+      { id: 'yieldpot', name: 'Yield potential', domain: 'Horticulture', desc: 'How much the beds can produce on time.', readFrom: ['yield', 'days'], usedIn: ['garden'] },
+      { id: 'matchfit', name: 'Match fitness', domain: 'Sports', desc: 'Readiness to play a full competitive match.', readFrom: ['stamina', 'sprint', 'recovery'], usedIn: ['football'] },
+      { id: 'mobility', name: 'Mobility', domain: 'Health', desc: 'Functional movement after a procedure.', readFrom: ['rom', 'pain', 'strength'], usedIn: ['clinic'] },
+      { id: 'pesttol', name: 'Pest tolerance', domain: 'Horticulture', desc: 'How well plants withstand pest pressure.', readFrom: ['pest'], usedIn: ['garden'] },
+      { id: 'frost', name: 'Frost hardiness', domain: 'Horticulture', desc: 'Tolerance of cold snaps. Defined but not yet read by any system.', readFrom: ['root'], usedIn: [] }
+    ],
+    traits: [
+      { id: 'moisture', name: 'Soil moisture', domain: 'Horticulture', desc: 'Water held in the bed, as a percentage.', meta: '0–100%  ·  baseline 45%' },
+      { id: 'water', name: 'Water use', domain: 'Horticulture', desc: 'Water drawn per week.', meta: 'L / week  ·  baseline 120 L' },
+      { id: 'root', name: 'Root depth', domain: 'Horticulture', desc: 'How deep the roots reach.', meta: 'cm  ·  baseline 18 cm' },
+      { id: 'yield', name: 'Yield per bed', domain: 'Horticulture', desc: 'Harvest weight from a single bed.', meta: 'kg  ·  baseline 6 kg' },
+      { id: 'days', name: 'Days to harvest', domain: 'Horticulture', desc: 'Time from planting to first pick.', meta: 'days  ·  baseline 78 d' },
+      { id: 'pest', name: 'Pest pressure', domain: 'Horticulture', desc: 'Pest load on the planting.', meta: 'index /10  ·  baseline 5.5' },
+      { id: 'stamina', name: 'Stamina', domain: 'Sports', desc: 'Aerobic endurance over a match.', meta: 'index /100  ·  baseline 60' },
+      { id: 'sprint', name: 'Sprint speed', domain: 'Sports', desc: 'Top running speed over short distance.', meta: 'm/s  ·  baseline 7.2' },
+      { id: 'recovery', name: 'Recovery rate', domain: 'Sports', desc: 'How fast a player bounces back.', meta: 'hrs  ·  baseline 48 h' },
+      { id: 'rom', name: 'Range of motion', domain: 'Health', desc: 'Joint movement, in degrees.', meta: 'degrees  ·  baseline 90°' },
+      { id: 'pain', name: 'Pain level', domain: 'Health', desc: 'Reported pain, on a 0–10 scale.', meta: 'index /10  ·  baseline 6' },
+      { id: 'strength', name: 'Strength', domain: 'Health', desc: 'Muscle strength index.', meta: 'index /100  ·  baseline 40' },
+      { id: 'leaf', name: 'Leaf area', domain: 'Horticulture', desc: 'Total leaf surface per plant. Logged but nothing reads it yet.', meta: 'cm²  ·  baseline 120' }
+    ],
+    interventions: [
+      { id: 'drip', name: 'Drip irrigation', domain: 'Horticulture', desc: 'Targeted watering delivered at the roots.', changes: [{ t: 'moisture', dir: 'up', strength: 0.34, conf: 0.85, dist: 'single', spread: 0.05, horizon: 16, evidence: ['Trial beds 2024 — moisture stayed above 60%', 'https://extension.example/drip-irrigation'] }], needs: ['budget', 'volunteer'], usedIn: ['garden'], meta: '€120  ·  6 h', actionChain: [{ action: 'notify-team', when: 'complete' }, { action: 'log-sheet', when: 'complete' }], failFast: false },
+      { id: 'mulch', name: 'Mulch the beds', domain: 'Horticulture', desc: 'Cover soil to hold moisture and suppress weeds.', changes: [{ t: 'moisture', dir: 'up', strength: 0.34, conf: 0.70, dist: 'single', spread: 0.05, horizon: 16, evidence: [] }], needs: ['materials', 'volunteer'], usedIn: ['garden'], meta: '€40  ·  4 h', actionChain: [], failFast: false },
+      { id: 'compost', name: 'Add compost', domain: 'Horticulture', desc: 'Enrich the soil ahead of planting.', changes: [{ t: 'yield', dir: 'up', strength: 0.34, conf: 0.75, dist: 'single', spread: 0.06, horizon: 20, evidence: [] }], needs: ['materials'], usedIn: ['garden'], meta: '€60  ·  3 h', actionChain: [], failFast: false },
+      { id: 'companion', name: 'Companion planting', domain: 'Horticulture', desc: 'Pair plants that protect each other.', changes: [{ t: 'pest', dir: 'down', strength: 0.18, conf: 0.35, dist: 'single', spread: 0.05, horizon: 12, evidence: [] }], needs: ['seeds'], usedIn: ['garden'], meta: '€15  ·  5 h', actionChain: [], failFast: false },
+      { id: 'interval', name: 'Interval running', domain: 'Sports', desc: 'Repeated high-intensity runs with recovery.', changes: [{ t: 'stamina', dir: 'up', strength: 0.4, conf: 0.6, dist: 'single', spread: 0.05, horizon: 8, evidence: [] }], needs: ['coach'], usedIn: ['football'], meta: '8 h / wk', actionChain: [{ action: 'notify-team', when: 'start' }], failFast: false },
+      { id: 'physio', name: 'Physiotherapy', domain: 'Health', desc: 'Guided movement to restore function.', changes: [{ t: 'rom', dir: 'up', strength: 0.45, conf: 0.7, dist: 'single', spread: 0.05, horizon: 24, evidence: [] }, { t: 'pain', dir: 'down', strength: 0.3, conf: 0.6, dist: 'single', spread: 0.05, horizon: 24, evidence: [] }], needs: ['therapist'], usedIn: ['clinic'], meta: '20 h / wk', actionChain: [{ action: 'calendar', when: 'start' }], failFast: true },
+      { id: 'shade', name: 'Shade cloth', domain: 'Horticulture', desc: 'Cut evaporation in peak heat. Drafted, not in a model yet.', changes: [{ t: 'moisture', dir: 'up', strength: 0.34, conf: 0.5, dist: 'single', spread: 0.05, horizon: 8, evidence: [] }], needs: ['budget'], usedIn: [], meta: '€80  ·  2 h', actionChain: [], failFast: false }
+    ],
+    resources: [
+      { id: 'budget', name: 'Budget', domain: 'Shared', desc: 'Money available to spend across the season.', meta: '€500 / season' },
+      { id: 'volunteer', name: 'Volunteer time', domain: 'Operations', desc: 'Hours the volunteer team can give.', meta: '40 h / week' },
+      { id: 'materials', name: 'Materials', domain: 'Horticulture', desc: 'Mulch, compost and sundries.', meta: 'by the load' },
+      { id: 'seeds', name: 'Seeds', domain: 'Horticulture', desc: 'Seed stock for planting.', meta: 'by the packet' },
+      { id: 'coach', name: 'Coach time', domain: 'Sports', desc: 'Coaching hours for sessions and drills.', meta: '12 h / week' },
+      { id: 'therapist', name: 'Therapist time', domain: 'Health', desc: 'Clinician hours for treatment.', meta: '20 h / week' },
+      { id: 'coldframe', name: 'Cold frames', domain: 'Horticulture', desc: 'Frames for season extension. In stock, unallocated.', meta: '4 units' }
+    ],
+    actions: [
+      { id: 'notify-team', name: 'Notify watering team', domain: 'Operations', type: 'webhook', target: 'https://hooks.example.org/garden/notify', method: 'POST', auth: 'garden-hook-secret', payload: [{ k: 'bed', v: 'bed name' }, { k: 'status', v: 'fired' }], retry: 'retry3', desc: 'Posts a short message to the volunteer crew when an intervention runs.' },
+      { id: 'log-sheet', name: 'Season log sheet', domain: 'Operations', type: 'integration', target: 'Spreadsheet · season-log', method: '', auth: 'sheets-service-account', payload: [], retry: 'none', desc: 'Appends a row to the shared season log so every run is recorded.' },
+      { id: 'calendar', name: 'Team calendar', domain: 'Operations', type: 'integration', target: 'Calendar · greenway', method: '', auth: 'calendar-token', payload: [], retry: 'alert', desc: 'Books a follow-up slot on the shared calendar.' },
+      { id: 'moisture-probe', name: 'Read moisture probe', domain: 'Horticulture', type: 'script', target: 'read-moisture.py', method: '', auth: '', payload: [], retry: 'none', desc: 'Runs a small script that reads a bed’s moisture sensor and returns the value.' },
+      { id: 'sms-alert', name: 'SMS alert', domain: 'Operations', type: 'webhook', target: 'https://hooks.example.org/sms', method: 'POST', auth: 'sms-secret', payload: [{ k: 'to', v: 'crew' }], retry: 'none', desc: 'Sends a text message. Drafted, not linked to any intervention yet.' }
+    ]
+  };
+
+  RAIL = [
+    { title: 'Compose', keys: ['systems'] },
+    { title: 'Building blocks', keys: ['subjects', 'phases', 'capabilities', 'traits', 'interventions', 'resources', 'actions'] }
+  ];
+
+  editorHref() { return 'Autorieren.dc.html'; }
+  componentDidMount() {
+    const patch = { interventions: JSON.parse(JSON.stringify(this.DATA.interventions)), actions: JSON.parse(JSON.stringify(this.DATA.actions)) };
+    try {
+      const m = /[?&]open=([^&]+)/.exec(window.location.search);
+      if (m) { const parts = decodeURIComponent(m[1]).split(':'); if (parts.length === 2 && this.DATA[parts[0]] && this.find(parts[0], parts[1])) { patch.lib = parts[0]; patch.openId = parts[1]; } }
+    } catch (e) {}
+    this.setState(patch);
+  }
+  isRemoved(lib, id) { return this.state.removed.indexOf(lib + ':' + id) >= 0; }
+  dataFor(lib) {
+    if (lib === 'interventions' && this.state.interventions) return this.state.interventions;
+    if (lib === 'actions' && this.state.actions) return this.state.actions;
+    return this.DATA[lib];
+  }
+  live(lib) { return this.dataFor(lib).filter(it => !this.isRemoved(lib, it.id)); }
+  find(lib, id) { return this.dataFor(lib).find(it => it.id === id); }
+  sysName(id) { const s = this.find('systems', id); return s ? s.name : id; }
+
+  // who references a building-block item → array of {lib, id, name, role}
+  usersOf(lib, id) {
+    const out = [];
+    if (lib === 'traits') {
+      this.live('capabilities').forEach(c => { if ((c.readFrom || []).indexOf(id) >= 0) out.push({ lib: 'capabilities', id: c.id, name: c.name }); });
+      this.live('interventions').forEach(i => { if ((i.changes || []).some(c => c.t === id)) out.push({ lib: 'interventions', id: i.id, name: i.name }); });
+      this.live('subjects').forEach(s => { if ((s.hasTraits || []).indexOf(id) >= 0) out.push({ lib: 'subjects', id: s.id, name: s.name }); });
+    } else if (lib === 'resources') {
+      this.live('interventions').forEach(i => { if ((i.needs || []).indexOf(id) >= 0) out.push({ lib: 'interventions', id: i.id, name: i.name }); });
+    } else if (lib === 'subjects') {
+      this.live('subjects').forEach(s => { if ((s.contains || []).indexOf(id) >= 0) out.push({ lib: 'subjects', id: s.id, name: s.name }); });
+    } else if (lib === 'actions') {
+      this.live('interventions').forEach(i => { if ((i.actionChain || []).some(c => c.action === id)) out.push({ lib: 'interventions', id: i.id, name: i.name }); });
+    }
+    return out;
+  }
+  systemsOf(lib, id) {
+    const it = this.find(lib, id);
+    return (it && it.usedIn ? it.usedIn : []).map(sid => ({ lib: 'systems', id: sid, name: this.sysName(sid), text: this.sysName(sid) }));
+  }
+  isUnused(lib, it) {
+    if (lib === 'traits' || lib === 'resources' || lib === 'actions') return this.usersOf(lib, it.id).length === 0;
+    if (lib === 'subjects') return (it.usedIn || []).length === 0 && this.usersOf('subjects', it.id).length === 0;
+    if (lib === 'interventions' || lib === 'capabilities' || lib === 'phases') return (it.usedIn || []).length === 0;
+    return false;
+  }
+  usageCount(lib, it) {
+    if (lib === 'traits' || lib === 'resources' || lib === 'actions') return this.usersOf(lib, it.id).length;
+    if (lib === 'subjects') return (it.usedIn || []).length + this.usersOf('subjects', it.id).length;
+    if (lib === 'interventions' || lib === 'capabilities' || lib === 'phases') return (it.usedIn || []).length;
+    return 0;
+  }
+
+  chipStyle(tone) {
+    if (tone === 'accent') return 'display:inline-flex;align-items:center;border-radius:7px;padding:4px 9px;font-size:11.5px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-rim);';
+    return 'display:inline-flex;align-items:center;border-radius:7px;padding:4px 9px;font-size:11.5px;background:var(--bg-inset);color:var(--fg-2);border:1px solid var(--line-2);';
+  }
+  refChipStyle(navigable) {
+    return 'display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:7px 11px;font-size:12.5px;cursor:' + (navigable ? 'pointer' : 'default') + ';transition:all 120ms;background:' + (navigable ? 'var(--bg-2)' : 'var(--bg-inset)') + ';color:' + (navigable ? 'var(--fg-1)' : 'var(--fg-3)') + ';border:1px solid var(--line-2);';
+  }
+  dirGlyph(d) { return d === 'down' ? ' ↓' : ' ↑'; }
+  CONN_TYPES = { webhook: 'Webhook', integration: 'Integration', script: 'Script' };
+  actName(id) { const a = this.find('actions', id); return a ? a.name : id; }
+  whenWord(c) {
+    if (c.when === 'start') return 'On start';
+    if (c.when === 'complete') return 'On complete';
+    if (c.when === 'measure') { const t = this.find('traits', c.measure); return 'When ' + (t ? t.name.toLowerCase() : 'a measure') + ' changes'; }
+    if (c.when === 'scheduled') return 'Every ' + (c.every || 'run');
+    return '';
+  }
+  MAG_LABELS = ['barely','small','moderate','big','huge'];
+  MAG_STRENGTH = [0.08, 0.18, 0.34, 0.52, 0.70];
+  WHEN_STOPS = [{ key: 'start', label: 'On start' }, { key: 'complete', label: 'On complete' }, { key: 'measure', label: 'On change' }, { key: 'scheduled', label: 'Scheduled' }];
+  RETRY_OPTS = [{ key: 'none', label: 'Don’t retry' }, { key: 'retry3', label: 'Retry ×3' }, { key: 'alert', label: 'Alert me' }];
+  METHODS = ['GET', 'POST', 'PUT'];
+  nearestMagIndex(st) { let bi = 0, bd = 1e9; this.MAG_STRENGTH.forEach((v, i) => { const d = Math.abs(st - v); if (d < bd) { bd = d; bi = i; } }); return bi; }
+  magLabelFor(st) { return this.MAG_LABELS[this.nearestMagIndex(st)]; }
+  confWord(c) { return c < 0.4 ? 'a hunch' : (c <= 0.75 ? 'some evidence' : 'well established'); }
+  num(e, f) { const v = parseFloat(e.target.value); return isNaN(v) ? f : v; }
+  chainSentence(link) {
+    const a = this.find('actions', link.action); const name = a ? a.name : 'an action';
+    let verb; if (!a) verb = 'call out'; else if (a.type === 'webhook') verb = 'fire the ' + name + ' webhook'; else if (a.type === 'script') verb = 'run ' + name; else verb = 'update ' + name;
+    let when; if (link.when === 'start') when = 'When this starts'; else if (link.when === 'complete') when = 'When this finishes'; else if (link.when === 'measure') { const t = this.find('traits', link.measure); when = 'When ' + (t ? t.name.toLowerCase() : 'a measure') + ' changes'; } else if (link.when === 'scheduled') when = (link.every ? 'Every ' + link.every : 'On a schedule'); else when = '';
+    return when + ', we ' + verb + '.';
+  }
+
+  openPanel(lib, id) { this.setState({ lib, openId: id }); }
+  closePanel() { this.setState({ openId: null }); }
+  navTo(ref) { if (ref.lib === 'systems') this.setState({ lib: 'systems', openId: null, query: '' }); else this.setState({ lib: ref.lib, openId: ref.id, query: '' }); }
+  removeItem(lib, id) { this.setState(s => ({ removed: s.removed.concat(lib + ':' + id), openId: null })); }
+
+  // ---- intervention editing ----
+  curIv() { return this.find('interventions', this.state.openId); }
+  patchIv(patch) { const id = this.state.openId; this.setState(s => ({ interventions: (s.interventions || this.DATA.interventions).map(it => it.id === id ? Object.assign({}, it, patch) : it) })); }
+  patchChange(ci, patch) { const it = this.curIv(); this.patchIv({ changes: it.changes.map((c, i) => i === ci ? Object.assign({}, c, patch) : c) }); }
+  addChange() { const it = this.curIv(); const t = (this.live('traits')[0] || {}).id || ''; this.patchIv({ changes: it.changes.concat({ t, dir: 'up', strength: 0.34, conf: 0.6, dist: 'single', spread: 0.05, horizon: 12, evidence: [], basis: 'literature' }) }); }
+  removeChange(ci) { const it = this.curIv(); this.patchIv({ changes: it.changes.filter((_, i) => i !== ci) }); }
+  addChangeEvidence(ci) { const it = this.curIv(); this.patchChange(ci, { evidence: (it.changes[ci].evidence || []).concat('') }); }
+  setChangeEvidence(ci, ei, val) { const it = this.curIv(); const ev = (it.changes[ci].evidence || []).slice(); ev[ei] = val; this.patchChange(ci, { evidence: ev }); }
+  removeChangeEvidence(ci, ei) { const it = this.curIv(); const ev = (it.changes[ci].evidence || []).slice(); ev.splice(ei, 1); this.patchChange(ci, { evidence: ev }); }
+  toggleExact(ci) { const key = this.state.openId + ':' + ci; this.setState(s => ({ exactOpen: Object.assign({}, s.exactOpen, { [key]: !(s.exactOpen || {})[key] }) })); }
+  addNeed(resId) { const it = this.curIv(); if ((it.needs || []).indexOf(resId) < 0) this.patchIv({ needs: (it.needs || []).concat(resId) }); }
+  removeNeed(resId) { const it = this.curIv(); this.patchIv({ needs: (it.needs || []).filter(r => r !== resId) }); }
+  addChainLink(actionId) { const it = this.curIv(); this.patchIv({ actionChain: (it.actionChain || []).concat({ action: actionId, when: 'complete' }) }); }
+  removeChainLink(ci) { const it = this.curIv(); this.patchIv({ actionChain: (it.actionChain || []).filter((_, i) => i !== ci) }); }
+  setChainLink(ci, patch) { const it = this.curIv(); this.patchIv({ actionChain: (it.actionChain || []).map((c, i) => i === ci ? Object.assign({}, c, patch) : c) }); }
+  moveChain(ci, dir) { const it = this.curIv(); const chain = (it.actionChain || []).slice(); const ni = ci + dir; if (ni < 0 || ni >= chain.length) return; const t = chain[ci]; chain[ci] = chain[ni]; chain[ni] = t; this.patchIv({ actionChain: chain }); }
+  toggleFailFast() { const it = this.curIv(); this.patchIv({ failFast: !it.failFast }); }
+  // ---- action (external call) editing ----
+  curAct() { return this.find('actions', this.state.openId); }
+  patchAct(patch) { const id = this.state.openId; this.setState(s => ({ actions: (s.actions || this.DATA.actions).map(a => a.id === id ? Object.assign({}, a, patch) : a) })); }
+  addActParam() { const a = this.curAct(); this.patchAct({ payload: (a.payload || []).concat({ k: '', v: '' }) }); }
+  setActParam(pi, patch) { const a = this.curAct(); const pl = (a.payload || []).map((p, i) => i === pi ? Object.assign({}, p, patch) : p); this.patchAct({ payload: pl }); }
+  removeActParam(pi) { const a = this.curAct(); const pl = (a.payload || []).slice(); pl.splice(pi, 1); this.patchAct({ payload: pl }); }
+
+  priorPaths() {
+    const x0 = 14, x1 = 226, w = x1 - x0, base = 58, top = 8, half = 3.0, N = 46;
+    const pts = [];
+    for (let i = 0; i <= N; i++) { const t = i / N; const z = (t * 2 - 1) * half; const y = Math.exp(-0.5 * z * z); pts.push([x0 + t * w, base - (base - top) * y]); }
+    const line = 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+    const area = line + ' L' + x1.toFixed(1) + ' ' + base + ' L' + x0.toFixed(1) + ' ' + base + ' Z';
+    const t2lo = (-2 / half + 1) / 2, t2hi = (2 / half + 1) / 2;
+    return { line, area, meanX: x0 + 0.5 * w, bandX0: x0 + t2lo * w, bandW: (t2hi - t2lo) * w };
+  }
+  buildInterventionForm(it) {
+    const seg = (on) => 'display:inline-flex;align-items:center;justify-content:center;gap:5px;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;transition:all 120ms;' + (on ? 'border:1px solid var(--accent-rim);color:var(--accent);background:var(--accent-soft);' : 'border:1px solid var(--line-2);color:var(--fg-3);background:var(--bg-2);');
+    const traits = this.live('traits');
+    const pc = this.priorPaths();
+    const BASES = [{ id: 'expert', label: 'expert' }, { id: 'literature', label: 'literature' }, { id: 'derived', label: 'derived' }];
+    const basisSeg = (on) => 'display:inline-flex;align-items:center;border-radius:7px;padding:5px 10px;font-family:var(--font-mono);font-size:10.5px;cursor:pointer;transition:all 120ms;' + (on ? 'border:1px solid var(--accent-rim);color:var(--accent);background:var(--accent-soft);' : 'border:1px solid var(--line-2);color:var(--fg-3);background:var(--bg-2);');
+    const changeRows = (it.changes || []).map((c, ci) => {
+      const exactOpen = !!(this.state.exactOpen || {})[it.id + ':' + ci];
+      const basis = c.basis || 'literature';
+      const basisStops = BASES.map(b => ({ label: b.label, onClick: () => this.patchChange(ci, { basis: b.id }), style: basisSeg(basis === b.id) }));
+      const signedMag = (c.dir === 'down' ? -1 : 1) * c.strength;
+      const priorLabel = (signedMag < 0 ? '−' : '') + Math.abs(signedMag).toFixed(2) + ' ± ' + (c.spread || 0.05).toFixed(2);
+      const magNi = this.nearestMagIndex(c.strength);
+      const magStops = this.MAG_LABELS.map((lab, i) => { const on = i === magNi; const h = 7 + i * 5; return { label: lab, onClick: () => this.patchChange(ci, { strength: this.MAG_STRENGTH[i] }), style: 'flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;height:46px;border-radius:7px;padding:5px 2px;cursor:pointer;transition:all 120ms;' + (on ? 'border:1px solid var(--accent-rim);background:var(--accent-soft);' : 'border:1px solid var(--line-2);background:var(--bg-2);'), barStyle: 'width:13px;height:' + h + 'px;border-radius:3px;background:' + (on ? 'var(--accent)' : 'var(--line-3)') + ';' + (on ? 'box-shadow:0 0 6px var(--accent-rim);' : ''), labelColor: on ? 'var(--accent)' : 'var(--fg-4)' }; });
+      const pointVal = (c.dir === 'down' ? -1 : 1) * c.strength;
+      const evidenceRows = (c.evidence || []).map((val, ei) => ({ value: val, isLink: /^https?:\/\//i.test(val) ? 'var(--accent)' : 'var(--fg-4)', onChange: e => this.setChangeEvidence(ci, ei, e.target.value), onRemove: () => this.removeChangeEvidence(ci, ei) }));
+      return {
+        t: c.t, traitOptions: traits.map(tr => ({ value: tr.id, label: tr.name })), onTrait: e => this.patchChange(ci, { t: e.target.value }),
+        dirUpStyle: seg(c.dir === 'up'), dirDownStyle: seg(c.dir === 'down'), onUp: () => this.patchChange(ci, { dir: 'up' }), onDown: () => this.patchChange(ci, { dir: 'down' }),
+        magStops, magLabel: this.magLabelFor(c.strength),
+        basisStops, priorLabel, priorArea: pc.area, priorLine: pc.line, priorMeanX: pc.meanX, priorBandX0: pc.bandX0, priorBandW: pc.bandW,
+        confValue: c.conf, confLabel: this.confWord(c.conf), onConf: e => this.patchChange(ci, { conf: Math.max(Math.min(this.num(e, 0.5), 1), 0) }),
+        exactOpen, onToggleExact: () => this.toggleExact(ci), exactChevStyle: 'display:flex;transition:transform 160ms;transform:rotate(' + (exactOpen ? '180deg' : '0deg') + ');',
+        strengthValue: pointVal.toFixed(2), onStrength: e => { const v = Math.max(Math.min(this.num(e, pointVal), 1), -1); this.patchChange(ci, { strength: Math.abs(v), dir: v < 0 ? 'down' : 'up' }); },
+        distSingleStyle: seg(c.dist === 'single'), distRangeStyle: seg(c.dist === 'range'), onDistSingle: () => this.patchChange(ci, { dist: 'single' }), onDistRange: () => this.patchChange(ci, { dist: 'range' }),
+        showSpread: c.dist === 'range', spreadValue: c.spread, onSpread: e => this.patchChange(ci, { spread: Math.max(this.num(e, 0.05), 0) }),
+        horizonValue: c.horizon, onHorizon: e => this.patchChange(ci, { horizon: Math.max(Math.round(this.num(e, 1)), 1) }),
+        confExactValue: c.conf.toFixed(2), onConfExact: e => this.patchChange(ci, { conf: Math.max(Math.min(this.num(e, 0.5), 1), 0) }),
+        evidenceRows, onAddEvidence: () => this.addChangeEvidence(ci),
+        onRemove: () => this.removeChange(ci), removable: (it.changes || []).length > 1
+      };
+    });
+    const needIds = it.needs || [];
+    const needChips = needIds.map(r => { const rr = this.find('resources', r); return { name: rr ? rr.name : r, onRemove: () => this.removeNeed(r) }; });
+    const needOptions = this.live('resources').filter(r => needIds.indexOf(r.id) < 0).map(r => ({ value: r.id, label: r.name }));
+    const usedInRefs = this.systemsOf('interventions', it.id).map(rf => ({ text: rf.text, style: this.refChipStyle(true), onClick: () => this.navTo(rf) }));
+    return {
+      changeCount: (it.changes || []).length + ((it.changes || []).length === 1 ? ' trait' : ' traits'),
+      changeRows, onAddChange: () => this.addChange(),
+      needChips, needOptions, hasNeedOptions: needOptions.length > 0, onAddNeed: e => { if (e.target.value) { this.addNeed(e.target.value); e.target.value = ''; } },
+      chainRows: this.buildChainRows(it), chainFailFast: !!it.failFast, onToggleFailFast: () => this.toggleFailFast(),
+      failFastDot: 'width:16px;height:16px;border-radius:5px;border:1px solid;flex:0 0 auto;display:flex;align-items:center;justify-content:center;' + (it.failFast ? 'background:var(--accent);border-color:var(--accent);box-shadow:0 0 7px var(--accent-rim);' : 'background:var(--bg-2);border-color:var(--line-3);'),
+      actionLinkOptions: this.live('actions').map(a => ({ value: a.id, label: a.name + ' · ' + this.CONN_TYPES[a.type] })), hasActionOptions: this.live('actions').length > 0,
+      onAddChainLink: e => { if (e.target.value) { this.addChainLink(e.target.value); e.target.value = ''; } }, chainEmpty: !((it.actionChain || []).length), showFailFast: (it.actionChain || []).length > 1,
+      usedInRefs, usedInEmpty: usedInRefs.length === 0, costText: it.meta || ''
+    };
+  }
+  buildChainRows(it) {
+    const seg = (on) => 'display:inline-flex;align-items:center;border-radius:8px;padding:5px 10px;font-family:var(--font-mono);font-size:10.5px;cursor:pointer;transition:all 120ms;' + (on ? 'border:1px solid var(--accent-rim);color:var(--accent);background:var(--accent-soft);' : 'border:1px solid var(--line-2);color:var(--fg-3);background:var(--bg-2);');
+    const dotFor = (t) => t === 'webhook' ? 'var(--accent)' : (t === 'script' ? 'var(--info)' : 'var(--ok)');
+    const chain = it.actionChain || []; const traits = this.live('traits');
+    const stepBtn = (enabled) => 'width:24px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--bg-inset);border:1px solid var(--line-2);color:' + (enabled ? 'var(--fg-2)' : 'var(--fg-4)') + ';cursor:' + (enabled ? 'pointer' : 'not-allowed') + ';opacity:' + (enabled ? '1' : '0.45') + ';';
+    return chain.map((link, ci) => {
+      const a = this.find('actions', link.action); const type = a ? a.type : 'webhook';
+      return {
+        idx: ci + 1, sentence: this.chainSentence(link), dotColor: dotFor(type),
+        actionName: a ? a.name : link.action, typeLabel: a ? this.CONN_TYPES[a.type] : 'missing', summary: a ? (this.CONN_TYPES[a.type] + ' · ' + (a.target || '')) : 'action not found',
+        onOpenAction: () => this.navTo({ lib: 'actions', id: link.action }),
+        whenStops: this.WHEN_STOPS.map(w => ({ label: w.label, style: seg(link.when === w.key), onClick: () => this.setChainLink(ci, { when: w.key }) })),
+        showMeasure: link.when === 'measure', measure: link.measure || (traits[0] && traits[0].id) || '', measureOptions: traits.map(tr => ({ value: tr.id, label: tr.name })), onMeasure: e => this.setChainLink(ci, { measure: e.target.value }),
+        showEvery: link.when === 'scheduled', every: link.every || '', onEvery: e => this.setChainLink(ci, { every: e.target.value }),
+        canUp: ci > 0, canDown: ci < chain.length - 1, upStyle: stepBtn(ci > 0), downStyle: stepBtn(ci < chain.length - 1), onUp: () => this.moveChain(ci, -1), onDown: () => this.moveChain(ci, 1),
+        onRemove: () => this.removeChainLink(ci)
+      };
+    });
+  }
+  buildActionForm(it) {
+    const seg = (on) => 'display:inline-flex;align-items:center;border-radius:8px;padding:6px 11px;font-size:12px;cursor:pointer;transition:all 120ms;' + (on ? 'border:1px solid var(--accent-rim);color:var(--accent);background:var(--accent-soft);' : 'border:1px solid var(--line-2);color:var(--fg-3);background:var(--bg-2);');
+    const segMono = (on) => 'display:inline-flex;align-items:center;border-radius:8px;padding:5px 10px;font-family:var(--font-mono);font-size:10.5px;cursor:pointer;transition:all 120ms;' + (on ? 'border:1px solid var(--accent-rim);color:var(--accent);background:var(--accent-soft);' : 'border:1px solid var(--line-2);color:var(--fg-3);background:var(--bg-2);');
+    const typeStops = ['webhook', 'integration', 'script'].map(t => ({ label: this.CONN_TYPES[t], style: seg(it.type === t), onClick: () => this.patchAct({ type: t }) }));
+    const payloadRows = (it.payload || []).map((p, pi) => ({ k: p.k, v: p.v, onK: e => this.setActParam(pi, { k: e.target.value }), onV: e => this.setActParam(pi, { v: e.target.value }), onRemove: () => this.removeActParam(pi) }));
+    const linkedBy = this.usersOf('actions', it.id).map(u => ({ text: u.name, style: this.refChipStyle(true), onClick: () => this.navTo({ lib: 'interventions', id: u.id }) }));
+    return {
+      typeStops, showMethod: it.type === 'webhook', methodStops: this.METHODS.map(mt => ({ label: mt, style: segMono((it.method || 'POST') === mt), onClick: () => this.patchAct({ method: mt }) })),
+      targetLabel: it.type === 'webhook' ? 'Endpoint' : (it.type === 'script' ? 'Script' : 'Target'), target: it.target || '', onTarget: e => this.patchAct({ target: e.target.value }),
+      auth: it.auth || '', onAuth: e => this.patchAct({ auth: e.target.value }),
+      payloadRows, onAddParam: () => this.addActParam(),
+      retryStops: this.RETRY_OPTS.map(r => ({ label: r.label, style: segMono((it.retry || 'none') === r.key), onClick: () => this.patchAct({ retry: r.key }) })),
+      linkedBy, linkedEmpty: linkedBy.length === 0
+    };
+  }
+
+  // ---- card meta/chips/rel from graph ----
+  cardExtras(lib, it) {
+    const e = { chips: null, meta: it.meta || null, rel: null, badge: null, unused: false };
+    if (lib === 'systems') {
+      e.badge = it.reuseCount ? { text: 'used in ' + it.reuseCount, tone: 'accent' } : { text: it.ready >= 0.75 ? 'ready' : 'draft', tone: it.ready >= 0.75 ? 'ok' : 'warn' };
+      e.rel = it.rel ? { text: it.rel, type: it.reuseCount ? 'reuse' : 'contain' } : null;
+      return e;
+    }
+    const used = this.usageCount(lib, it);
+    e.unused = this.isUnused(lib, it);
+    if (lib === 'interventions') {
+      e.chips = [
+        { label: 'changes', tone: 'accent', items: it.changes.map(c => this.find('traits', c.t) ? this.find('traits', c.t).name + this.dirGlyph(c.dir) : c.t) },
+        { label: 'needs', items: it.needs.map(r => this.find('resources', r) ? this.find('resources', r).name : r) }
+      ];
+      if (it.actionChain && it.actionChain.length) e.chips.push({ label: 'actions', items: it.actionChain.map(c => this.actName(c.action)) });
+      e.rel = { text: used ? 'Used in ' + used + (used === 1 ? ' system' : ' systems') : 'Not yet used', type: 'reuse' };
+    } else if (lib === 'actions') {
+      e.meta = it.target;
+      e.badge = { text: this.CONN_TYPES[it.type] || it.type, tone: 'neutral' };
+      e.rel = { text: used ? 'Linked by ' + used + (used === 1 ? ' intervention' : ' interventions') : 'Not yet linked', type: 'reuse' };
+    } else if (lib === 'capabilities') {
+      e.chips = [{ label: 'read from', items: it.readFrom.map(t => this.find('traits', t) ? this.find('traits', t).name : t) }];
+      e.rel = { text: used ? 'Used in ' + used + (used === 1 ? ' system' : ' systems') : 'Not yet used', type: 'reuse' };
+    } else if (lib === 'subjects') {
+      if (it.contains && it.contains.length) e.chips = [{ label: 'contains', items: it.contains.map(s => this.find('subjects', s) ? this.find('subjects', s).name : s) }];
+      e.rel = { text: used ? 'Used in ' + used + (used === 1 ? ' place' : ' places') : 'Not yet used', type: 'reuse' };
+    } else if (lib === 'traits' || lib === 'resources') {
+      e.rel = { text: used ? 'Used by ' + used + (used === 1 ? ' item' : ' items') : 'Not yet used', type: 'reuse' };
+    } else if (lib === 'phases') {
+      e.rel = { text: used ? 'In ' + used + (used === 1 ? ' system' : ' systems') : 'Not yet used', type: 'contain' };
+    }
+    return e;
+  }
+
+  mkCard(lib, it) {
+    const ex = this.cardExtras(lib, it);
+    const feat = !!it.featured;
+    const vlevel = this.visLevel(lib, it.id); const vmeta = this.VIS_META[vlevel];
+    const hasBar = typeof it.ready === 'number';
+    const readyColor = hasBar ? (it.ready >= 0.75 ? 'var(--ok)' : (it.ready >= 0.5 ? 'var(--warn)' : 'var(--fg-3)')) : '';
+    const badge = ex.badge;
+    const badgeColors = { ok: ['var(--ok)', 'var(--ok-bg)', 'rgba(34,211,154,0.25)'], warn: ['var(--warn)', 'var(--warn-bg)', 'rgba(245,181,68,0.3)'], accent: ['var(--accent)', 'var(--accent-soft)', 'var(--accent-rim)'], neutral: ['var(--fg-2)', 'var(--bg-inset)', 'var(--line-2)'] };
+    const bc = badge ? (badgeColors[badge.tone] || badgeColors.accent) : null;
+    const showTrash = ex.unused;
+    return {
+      onClick: lib === 'systems' ? (() => this.goEditor(it.id)) : (() => this.goItem(lib, it.id)),
+      featured: feat,
+      iconPaths: this.ICONS[this.LIBS[lib].icon] || [],
+      iconWrap: 'flex:0 0 auto;width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:' + (feat ? 'var(--accent-soft)' : 'var(--bg-inset)') + ';border:1px solid ' + (feat ? 'var(--accent-rim)' : 'var(--line-2)') + ';color:' + (feat ? 'var(--accent)' : 'var(--fg-2)') + ';' + (feat ? 'box-shadow:var(--glow-soft);' : ''),
+      hasDomain: !!it.domain, domainLabel: it.domain || '',
+      visLabel: vmeta.label, visIconPaths: this.ICONS[vmeta.icon], visChipStyle: this.visChipStyle(vlevel, false),
+      name: it.name,
+      hasDesc: !!it.desc, desc: it.desc || '',
+      showTrash, onTrash: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.removeItem(lib, it.id); },
+      hasBadge: !showTrash && !!badge, badgeText: badge ? badge.text : '',
+      badgeStyle: bc ? 'flex:0 0 auto;display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;border-radius:5px;padding:3px 8px;color:' + bc[0] + ';background:' + bc[1] + ';border:1px solid ' + bc[2] + ';' : '',
+      hasBar, barStyle: hasBar ? 'height:100%;width:' + Math.round(it.ready * 100) + '%;border-radius:999px;background:' + readyColor + ';' + (it.ready >= 0.5 ? 'box-shadow:0 0 7px ' + readyColor + ';' : '') : '',
+      hasMeta: !!ex.meta, metaText: ex.meta || '',
+      hasChips: !!(ex.chips && ex.chips.length), chipGroups: (ex.chips || []).map(g => ({ label: g.label, items: g.items.map(t => ({ text: t, style: this.chipStyle(g.tone) })) })),
+      hasRel: !!ex.rel, relText: ex.rel ? ex.rel.text : '', relTextColor: (ex.rel && ex.unused) ? 'var(--fg-4)' : 'var(--fg-2)',
+      relColor: ex.rel && ex.rel.type === 'reuse' && !ex.unused ? 'var(--accent)' : 'var(--fg-3)',
+      relIconPaths: ex.rel ? (this.ICONS[ex.rel.type] || this.ICONS.reuse) : [],
+      cardStyle: 'display:flex;flex-direction:column;box-sizing:border-box;width:100%;height:100%;text-align:left;text-decoration:none;border-radius:15px;padding:18px;cursor:pointer;transition:all 140ms var(--ease-out);background:' + (feat ? 'var(--glass-bg)' : 'var(--bg-2)') + ';' + (feat ? 'backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);' : '') + 'border:1px solid ' + (feat ? 'var(--accent-rim)' : 'var(--line-1)') + ';box-shadow:' + (feat ? 'var(--shadow-2),var(--rim),var(--glow-soft)' : 'var(--shadow-1)') + ';'
+    };
+  }
+
+  buildSystemPanel(it) {
+    const tree = this.TREES[it.id] || [];
+    let nodeCount = 0, gateCount = 0;
+    const treePhases = tree.map(p => ({ name: p.name, tag: p.tag, nodes: p.nodes.map(n => {
+      nodeCount++; const gate = n.kind === 'gate'; if (gate) gateCount++;
+      return { id: n.id, title: n.title, isGate: gate, glyphStyle: gate ? 'flex:0 0 auto;width:8px;height:8px;border-radius:2px;transform:rotate(45deg);background:var(--warn);box-shadow:0 0 7px var(--warn);' : 'flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:var(--fg-3);' };
+    }) }));
+    return {
+      iconPaths: this.ICONS[this.LIBS.systems.icon] || [], kindLabel: 'System · plan tree', name: it.name,
+      hasDomain: !!it.domain, domain: it.domain || '', desc: it.desc || '',
+      sections: [], unused: false, inUse: false, isIntervention: false, isAction: false, isSystem: true,
+      treePhases, treeSummary: nodeCount + ' nodes · ' + (gateCount || 'no') + (gateCount === 1 ? ' gate' : ' gates'),
+      instanceNote: 'This System is a plan tree. Run it in Foundry to act on it — a run can spawn child plan trees whose work-items become story tickets in Betrieb, but it doesn’t have to.',
+      onRun: () => { if (this.props && this.props.onNavigate) this.props.onNavigate('betrieb'); else window.location.href = 'Betrieb.dc.html'; },
+      lockText: ''
+    };
+  }
+  buildPanel() {
+    const lib = this.state.lib, id = this.state.openId;
+    if (!id) return null;
+    const it = this.find(lib, id);
+    if (!it || this.isRemoved(lib, id)) return null;
+    if (lib === 'systems') return this.buildSystemPanel(it);
+    const L = this.LIBS[lib];
+    const sections = [];
+    const mkRefs = (label, refs, emptyText) => sections.push({ label, isRefs: true, isText: false, empty: refs.length === 0, emptyText: emptyText || 'None', refs: refs.map(rf => ({ text: rf.text, navigable: rf.navigable !== false, style: this.refChipStyle(rf.navigable !== false), onClick: () => this.navTo(rf) })) });
+
+    if (lib === 'traits' || lib === 'resources') {
+      if (it.meta) sections.push({ label: lib === 'traits' ? 'Unit & baseline' : 'Capacity', isText: true, text: it.meta });
+      mkRefs('Used by', this.usersOf(lib, id).map(u => ({ text: u.name, lib: u.lib, id: u.id })), 'Nothing uses this yet');
+    } else if (lib === 'interventions') {
+      // interventions render an editable form (panel.form) instead of read-only sections
+    } else if (lib === 'capabilities') {
+      mkRefs('Read from traits', it.readFrom.map(t => { const tr = this.find('traits', t); return { text: tr ? tr.name : t, lib: 'traits', id: t, navigable: !!tr && !this.isRemoved('traits', t) }; }));
+      mkRefs('Used in', this.systemsOf(lib, id), 'Not used in any system yet');
+    } else if (lib === 'subjects') {
+      if (it.contains && it.contains.length) mkRefs('Contains', it.contains.map(s => { const ss = this.find('subjects', s); return { text: ss ? ss.name : s, lib: 'subjects', id: s, navigable: !!ss }; }));
+      if (it.hasTraits && it.hasTraits.length) mkRefs('Has traits', it.hasTraits.map(t => { const tr = this.find('traits', t); return { text: tr ? tr.name : t, lib: 'traits', id: t, navigable: !!tr && !this.isRemoved('traits', t) }; }));
+      const containedBy = this.usersOf('subjects', id).map(u => ({ text: u.name, lib: 'subjects', id: u.id }));
+      mkRefs('Used in', this.systemsOf(lib, id).concat(containedBy), 'Not used anywhere yet');
+    } else if (lib === 'phases') {
+      if (it.meta) sections.push({ label: 'Duration', isText: true, text: it.meta });
+      mkRefs('Part of', this.systemsOf(lib, id), 'Not in any system yet');
+    } else if (lib === 'actions') {
+      // actions render an editable form (panel.actionForm) instead of read-only sections
+    }
+
+    const unused = this.isUnused(lib, it);
+    const used = this.usageCount(lib, it);
+    const vlevel = this.visLevel(lib, id); const vmeta = this.VIS_META[vlevel];
+    return {
+      iconPaths: this.ICONS[L.icon] || [], kindLabel: L.kind, name: it.name,
+      hasDomain: !!it.domain, domain: it.domain || '', desc: it.desc || '',
+      visLabel: vmeta.label, visIconPaths: this.ICONS[vmeta.icon], visBtnStyle: this.visChipStyle(vlevel, true), onToggleVis: () => this.cycleVis(lib, id),
+      sections, unused, inUse: !unused,
+      isIntervention: lib === 'interventions', form: lib === 'interventions' ? this.buildInterventionForm(it) : null,
+      isAction: lib === 'actions', actionForm: lib === 'actions' ? this.buildActionForm(it) : null,
+      lockText: 'In use by ' + used + (used === 1 ? ' place' : ' places') + ' — remove those first to drop it.',
+      onRemove: () => this.removeItem(lib, id)
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const lib = this.LIBS[s.lib];
+    const q = s.query.trim().toLowerCase();
+    const raw = this.live(s.lib);
+    let filtered = q ? raw.filter(it => (it.name + ' ' + (it.desc || '') + ' ' + (it.domain || '')).toLowerCase().includes(q)) : raw;
+    if (s.visFilter !== 'all') filtered = filtered.filter(it => this.visLevel(s.lib, it.id) === s.visFilter);
+
+    const order = [], byGroup = {};
+    filtered.forEach(it => { const g = it._group || '_'; if (!byGroup[g]) { byGroup[g] = []; order.push(g); } byGroup[g].push(it); });
+    const groups = order.map((gName, gi) => ({
+      showTitle: gName !== '_', title: gName, hasSubtitle: gName === 'Reusable', subtitle: 'used as an action inside other systems',
+      showNew: gi === 0 && !q,
+      items: byGroup[gName].map(it => this.mkCard(s.lib, it))
+    }));
+
+    const railSections = this.RAIL.map((sec, si) => ({
+      title: sec.title, topGap: si === 0 ? '0px' : '14px',
+      items: sec.keys.map(k => {
+        const on = k === s.lib; const L = this.LIBS[k];
+        return {
+          label: L.label, count: this.live(k).length,
+          onClick: () => this.setState({ lib: k, query: '', openId: null }),
+          labelColor: on ? 'var(--fg-1)' : 'var(--fg-2)', weight: on ? '500' : '400', countColor: on ? 'var(--accent)' : 'var(--fg-4)',
+          iconPaths: this.ICONS[L.icon] || [],
+          indicatorStyle: 'flex:0 0 auto;width:3px;height:20px;border-radius:2px;background:' + (on ? 'var(--accent)' : 'transparent') + ';' + (on ? 'box-shadow:0 0 7px var(--accent-rim);' : ''),
+          iconWrap: 'flex:0 0 auto;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:' + (on ? 'var(--accent)' : 'var(--fg-3)') + ';background:' + (on ? 'var(--accent-soft)' : 'transparent') + ';border:1px solid ' + (on ? 'var(--accent-rim)' : 'transparent') + ';',
+          style: 'display:flex;align-items:center;gap:9px;width:100%;text-align:left;cursor:pointer;border:none;background:none;border-radius:10px;padding:8px 8px 8px 5px;margin-bottom:2px;transition:opacity 120ms;opacity:' + (on ? '1' : '0.78') + ';'
+        };
+      })
+    }));
+
+    const tierBtn = (on) => 'display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;font-size:12px;cursor:pointer;transition:all 120ms;border:none;' + (on ? 'background:var(--accent-soft);color:var(--accent);box-shadow:var(--glow-soft);font-weight:500;' : 'background:transparent;color:var(--fg-3);');
+
+    const visFilters = [{ key: 'all', label: 'All' }, { key: 'private', label: 'Private' }, { key: 'org', label: 'Org' }, { key: 'customers', label: 'Customers' }].map(f => ({ label: f.label, onClick: () => this.setState({ visFilter: f.key }), style: 'display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;font-size:11.5px;cursor:pointer;font-family:var(--font-body);transition:all 120ms;' + (s.visFilter === f.key ? 'border:1px solid var(--accent-rim);background:var(--accent-soft);color:var(--accent);' : 'border:1px solid var(--line-2);background:var(--bg-2);color:var(--fg-3);') }));
+    return {
+      tabs: this.buildTabs('catalog'),
+      visFilters,
+      isSystems: s.lib === 'systems',
+      libLabel: lib.label, libLabelLower: lib.label.toLowerCase(), libIntro: lib.intro, newLabel: lib.singular,
+      query: s.query, onSearch: e => this.setState({ query: e.target.value }),
+      onNew: () => this.newItem(),
+      resultCount: filtered.length + ' of ' + raw.length,
+      groups, railSections, isEmpty: filtered.length === 0,
+      simpleTierStyle: tierBtn(s.openTier === 'simple'), proTierStyle: tierBtn(s.openTier === 'pro'),
+      onSimpleTier: () => this.setState({ openTier: 'simple' }), onProTier: () => this.setState({ openTier: 'pro' })
+    };
+  }
+}
+</script>
+</body>
+</html>

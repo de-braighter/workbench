@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/colors_and_type.css">
+<style>
+  html,body{ background:var(--bg-0); margin:0; }
+  .rp-scroll{ scrollbar-width:thin; } .rp-scroll::-webkit-scrollbar{ width:8px; } .rp-scroll::-webkit-scrollbar-thumb{ background:var(--line-2); border-radius:8px; }
+</style>
+</helmet>
+<div data-skin="exercir" style="position:relative;width:100%;height:100vh;background:var(--bg-1);overflow:hidden;font-family:var(--font-body);color:var(--fg-1);display:flex;flex-direction:column;">
+
+  <div style="position:absolute;left:-8%;right:-8%;top:-26%;height:50%;background:radial-gradient(ellipse at 28% 0%, var(--accent-soft), transparent 60%),radial-gradient(ellipse at 86% 6%, rgba(34,211,154,0.05), transparent 55%);filter:blur(40px);pointer-events:none;z-index:0;"></div>
+
+  <!-- TOP BAR -->
+  <header style="position:relative;z-index:3;display:flex;align-items:center;gap:16px;height:58px;padding:0 18px;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--line-1);box-shadow:var(--rim);flex:0 0 auto;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:25px;height:25px;border-radius:8px;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));box-shadow:var(--glow-soft);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border:1.6px solid var(--fg-on-glow);border-radius:2px;transform:rotate(45deg);"></div></div>
+      <div style="display:flex;flex-direction:column;line-height:1.05;"><span style="font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:-0.02em;color:var(--fg-1);">system-builder</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg-3);">studio</span></div>
+      <div style="margin-left:6px;display:flex;gap:3px;padding:3px;background:var(--bg-inset);border:1px solid var(--line-1);border-radius:999px;">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button style="{{ t.style }}" onClick="{{ t.onClick }}">{{ t.label }}</button></sc-for>
+      </div>
+    </div>
+
+    <div style="width:1px;height:24px;background:var(--line-2);margin:0 2px;"></div>
+    <div style="display:flex;flex-direction:column;line-height:1.15;min-width:0;">
+      <span style="font-size:14.5px;color:var(--fg-1);font-weight:500;white-space:nowrap;">Reproduzierbarkeit</span>
+      <span style="font-size:11.5px;color:var(--fg-3);">vorhergesagt vs. beobachtet · Lauf {{ planVersion }}</span>
+    </div>
+
+    <div style="flex:1 1 0;"></div>
+
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:10px;background:var(--ok-bg);border:1px solid rgba(34,211,154,0.28);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+      <span style="font-size:12.5px;color:var(--ok);font-weight:500;">reproduzierbar</span>
+    </div>
+  </header>
+
+  <div style="position:relative;z-index:1;flex:1 1 0;display:flex;min-height:0;">
+
+    <!-- LEFT RAIL — RUN MANIFEST -->
+    <aside class="rp-scroll" style="flex:0 0 280px;display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-right:1px solid var(--line-1);box-shadow:var(--rim);min-height:0;overflow-y:auto;">
+      <div style="padding:18px 18px 14px;">
+        <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-3);">Lauf-Manifest</div>
+        <p style="margin-top:7px;font-size:12.5px;line-height:1.5;color:var(--fg-3);text-wrap:pretty;">Welche Version des Pfads lief, wann, mit welchem Seed — so wird der Lauf wiederholbar.</p>
+      </div>
+      <div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:2px;">
+        <sc-for list="{{ manifest }}" as="m" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 8px;border-bottom:1px solid var(--line-1);">
+            <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--fg-4);">{{ m.k }}</span>
+            <span style="font-family:var(--font-mono);font-size:12.5px;color:{{ m.color }};text-align:right;">{{ m.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin:6px 16px 0;padding:14px 15px;border-radius:12px;background:var(--bg-2);border:1px solid var(--line-1);">
+        <div style="display:flex;align-items:center;gap:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M18 9l-5 5-3-3-4 4"></path></svg><span style="font-size:12.5px;color:var(--fg-2);font-weight:500;">Liefer-Kalibrierung</span></div>
+        <p style="margin-top:8px;font-size:12px;line-height:1.5;color:var(--fg-3);text-wrap:pretty;">Die Inferenz hinter jeder Wirkung. Beobachtungen wurden gegen die ± 2σ-Bänder der deklarierten Priors geprüft.</p>
+      </div>
+      <div style="flex:1 1 0;"></div>
+      <div style="padding:14px 18px 18px;border-top:1px solid var(--line-1);">
+        <button style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--bg-2);color:var(--fg-2);border:1px solid var(--line-2);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;transition:all 120ms;" style-hover="border-color:var(--line-3);color:var(--fg-1);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>Manifest exportieren
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="rp-scroll" style="flex:1 1 0;min-width:0;overflow-y:auto;min-height:0;padding:22px 26px 30px;">
+
+      <!-- SUMMARY KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="3">
+          <div style="background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--line-1);border-radius:14px;box-shadow:var(--shadow-1),var(--rim);padding:16px 18px;">
+            <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-3);">{{ k.label }}</div>
+            <div style="margin-top:9px;display:flex;align-items:flex-end;gap:9px;"><span style="font-family:var(--font-display);font-weight:700;font-size:28px;line-height:1;color:{{ k.color }};">{{ k.value }}</span><span style="padding-bottom:3px;font-size:12px;color:var(--fg-3);">{{ k.sub }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- HEADER ROW -->
+      <div style="margin-top:24px;display:flex;align-items:center;gap:10px;">
+        <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-3);">Vorhergesagt vs. beobachtet</span>
+        <span style="font-size:12px;color:var(--fg-4);">je deklarierte Wirkung · Band = Prior ± 2σ</span>
+        <div style="flex:1 1 0;height:1px;background:var(--line-1);"></div>
+      </div>
+
+      <!-- OUTCOME TABLE -->
+      <div style="margin-top:14px;background:var(--bg-2);border:1px solid var(--line-1);border-radius:14px;overflow:hidden;">
+        <div style="display:grid;grid-template-columns:2.1fr 1.3fr 320px 1.1fr;gap:0;padding:11px 18px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-4);border-bottom:1px solid var(--line-1);">
+          <span>Knoten · Indikator</span><span>Prior &amp; Beobachtung</span><span>± 2σ-Band</span><span style="text-align:right;">Befund</span>
+        </div>
+        <sc-for list="{{ outcomes }}" as="o" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:2.1fr 1.3fr 320px 1.1fr;gap:0;padding:16px 18px;border-bottom:1px solid var(--line-1);align-items:center;transition:background 120ms;" style-hover="background:var(--bg-3);">
+            <div style="min-width:0;padding-right:12px;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);">{{ o.node }}</span><span style="font-size:14px;color:var(--fg-1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ o.title }}</span></div>
+              <div style="margin-top:4px;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-rim);border-radius:6px;padding:3px 8px;">{{ o.indicator }}<span style="color:var(--fg-3);">· {{ o.dirLabel }}</span></div>
+            </div>
+            <div style="padding-right:14px;display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;align-items:baseline;gap:7px;"><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--fg-4);min-width:62px;">vorhergesagt</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--fg-2);">{{ o.predText }}</span></div>
+              <div style="display:flex;align-items:baseline;gap:7px;"><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--fg-4);min-width:62px;">beobachtet</span><span style="font-family:var(--font-mono);font-size:13px;color:{{ o.obsColor }};font-weight:500;">{{ o.obsText }}</span></div>
+            </div>
+            <div>
+              <svg viewBox="0 0 300 46" width="300" height="46" style="display:block;overflow:visible;">
+                <line x1="10" y1="28" x2="290" y2="28" stroke="var(--line-2)" stroke-width="1"></line>
+                <line x1="{{ o.zeroX }}" y1="11" x2="{{ o.zeroX }}" y2="38" stroke="var(--line-3)" stroke-width="1" stroke-dasharray="2 3"></line>
+                <text x="{{ o.zeroX }}" y="9" font-family="var(--font-mono)" font-size="7.5" fill="var(--fg-4)" text-anchor="middle">0</text>
+                <rect x="{{ o.bandX }}" y="20" width="{{ o.bandW }}" height="16" rx="4" fill="var(--accent-soft)" stroke="var(--accent-rim)" stroke-width="1"></rect>
+                <line x1="{{ o.meanX }}" y1="15" x2="{{ o.meanX }}" y2="41" stroke="var(--accent)" stroke-width="1.5"></line>
+                <text x="{{ o.meanX }}" y="9" font-family="var(--font-mono)" font-size="7.5" fill="var(--accent)" text-anchor="middle">μ</text>
+                <circle cx="{{ o.obsX }}" cy="28" r="5.5" fill="{{ o.obsFill }}" stroke="var(--bg-2)" stroke-width="1.5"></circle>
+                <circle cx="{{ o.obsX }}" cy="28" r="5.5" fill="none" stroke="{{ o.obsFill }}" stroke-width="1" opacity="0.5"></circle>
+              </svg>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <span style="{{ o.badgeStyle }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="{{ o.badgeIcon }}"></path></svg>{{ o.badgeText }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <p style="margin-top:16px;font-size:12.5px;color:var(--fg-4);line-height:1.5;max-width:680px;text-wrap:pretty;">Fällt die Beobachtung ins ± 2σ-Band des deklarierten Priors, gilt die Wirkung als bestätigt. AP-07 liegt ausserhalb — die Befunde stiegen statt zu sinken; ein Kandidat für eine neu kalibrierte Prior im nächsten Lauf.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 880}}">
+class Component extends DCLogic {
+  NAVMAP = { catalog: 'Catalog.dc.html', autorieren: 'Autorieren.dc.html', betrieb: 'Betrieb.dc.html', ergebnisse: 'Reproduzierbarkeit.dc.html' };
+  TABDEFS = [ { key: 'catalog', label: 'Katalog' }, { key: 'betrieb', label: 'Betreiben' }, { key: 'ergebnisse', label: 'Ergebnisse' } ];
+  navTo(key) { if (this.props && this.props.onNavigate) this.props.onNavigate(key); else window.location.href = this.NAVMAP[key]; }
+  buildTabs(active) { return this.TABDEFS.map(t => ({ label: t.label, onClick: () => this.navTo(t.key), style: 'display:inline-flex;align-items:center;padding:5px 13px;border-radius:999px;font-size:12.5px;cursor:pointer;border:1px solid transparent;background:none;font-family:var(--font-body);transition:all 120ms;' + (t.key === active ? 'font-weight:500;background:var(--accent-soft);color:var(--accent);border-color:var(--accent-rim);box-shadow:var(--glow-soft);' : 'color:var(--fg-3);') })); }
+  // i18n: studio.repro.predicted → "vorhergesagt" · studio.repro.observed → "beobachtet" · studio.repro.withinBand → "im vorhergesagten Bereich"
+  PLAN = 'plan@v7';
+
+  // RunManifest
+  MANIFEST = [
+    { k: 'Plan-Version', v: 'plan@v7', accent: true },
+    { k: 'ausgeführt', v: '23.06.2026 14:20' },
+    { k: 'Seed', v: '0x7F3A·E1' },
+    { k: 'Aktuator', v: 'Foundry' },
+    { k: 'Knoten gelaufen', v: '6' },
+    { k: 'Wirkungen geprüft', v: '5' }
+  ];
+
+  // EffectOutcome[] — improves = lower is better (negative = improvement)
+  OUTCOMES = [
+    { node: 'AP-03', title: 'Adresse-Validierung', indicator: 'Durchlaufzeit', unit: 'h', dir: 'improves', mu: -0.40, sd: 0.15, obs: -0.34 },
+    { node: 'AP-05', title: 'Zahlungs-Adapter',    indicator: 'Durchlaufzeit', unit: 'h', dir: 'improves', mu: -0.60, sd: 0.20, obs: -0.52 },
+    { node: 'CP-01', title: 'Checkout p95-Latenz', indicator: 'Durchlaufzeit', unit: 'h', dir: 'improves', mu: -0.30, sd: 0.10, obs: -0.28 },
+    { node: 'RV-02', title: 'Review-Durchlauf',    indicator: 'Befunde',       unit: '',  dir: 'improves', mu: -1.5,  sd: 0.8,  obs: -1.2 },
+    { node: 'AP-07', title: 'Idempotenz-Schlüssel',indicator: 'Befunde',       unit: '',  dir: 'improves', mu: -2.0,  sd: 1.0,  obs: 1.0 }
+  ];
+
+  fmt(v, unit) { const sign = v < 0 ? '−' : '+'; const a = Math.abs(v).toFixed(unit === 'h' ? 2 : 1); return sign + a + (unit ? ' ' + unit : ''); }
+
+  band(mu, sd, obs) {
+    const padL = 12, innerW = 276;
+    let lo = Math.min(mu - 2.6 * sd, obs, 0);
+    let hi = Math.max(mu + 2.6 * sd, obs, 0);
+    const span = (hi - lo) || 1; const pad = span * 0.14; lo -= pad; hi += pad;
+    const fx = v => padL + (v - lo) / (hi - lo) * innerW;
+    const bx1 = fx(mu - 2 * sd), bx2 = fx(mu + 2 * sd);
+    return { bandX: bx1, bandW: Math.max(bx2 - bx1, 2), meanX: fx(mu), obsX: fx(obs), zeroX: fx(0), within: Math.abs(obs - mu) <= 2 * sd };
+  }
+
+  renderVals() {
+    const outcomes = this.OUTCOMES.map(o => {
+      const b = this.band(o.mu, o.sd, o.obs);
+      const obsColor = b.within ? 'var(--ok)' : 'var(--warn)';
+      return {
+        node: o.node, title: o.title, indicator: o.indicator,
+        dirLabel: o.dir === 'improves' ? 'verbessert' : 'verschlechtert',
+        predText: this.fmt(o.mu, o.unit) + '  ± ' + Math.abs(o.sd).toFixed(o.unit === 'h' ? 2 : 1),
+        obsText: this.fmt(o.obs, o.unit), obsColor,
+        bandX: b.bandX, bandW: b.bandW, meanX: b.meanX, obsX: b.obsX, zeroX: b.zeroX, obsFill: obsColor,
+        badgeText: b.within ? 'im Bereich' : 'ausserhalb',
+        badgeIcon: b.within ? 'M20 6L9 17l-5-5' : 'M12 9v4M12 17h.01',
+        badgeStyle: 'display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;border-radius:999px;padding:6px 12px;color:' + (b.within ? 'var(--ok)' : 'var(--warn)') + ';background:' + (b.within ? 'var(--ok-bg)' : 'var(--warn-bg)') + ';border:1px solid ' + (b.within ? 'rgba(34,211,154,0.25)' : 'rgba(245,181,68,0.3)') + ';'
+      };
+    });
+    const within = outcomes.filter(o => o.badgeText === 'im Bereich').length;
+
+    const manifest = this.MANIFEST.map(m => ({ k: m.k, v: m.v, color: m.accent ? 'var(--accent)' : 'var(--fg-1)' }));
+
+    const kpis = [
+      { label: 'im Bereich', value: within + ' / ' + outcomes.length, sub: 'Wirkungen bestätigt', color: 'var(--ok)' },
+      { label: 'Kalibrierung', value: 'gut', sub: '1 Ausreisser', color: 'var(--accent)' },
+      { label: 'Abdeckung', value: '100%', sub: 'jede Wirkung gemessen', color: 'var(--fg-1)' }
+    ];
+
+    return { planVersion: this.PLAN, tabs: this.buildTabs('ergebnisse'), manifest, kpis, outcomes };
+  }
+}
+</script>
+</body>
+</html>

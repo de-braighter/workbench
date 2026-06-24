@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/colors_and_type.css">
+<style>
+  html,body{ background:var(--bg-0); margin:0; }
+</style>
+</helmet>
+<div data-skin="exercir" style="position:relative;width:100%;height:100vh;background:var(--bg-1);overflow:hidden;font-family:var(--font-body);color:var(--fg-1);">
+  <sc-if value="{{ isCatalog }}" hint-placeholder-val="{{ true }}">
+    <dc-import name="Catalog" embedded="{{ embedded }}" on-navigate="{{ goto }}" hint-size="100%,100%" style="display:block;width:100%;height:100%;"></dc-import>
+  </sc-if>
+  <sc-if value="{{ isBetrieb }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="Betrieb" embedded="{{ embedded }}" on-navigate="{{ goto }}" hint-size="100%,100%" style="display:block;width:100%;height:100%;"></dc-import>
+  </sc-if>
+  <sc-if value="{{ isErgebnisse }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="Reproduzierbarkeit" embedded="{{ embedded }}" on-navigate="{{ goto }}" hint-size="100%,100%" style="display:block;width:100%;height:100%;"></dc-import>
+  </sc-if>
+  <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="Editor" item="{{ editorItem }}" embedded="{{ embedded }}" on-navigate="{{ goto }}" hint-size="100%,100%" style="display:block;width:100%;height:100%;"></dc-import>
+  </sc-if>
+  <sc-if value="{{ isItem }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="ItemEditor" lib="{{ itemLib }}" item="{{ itemId }}" embedded="{{ embedded }}" on-navigate="{{ goto }}" hint-size="100%,100%" style="display:block;width:100%;height:100%;"></dc-import>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 880}}">
+class Component extends DCLogic {
+  state = { screen: 'catalog', editorItem: 'checkout', itemLib: 'traits', itemId: 'moisture' };
+  goto(key, payload) {
+    this.setState(st => {
+      const next = { screen: key };
+      if (key === 'editor' && payload) next.editorItem = payload;
+      if (key === 'item' && payload) { next.itemLib = payload.lib; next.itemId = payload.id; }
+      return next;
+    });
+  }
+  renderVals() {
+    const s = this.state.screen;
+    return {
+      embedded: true,
+      editorItem: this.state.editorItem,
+      itemLib: this.state.itemLib,
+      itemId: this.state.itemId,
+      goto: (key, payload) => this.goto(key, payload),
+      isCatalog: s === 'catalog',
+      isBetrieb: s === 'betrieb',
+      isErgebnisse: s === 'ergebnisse',
+      isEditor: s === 'editor',
+      isItem: s === 'item'
+    };
+  }
+}
+</script>
+</body>
+</html>
