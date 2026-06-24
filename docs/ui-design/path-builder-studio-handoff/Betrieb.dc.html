@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/colors_and_type.css">
+<style>
+  html,body{ background:var(--bg-0); margin:0; }
+  @keyframes opPulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  @keyframes opSpin{ to{ transform:rotate(360deg) } }
+  @keyframes opShimmer{ 0%{ background-position:-280px 0 } 100%{ background-position:280px 0 } }
+  @keyframes opIn{ from{ transform:translateY(-6px);opacity:0 } to{ transform:none;opacity:1 } }
+  @media (prefers-reduced-motion: no-preference){
+    .op-pulse{ animation:opPulse 1.6s var(--ease-in-out) infinite }
+    .op-spin{ animation:opSpin .9s linear infinite }
+    .op-skel{ background:linear-gradient(90deg,var(--bg-2) 0%,var(--bg-3) 50%,var(--bg-2) 100%);background-size:560px 100%;animation:opShimmer 1.3s linear infinite }
+    .op-feedin{ animation:opIn .26s var(--ease-out) both }
+  }
+  .op-scroll{ scrollbar-width:thin; } .op-scroll::-webkit-scrollbar{ width:8px; } .op-scroll::-webkit-scrollbar-thumb{ background:var(--line-2); border-radius:8px; }
+</style>
+</helmet>
+<div data-skin="exercir" style="position:relative;width:100%;height:100vh;background:var(--bg-1);overflow:hidden;font-family:var(--font-body);color:var(--fg-1);display:flex;flex-direction:column;">
+
+  <div style="position:absolute;left:-8%;right:-8%;top:-26%;height:50%;background:radial-gradient(ellipse at 30% 0%, var(--accent-soft), transparent 60%),radial-gradient(ellipse at 88% 6%, rgba(245,181,68,0.05), transparent 55%);filter:blur(40px);pointer-events:none;z-index:0;"></div>
+
+  <!-- TOP BAR -->
+  <header style="position:relative;z-index:3;display:flex;align-items:center;gap:16px;height:58px;padding:0 18px;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--line-1);box-shadow:var(--rim);flex:0 0 auto;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:25px;height:25px;border-radius:8px;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));box-shadow:var(--glow-soft);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border:1.6px solid var(--fg-on-glow);border-radius:2px;transform:rotate(45deg);"></div></div>
+      <div style="display:flex;flex-direction:column;line-height:1.05;"><span style="font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:-0.02em;color:var(--fg-1);">system-builder</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg-3);">studio</span></div>
+      <div style="margin-left:6px;display:flex;gap:3px;padding:3px;background:var(--bg-inset);border:1px solid var(--line-1);border-radius:999px;">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button style="{{ t.style }}" onClick="{{ t.onClick }}">{{ t.label }}</button></sc-for>
+      </div>
+    </div>
+
+    <div style="width:1px;height:24px;background:var(--line-2);margin:0 2px;"></div>
+    <div style="display:flex;flex-direction:column;line-height:1.15;min-width:0;">
+      <span style="font-size:14.5px;color:var(--fg-1);font-weight:500;white-space:nowrap;">Checkout-Rewrite v2</span>
+      <span style="font-size:11.5px;color:var(--fg-3);">Instanz von Checkout-Rewrite v2 · beobachten &amp; entscheiden</span>
+    </div>
+
+    <div style="flex:1 1 0;"></div>
+
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:10px;background:var(--bg-2);border:1px solid var(--line-2);">
+      <span class="op-pulse" style="width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);flex:0 0 auto;"></span>
+      <span style="font-size:12.5px;color:var(--fg-2);">Foundry verbunden</span>
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);">· {{ agentCount }} Agenten</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:10px;background:var(--bg-inset);border:1px solid var(--line-1);">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--fg-3)" stroke-width="1.7" aria-hidden="true"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="9"></circle></svg>
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);">{{ planVersion }}</span>
+    </div>
+  </header>
+
+  <div style="position:relative;z-index:1;flex:1 1 0;display:flex;min-height:0;">
+
+    <!-- LEFT RAIL -->
+    <aside class="op-scroll" style="flex:0 0 232px;display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-right:1px solid var(--line-1);box-shadow:var(--rim);min-height:0;">
+      <div style="padding:18px 16px 10px;flex:0 0 auto;">
+        <div style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-3);">Orchestrierung</div>
+        <p style="margin-top:7px;font-size:12.5px;line-height:1.5;color:var(--fg-3);text-wrap:pretty;">Was Foundry gerade abarbeitet — beobachten und an Gates entscheiden.</p>
+      </div>
+
+      <div style="flex:1 1 0;padding:4px 10px;display:flex;flex-direction:column;gap:4px;min-height:0;">
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="4">
+          <button style="{{ n.style }}" onClick="{{ n.onClick }}" style-hover="opacity:1;">
+            <span style="{{ n.indicatorStyle }}"></span>
+            <span style="{{ n.iconWrap }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><sc-for list="{{ n.iconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg></span>
+            <span style="flex:1 1 0;text-align:left;font-size:13.5px;color:{{ n.labelColor }};font-weight:{{ n.weight }};">{{ n.label }}</span>
+            <span style="{{ n.countStyle }}">{{ n.count }}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="flex:0 0 auto;padding:14px 16px 16px;border-top:1px solid var(--line-1);">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-4);margin-bottom:10px;">Foundry-Status</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div style="display:flex;align-items:center;gap:8px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);flex:0 0 auto;"></span><span style="font-size:12px;color:var(--fg-2);flex:1 1 0;">Aktuator erreichbar</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);flex:0 0 auto;"></span><span style="font-size:12px;color:var(--fg-2);flex:1 1 0;">{{ agentCount }} Agenten aktiv</span></div>
+          <div style="margin-top:3px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11.5px;color:var(--fg-3);">Durchlaufzeit p50</span><span style="font-family:var(--font-mono);font-size:12.5px;color:var(--accent);">3.4 h</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div style="flex:1 1 0;min-width:0;display:flex;min-height:0;">
+
+      <!-- QUEUE COLUMN -->
+      <div class="op-scroll" style="flex:1 1 0;min-width:0;overflow-y:auto;min-height:0;padding:20px 22px 28px;">
+
+        <!-- INSTANCE BREADCRUMB -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:11px 14px;border-radius:11px;background:var(--bg-2);border:1px solid var(--line-1);flex-wrap:wrap;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" style="flex:0 0 auto;" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"></path><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path></svg>
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-4);">Instanz von</span>
+          <button onClick="{{ onOpenTemplate }}" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-size:13.5px;color:var(--fg-1);font-family:var(--font-body);padding:0;" style-hover="color:var(--accent);">Checkout-Rewrite v2<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" style="opacity:0.6;" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"></path></svg></button>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);">· Plan-Baum als Story-Tickets ausgerollt</span>
+          <span style="margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--fg-4);">INST-7 · plan@v7 · vor 24 min</span>
+        </div>
+
+        <!-- GATE DECIDE -->
+        <div style="background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid {{ gateRimColor }};border-radius:15px;box-shadow:var(--shadow-2),var(--rim);overflow:hidden;">
+          <div style="height:2px;background:{{ gateBarBg }};"></div>
+          <div style="padding:17px 20px 19px;">
+            <div style="display:flex;align-items:flex-start;gap:14px;">
+              <span style="{{ gateGlyphWrap }}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M7 14l3-3 3 3 4-5"></path><circle cx="12" cy="12" r="9" style="display:none;"></circle></svg>
+              </span>
+              <div style="flex:1 1 0;min-width:0;">
+                <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
+                  <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-3);">{{ gateKindLabel }}</span>
+                  <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-4);">{{ gateId }}</span>
+                  <span style="{{ gateStatePillStyle }}"><span class="{{ gateStateDotAnim }}" style="{{ gateStateDotStyle }}"></span>{{ gateStateLabel }}</span>
+                </div>
+                <h3 style="margin-top:6px;font-size:19px;color:var(--fg-1);">{{ gateTitle }}</h3>
+                <p style="margin-top:5px;font-size:13.5px;color:var(--fg-2);line-height:1.5;max-width:560px;text-wrap:pretty;">{{ gateContext }}</p>
+                <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <sc-for list="{{ gateChecks }}" as="g" hint-placeholder-count="3">
+                    <span style="{{ g.style }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="{{ g.icon }}"></path></svg>{{ g.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <sc-if value="{{ gatePending }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:16px;padding-top:15px;border-top:1px solid var(--line-1);display:flex;align-items:center;gap:11px;">
+              <button onClick="{{ onApprove }}" style="display:inline-flex;align-items:center;gap:8px;border:none;border-radius:11px;padding:12px 20px;font-family:var(--font-display);font-weight:600;font-size:14px;cursor:pointer;transition:all 120ms;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));color:var(--fg-on-glow);box-shadow:var(--glow);" style-active="transform:scale(0.98);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>Freigeben
+              </button>
+              <button onClick="{{ onReject }}" style="display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);border-radius:11px;padding:12px 18px;font-size:14px;cursor:pointer;transition:all 120ms;background:var(--bg-2);color:var(--fg-2);" style-hover="border-color:var(--err);color:var(--err);" style-active="transform:scale(0.98);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg>Zurückweisen
+              </button>
+              <span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--fg-4);">wartet seit 6 min</span>
+            </div>
+            </sc-if>
+            <sc-if value="{{ gateResolved }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:15px;padding-top:14px;border-top:1px solid var(--line-1);display:flex;align-items:center;gap:10px;">
+              <span style="{{ gateResultDotStyle }}"></span>
+              <span style="font-size:13.5px;color:var(--fg-1);">{{ gateResultText }}</span>
+              <button onClick="{{ onReopenGate }}" style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--fg-3);background:none;border:1px solid var(--line-2);border-radius:8px;padding:6px 11px;cursor:pointer;transition:all 120ms;" style-hover="color:var(--fg-1);border-color:var(--line-3);">zurücksetzen</button>
+            </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <!-- QUEUE -->
+        <div style="margin-top:22px;display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-3);">Story-Tickets</span>
+          <span style="font-size:12px;color:var(--fg-4);">{{ queueSummary }}</span>
+          <div style="flex:1 1 0;height:1px;background:var(--line-1);"></div>
+        </div>
+
+        <div style="margin-top:13px;display:flex;flex-direction:column;gap:8px;">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+            <button style="{{ r.rowStyle }}" onClick="{{ r.onClick }}" style-hover="border-color:var(--line-3);">
+              <span style="{{ r.stateChipStyle }}"><span class="{{ r.stateDotAnim }}" style="{{ r.stateDotStyle }}"></span>{{ r.stateLabel }}</span>
+              <span style="flex:0 0 58px;font-family:var(--font-mono);font-size:12px;color:var(--fg-3);text-align:left;">{{ r.id }}</span>
+              <div style="flex:1 1 0;min-width:0;text-align:left;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="{{ r.kindGlyphStyle }}"></span>
+                  <span style="font-size:14px;color:var(--fg-1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.title }}</span>
+                </div>
+                <div style="margin-top:3px;font-family:var(--font-mono);font-size:10.5px;color:var(--fg-4);">{{ r.kindLabel }} · {{ r.detail }}</div>
+              </div>
+              <span style="{{ r.claimStyle }}"><span style="{{ r.claimDotStyle }}"></span>{{ r.claimText }}</span>
+              <span style="flex:0 0 78px;text-align:right;font-family:var(--font-mono);font-size:11px;color:{{ r.indicatorColor }};">{{ r.indicator }}</span>
+            </button>
+          </sc-for>
+
+          <!-- SKELETON (loading op state) -->
+          <div style="display:flex;align-items:center;gap:14px;border-radius:12px;padding:13px 14px;background:var(--bg-2);border:1px solid var(--line-1);">
+            <span class="op-skel" style="flex:0 0 118px;height:24px;border-radius:999px;"></span>
+            <span class="op-skel" style="flex:0 0 50px;height:13px;border-radius:5px;"></span>
+            <div style="flex:1 1 0;display:flex;flex-direction:column;gap:6px;"><span class="op-skel" style="width:46%;height:13px;border-radius:5px;"></span><span class="op-skel" style="width:28%;height:10px;border-radius:5px;"></span></div>
+            <span class="op-skel" style="flex:0 0 90px;height:22px;border-radius:7px;"></span>
+          </div>
+
+          <!-- ERROR (non-happy op state) -->
+          <div style="display:flex;align-items:center;gap:12px;border-radius:12px;padding:13px 15px;background:var(--err-bg);border:1px solid rgba(255,93,108,0.30);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="1.9" style="flex:0 0 auto;" aria-hidden="true"><path d="M12 9v4M12 17h.01"></path><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>
+            <div style="flex:1 1 0;min-width:0;">
+              <div style="font-size:13.5px;color:var(--fg-1);">Aktuator nicht erreichbar</div>
+              <div style="margin-top:2px;font-family:var(--font-mono);font-size:10.5px;color:var(--fg-3);">AP-15 · Build-Worker antwortet seit 40 s nicht</div>
+            </div>
+            <button onClick="{{ onRetry }}" style="flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,93,108,0.4);background:var(--bg-2);color:var(--err);border-radius:9px;padding:8px 13px;font-size:12.5px;cursor:pointer;transition:all 120ms;" style-hover="background:rgba(255,93,108,0.14);">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg>Erneut versuchen
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBSERVE FEED -->
+      <aside style="flex:0 0 396px;display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-left:1px solid var(--line-1);box-shadow:var(--rim);min-height:0;">
+        <div style="flex:0 0 auto;padding:18px 20px 13px;border-bottom:1px solid var(--line-1);">
+          <div style="display:flex;align-items:center;gap:9px;">
+            <span class="op-pulse" style="width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 9px var(--accent);flex:0 0 auto;"></span>
+            <span style="font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--fg-1);">Beobachten</span>
+            <span style="margin-left:auto;font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-4);">live</span>
+          </div>
+          <p style="margin-top:6px;font-size:12px;color:var(--fg-3);line-height:1.45;">Ereignisse, die vom Aktuator zurückströmen — PRs, Verifier-Verdikte, Merges.</p>
+        </div>
+        <div class="op-scroll" style="flex:1 1 0;overflow-y:auto;min-height:0;padding:14px 18px 20px;">
+          <div style="position:relative;">
+            <div style="position:absolute;left:13px;top:6px;bottom:6px;width:1px;background:var(--line-2);"></div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <sc-for list="{{ feed }}" as="f" hint-placeholder-count="6">
+                <div class="{{ f.anim }}" style="position:relative;display:flex;gap:13px;padding:9px 0 9px 0;">
+                  <span style="{{ f.dotWrap }}"><span style="{{ f.dot }}"></span></span>
+                  <div style="flex:1 1 0;min-width:0;">
+                    <div style="font-size:13px;color:var(--fg-1);line-height:1.4;text-wrap:pretty;">{{ f.label }}</div>
+                    <div style="margin-top:3px;display:flex;align-items:center;gap:8px;">
+                      <span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);">{{ f.node }}</span>
+                      <span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);">{{ f.time }}</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 880}}">
+class Component extends DCLogic {
+  NAVMAP = { catalog: 'Catalog.dc.html', autorieren: 'Autorieren.dc.html', betrieb: 'Betrieb.dc.html', ergebnisse: 'Reproduzierbarkeit.dc.html' };
+  TABDEFS = [ { key: 'catalog', label: 'Katalog' }, { key: 'betrieb', label: 'Betreiben' }, { key: 'ergebnisse', label: 'Ergebnisse' } ];
+  navTo(key) { if (this.props && this.props.onNavigate) this.props.onNavigate(key); else window.location.href = this.NAVMAP[key]; }
+  buildTabs(active) { return this.TABDEFS.map(t => ({ label: t.label, onClick: () => this.navTo(t.key), style: 'display:inline-flex;align-items:center;padding:5px 13px;border-radius:999px;font-size:12.5px;cursor:pointer;border:1px solid transparent;background:none;font-family:var(--font-body);transition:all 120ms;' + (t.key === active ? 'font-weight:500;background:var(--accent-soft);color:var(--accent);border-color:var(--accent-rim);box-shadow:var(--glow-soft);' : 'color:var(--fg-3);') })); }
+  // i18n: studio.nav.queue → "Warteschlange" · studio.nav.gates → "Freigaben" · studio.nav.observe → "Beobachten" · studio.nav.history → "Verlauf"
+  ICONS = {
+    queue: [{ d: 'M3 6h18M3 12h18M3 18h12' }],
+    gate: [{ d: 'M3 3v18h18' }, { d: 'M7 14l3-3 3 3 4-5' }],
+    observe: [{ d: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z' }, { d: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' }],
+    history: [{ d: 'M3 3v5h5' }, { d: 'M3.05 13A9 9 0 1 0 6 5.3L3 8' }, { d: 'M12 7v5l4 2' }]
+  };
+  NAV = [
+    { id: 'queue', label: 'Warteschlange', icon: 'queue', count: 7 },
+    { id: 'gates', label: 'Freigaben', icon: 'gate', count: 1 },
+    { id: 'observe', label: 'Beobachten', icon: 'observe', count: '' },
+    { id: 'history', label: 'Verlauf', icon: 'history', count: '' }
+  ];
+
+  // PlanNode-shaped queue (truth → derived projection)
+  ROWS = [
+    { id: 'AP-03', kind: 'intervention', kindLabel: 'Arbeitspaket', title: 'Adresse-Validierung', state: 'done', claim: 'agent-02', detail: 'gemerged · #305', indicator: '2.8 h', indGood: true },
+    { id: 'AP-05', kind: 'intervention', kindLabel: 'Arbeitspaket', title: 'Zahlungs-Adapter', state: 'running', claim: 'agent-07', detail: 'baut · Verifier-Wave grün', indicator: '~3 h', indGood: null },
+    { id: 'AP-07', kind: 'intervention', kindLabel: 'Arbeitspaket', title: 'Idempotenz-Schlüssel', state: 'running', claim: 'agent-04', detail: 'PR #312 offen · 2 Befunde', indicator: '+1.4 h', indGood: false },
+    { id: 'GATE-01', kind: 'gate', kindLabel: 'Founder-Gate', title: 'Release-Freigabe', state: 'awaiting-gate', claim: '', detail: 'blockiert 3 Pakete', indicator: '', indGood: null },
+    { id: 'AP-11', kind: 'intervention', kindLabel: 'Arbeitspaket', title: 'Lastpfad-Härtung', state: 'claimed', claim: 'verifier-wave-3', detail: 'beansprucht · Setup', indicator: '', indGood: null },
+    { id: 'AP-09', kind: 'intervention', kindLabel: 'Arbeitspaket', title: 'Telemetrie-Hooks', state: 'queued', claim: '', detail: 'wartet auf GATE-01', indicator: '', indGood: null }
+  ];
+
+  // ObservationEvent stream — newest first
+  BASE_FEED = [
+    { kind: 'merge', label: 'Adresse-Validierung gemerged in main', node: 'AP-03', time: 'vor 1 min' },
+    { kind: 'review', label: 'Verifier-Wave grün — 0 Regressionen', node: 'AP-05', time: 'vor 2 min' },
+    { kind: 'pr', label: 'PR #312 eröffnet', node: 'AP-07', time: 'vor 4 min' },
+    { kind: 'review', label: 'Review-Verdikt: 2 Befunde, nicht blockierend', node: 'AP-07', time: 'vor 6 min' },
+    { kind: 'claim', label: 'Von verifier-wave-3 beansprucht', node: 'AP-11', time: 'vor 9 min' },
+    { kind: 'pr', label: 'PR #309 eröffnet', node: 'AP-05', time: 'vor 12 min' },
+    { kind: 'merge', label: 'Telemetrie-Schema bestätigt', node: 'AP-09', time: 'vor 18 min' },
+    { kind: 'measurement', label: 'Durchlaufzeit gemessen: 2.8 h', node: 'AP-03', time: 'vor 22 min' }
+  ];
+
+  STATE_META = {
+    done:           { label: 'erledigt',           color: 'var(--ok)',     bg: 'var(--ok-bg)',     rim: 'rgba(34,211,154,0.25)',  anim: '' },
+    running:        { label: 'läuft',              color: 'var(--accent)', bg: 'var(--accent-soft)',rim: 'var(--accent-rim)',     anim: 'op-pulse' },
+    'awaiting-gate':{ label: 'wartet auf Freigabe', color: 'var(--warn)',   bg: 'var(--warn-bg)',   rim: 'rgba(245,181,68,0.3)',   anim: 'op-pulse' },
+    claimed:        { label: 'beansprucht',         color: 'var(--info)',   bg: 'var(--info-bg)',   rim: 'rgba(109,210,255,0.3)',  anim: '' },
+    queued:         { label: 'in Warteschlange',    color: 'var(--fg-3)',   bg: 'var(--bg-inset)',  rim: 'var(--line-2)',          anim: '' }
+  };
+
+  state = { active: 'queue', selectedId: 'GATE-01', gate: 'pending', feed: null };
+
+  componentDidMount() { this.setState({ feed: this.BASE_FEED.slice() }); }
+
+  approve() {
+    this.setState(s => ({ gate: 'approved', feed: [{ kind: 'gate', label: 'Founder-Gate freigegeben — Merge nach Produktion gestartet', node: 'GATE-01', time: 'gerade eben', _new: true }].concat(s.feed || this.BASE_FEED) }));
+  }
+  reject() {
+    this.setState(s => ({ gate: 'rejected', feed: [{ kind: 'reject', label: 'Founder-Gate zurückgewiesen — Pakete zurück in Review', node: 'GATE-01', time: 'gerade eben', _new: true }].concat(s.feed || this.BASE_FEED) }));
+  }
+  reopenGate() { this.setState({ gate: 'pending' }); }
+  retry() {
+    this.setState(s => ({ feed: [{ kind: 'claim', label: 'AP-15 erneut zugewiesen — Build-Worker neu gestartet', node: 'AP-15', time: 'gerade eben', _new: true }].concat(s.feed || this.BASE_FEED) }));
+  }
+
+  feedDotColor(kind) {
+    if (kind === 'merge' || kind === 'review') return 'var(--ok)';
+    if (kind === 'pr' || kind === 'gate') return 'var(--accent)';
+    if (kind === 'measurement') return 'var(--info)';
+    if (kind === 'claim') return 'var(--fg-3)';
+    if (kind === 'reject') return 'var(--err)';
+    return 'var(--fg-3)';
+  }
+
+  renderVals() {
+    const s = this.state;
+
+    const navItems = this.NAV.map(n => {
+      const on = n.id === s.active;
+      return {
+        label: n.label, count: n.count === '' ? '' : ('' + n.count),
+        onClick: () => this.setState({ active: n.id }),
+        iconPaths: this.ICONS[n.icon] || [],
+        labelColor: on ? 'var(--fg-1)' : 'var(--fg-2)', weight: on ? '500' : '400',
+        indicatorStyle: 'flex:0 0 auto;width:3px;height:20px;border-radius:2px;background:' + (on ? 'var(--accent)' : 'transparent') + ';' + (on ? 'box-shadow:0 0 7px var(--accent-rim);' : ''),
+        iconWrap: 'flex:0 0 auto;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:' + (on ? 'var(--accent)' : 'var(--fg-3)') + ';background:' + (on ? 'var(--accent-soft)' : 'transparent') + ';border:1px solid ' + (on ? 'var(--accent-rim)' : 'transparent') + ';',
+        countStyle: 'font-family:var(--font-mono);font-size:11px;min-width:18px;text-align:center;color:' + (on ? 'var(--accent)' : 'var(--fg-4)') + ';' + (n.id === 'gates' && n.count ? 'background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:1px 6px;' : ''),
+        style: 'display:flex;align-items:center;gap:9px;width:100%;text-align:left;cursor:pointer;border:none;background:none;border-radius:10px;padding:9px 9px 9px 5px;transition:opacity 120ms;opacity:' + (on ? '1' : '0.78') + ';'
+      };
+    });
+
+    const kindGlyph = (kind) => {
+      if (kind === 'gate') return 'flex:0 0 auto;width:9px;height:9px;border-radius:2px;transform:rotate(45deg);background:var(--warn);box-shadow:0 0 7px var(--warn);';
+      return 'flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:var(--fg-3);';
+    };
+    const rows = this.ROWS.map(r => {
+      const m = this.STATE_META[r.state];
+      const on = r.id === s.selectedId;
+      const claimText = r.claim || '—';
+      const indColor = r.indGood === true ? 'var(--ok)' : (r.indGood === false ? 'var(--warn)' : 'var(--fg-3)');
+      return {
+        id: r.id, title: r.title, kindLabel: r.kindLabel, detail: r.detail, indicator: r.indicator, indicatorColor: indColor,
+        onClick: () => this.setState({ selectedId: r.id }),
+        rowStyle: 'display:flex;align-items:center;gap:14px;width:100%;cursor:pointer;border-radius:12px;padding:12px 14px;transition:all 120ms;background:' + (on ? 'var(--bg-3)' : 'var(--bg-2)') + ';border:1px solid ' + (on ? 'var(--accent-rim)' : 'var(--line-1)') + ';' + (on ? 'box-shadow:var(--glow-soft);' : ''),
+        stateChipStyle: 'flex:0 0 132px;display:inline-flex;align-items:center;gap:7px;justify-content:flex-start;font-family:var(--font-mono);font-size:10.5px;border-radius:999px;padding:6px 11px;color:' + m.color + ';background:' + m.bg + ';border:1px solid ' + m.rim + ';',
+        stateDotAnim: m.anim, stateDotStyle: 'width:6px;height:6px;border-radius:50%;background:' + m.color + ';box-shadow:0 0 6px ' + m.color + ';flex:0 0 auto;',
+        stateLabel: m.label,
+        kindGlyphStyle: kindGlyph(r.kind),
+        claimStyle: 'flex:0 0 140px;display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;color:' + (r.claim ? 'var(--fg-2)' : 'var(--fg-4)') + ';border-radius:8px;padding:6px 10px;background:' + (r.claim ? 'var(--bg-inset)' : 'transparent') + ';border:1px solid ' + (r.claim ? 'var(--line-2)' : 'transparent') + ';',
+        claimDotStyle: 'width:14px;height:14px;border-radius:5px;flex:0 0 auto;background:' + (r.claim ? 'linear-gradient(180deg,var(--accent-strong),var(--accent-deep))' : 'transparent') + ';' + (r.claim ? 'box-shadow:var(--glow-soft);' : 'display:none;'),
+        claimText
+      };
+    });
+
+    // Gate decide card
+    const gatePending = s.gate === 'pending';
+    const gateMeta = this.STATE_META['awaiting-gate'];
+    const gateChecks = [
+      { label: 'Verifier-Wave grün', ok: true },
+      { label: 'Durchlaufzeit im Plan', ok: true },
+      { label: '2 Befunde offen', ok: false }
+    ].map(c => ({
+      label: c.label,
+      icon: c.ok ? 'M20 6L9 17l-5-5' : 'M12 9v4M12 17h.01',
+      style: 'display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10.5px;border-radius:999px;padding:5px 11px;color:' + (c.ok ? 'var(--ok)' : 'var(--warn)') + ';background:' + (c.ok ? 'var(--ok-bg)' : 'var(--warn-bg)') + ';border:1px solid ' + (c.ok ? 'rgba(34,211,154,0.25)' : 'rgba(245,181,68,0.3)') + ';'
+    }));
+
+    const gateResultText = s.gate === 'approved'
+      ? 'Freigegeben — 3 Arbeitspakete übergeben, Merge nach Produktion läuft.'
+      : 'Zurückgewiesen — Pakete zurück in Review, Foundry pausiert die Übergabe.';
+    const gateResultColor = s.gate === 'approved' ? 'var(--ok)' : 'var(--err)';
+
+    const feedRaw = s.feed || this.BASE_FEED;
+    const feed = feedRaw.map(f => {
+      const c = this.feedDotColor(f.kind);
+      return {
+        label: f.label, node: f.node, time: f.time, anim: f._new ? 'op-feedin' : '',
+        dotWrap: 'flex:0 0 27px;display:flex;align-items:flex-start;justify-content:center;padding-top:2px;',
+        dot: 'width:11px;height:11px;border-radius:50%;background:' + c + ';box-shadow:0 0 8px ' + c + ';border:2px solid var(--bg-1);'
+      };
+    });
+
+    return {
+      agentCount: 3, planVersion: 'plan@v7',
+      tabs: this.buildTabs('betrieb'),
+      navItems,
+      queueSummary: 'aus dem Plan-Baum · 7 Tickets, 1 Gate',
+      onOpenTemplate: () => this.navTo('catalog'),
+      rows,
+      // gate
+      gateId: 'GATE-01', gateKindLabel: 'Founder-Gate', gateTitle: 'Release-Freigabe',
+      gateContext: '3 Arbeitspakete sind gebaut und warten auf diese Freigabe, bevor Foundry nach Produktion merged. Das Gate ist ein sichtbarer Knoten im Pfad — keine Modal-Unterbrechung.',
+      gateChecks,
+      gatePending, gateResolved: !gatePending,
+      gateRimColor: gatePending ? 'rgba(245,181,68,0.4)' : (s.gate === 'approved' ? 'var(--accent-rim)' : 'rgba(255,93,108,0.35)'),
+      gateBarBg: gatePending ? 'linear-gradient(90deg,transparent,var(--warn),transparent)' : (s.gate === 'approved' ? 'linear-gradient(90deg,transparent,var(--accent),transparent)' : 'linear-gradient(90deg,transparent,var(--err),transparent)'),
+      gateGlyphWrap: 'flex:0 0 auto;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:' + (gatePending ? 'var(--warn)' : (s.gate === 'approved' ? 'var(--accent)' : 'var(--err)')) + ';background:' + (gatePending ? 'var(--warn-bg)' : (s.gate === 'approved' ? 'var(--accent-soft)' : 'var(--err-bg)')) + ';border:1px solid ' + (gatePending ? 'rgba(245,181,68,0.3)' : (s.gate === 'approved' ? 'var(--accent-rim)' : 'rgba(255,93,108,0.3)')) + ';',
+      gateStatePillStyle: 'display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;border-radius:999px;padding:4px 10px;color:' + gateMeta.color + ';background:' + gateMeta.bg + ';border:1px solid ' + gateMeta.rim + ';',
+      gateStateDotAnim: gatePending ? 'op-pulse' : '', gateStateDotStyle: 'width:6px;height:6px;border-radius:50%;background:' + (gatePending ? 'var(--warn)' : (s.gate === 'approved' ? 'var(--ok)' : 'var(--err)')) + ';box-shadow:0 0 6px currentColor;flex:0 0 auto;',
+      gateStateLabel: gatePending ? 'wartet auf Entscheidung' : (s.gate === 'approved' ? 'freigegeben' : 'zurückgewiesen'),
+      onApprove: () => this.approve(), onReject: () => this.reject(), onReopenGate: () => this.reopenGate(),
+      gateResultText, gateResultDotStyle: 'width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:' + gateResultColor + ';box-shadow:0 0 8px ' + gateResultColor + ';',
+      onRetry: () => this.retry(),
+      feed
+    };
+  }
+}
+</script>
+</body>
+</html>

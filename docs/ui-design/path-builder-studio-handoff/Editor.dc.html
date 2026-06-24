@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/colors_and_type.css">
+<style>
+  html,body{ background:var(--bg-0); margin:0; }
+  @keyframes edPulse{ 0%,100%{opacity:1} 50%{opacity:.4} }
+  @media (prefers-reduced-motion: no-preference){ .ed-pulse{ animation:edPulse 1.6s var(--ease-in-out) infinite } }
+  .ed-scroll{ scrollbar-width:thin; } .ed-scroll::-webkit-scrollbar{ width:8px; } .ed-scroll::-webkit-scrollbar-thumb{ background:var(--line-2); border-radius:8px; }
+  .ed-row .ed-tools{ opacity:0; transition:opacity 120ms; } .ed-row:hover .ed-tools{ opacity:1; } .ed-row.sel .ed-tools{ opacity:1; }
+</style>
+</helmet>
+<div data-skin="exercir" style="position:relative;width:100%;height:100vh;background:var(--bg-1);overflow:hidden;font-family:var(--font-body);color:var(--fg-1);display:flex;flex-direction:column;">
+
+  <div style="position:absolute;left:-8%;right:-8%;top:-26%;height:50%;background:radial-gradient(ellipse at 30% 0%, var(--accent-soft), transparent 60%);filter:blur(40px);pointer-events:none;z-index:0;"></div>
+
+  <!-- TOP BAR -->
+  <header style="position:relative;z-index:3;display:flex;align-items:center;gap:14px;height:58px;padding:0 18px;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-bottom:1px solid var(--line-1);box-shadow:var(--rim);flex:0 0 auto;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:25px;height:25px;border-radius:8px;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));box-shadow:var(--glow-soft);display:flex;align-items:center;justify-content:center;"><div style="width:8px;height:8px;border:1.6px solid var(--fg-on-glow);border-radius:2px;transform:rotate(45deg);"></div></div>
+      <div style="display:flex;flex-direction:column;line-height:1.05;"><span style="font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:-0.02em;color:var(--fg-1);">system-builder</span><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--fg-3);">studio</span></div>
+    </div>
+    <button onClick="{{ onBack }}" title="Zurück zum Katalog" style="display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--fg-3);font-size:12.5px;cursor:pointer;font-family:var(--font-body);transition:all 120ms;flex:0 0 auto;" style-hover="border-color:var(--line-3);color:var(--fg-1);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>Katalog
+    </button>
+    <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+      <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-4);">System · Plan-Baum</span>
+      <span style="font-size:15px;color:var(--fg-1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ title }}</span>
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);">· {{ domain }}</span>
+    </div>
+    <button onClick="{{ onToggleVis }}" title="Sichtbarkeit — wer dieses System nutzen darf" style="{{ visBtnStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><sc-for list="{{ visIconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg>{{ visLabel }}</button>
+
+    <div style="flex:1 1 0;"></div>
+
+    <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10.5px;color:var(--fg-4);"><span style="width:6px;height:6px;border-radius:50%;background:var(--fg-3);"></span>Entwurf — nichts läuft</div>
+    <button onClick="{{ onRun }}" style="{{ runStyle }}" style-active="transform:scale(0.985);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="{{ runIcon }}"></path></svg>{{ runLabel }}
+    </button>
+  </header>
+
+  <div style="position:relative;z-index:1;flex:1 1 0;display:flex;min-height:0;">
+
+    <!-- GRAPH (indented outline) -->
+    <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;min-height:0;">
+      <div style="flex:0 0 auto;display:flex;align-items:center;gap:11px;padding:15px 22px 13px;border-bottom:1px solid var(--line-1);">
+        <span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-3);">Plan-Baum</span>
+        <span style="font-size:12px;color:var(--fg-4);">{{ treeSummary }}</span>
+        <div style="flex:1 1 0;"></div>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);">Struktur, nicht Geometrie · auto-angeordnet</span>
+      </div>
+      <div class="ed-scroll" style="flex:1 1 0;overflow-y:auto;min-height:0;padding:18px 22px 26px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+            <div class="{{ r.rowClass }}" style="{{ r.rowStyle }}">
+              <sc-if value="{{ r.showElbow }}" hint-placeholder-val="{{ false }}"><span style="flex:0 0 auto;width:16px;height:17px;margin-right:3px;margin-top:-11px;border-left:1px solid var(--line-2);border-bottom:1px solid var(--line-2);border-bottom-left-radius:7px;"></span></sc-if>
+              <button onClick="{{ r.onSelect }}" style="{{ r.cardStyle }}" style-hover="border-color:var(--line-3);">
+                <span style="{{ r.glyphStyle }}"></span>
+                <span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);flex:0 0 auto;">{{ r.id }}</span>
+                <span style="flex:1 1 0;min-width:0;text-align:left;font-size:13.5px;color:{{ r.titleColor }};font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.title }}</span>
+                <sc-if value="{{ r.isGate }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:8.5px;color:var(--warn);background:var(--warn-bg);border:1px solid rgba(245,181,68,0.3);border-radius:5px;padding:2px 6px;flex:0 0 auto;">gate</span></sc-if>
+                <sc-if value="{{ r.hasEffect }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--accent);flex:0 0 auto;">{{ r.effectTag }}</span></sc-if>
+              </button>
+              <div class="ed-tools" style="flex:0 0 auto;display:flex;align-items:center;gap:3px;margin-left:7px;">
+                <button onClick="{{ r.onAddChild }}" title="Kind hinzufügen" style="{{ r.toolStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+                <button onClick="{{ r.onAddGate }}" title="Gate hinzufügen" style="{{ r.toolStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 3v18h18"></path><path d="M7 14l3-3 3 3 4-5"></path></svg></button>
+                <button onClick="{{ r.onIndent }}" title="Einrücken (Kind des vorherigen)" style="{{ r.indentStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path><path d="M20 4v16"></path></svg></button>
+                <button onClick="{{ r.onOutdent }}" title="Ausrücken" style="{{ r.outdentStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path><path d="M4 4v16"></path></svg></button>
+                <button onClick="{{ r.onUp }}" title="Nach oben" style="{{ r.upStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 15l-6-6-6 6"></path></svg></button>
+                <button onClick="{{ r.onDown }}" title="Nach unten" style="{{ r.downStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+                <button onClick="{{ r.onDelete }}" title="Löschen" style="{{ r.delStyle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+              </div>
+            </div>
+          </sc-for>
+          <button onClick="{{ onAddRoot }}" style="align-self:flex-start;margin-top:8px;display:inline-flex;align-items:center;gap:7px;background:none;border:1px dashed var(--line-3);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--fg-3);cursor:pointer;transition:all 120ms;font-family:var(--font-body);" style-hover="border-color:var(--accent-rim);color:var(--accent);">+ Knoten auf oberster Ebene</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NODE INSPECTOR -->
+    <aside class="ed-scroll" style="flex:0 0 452px;display:flex;flex-direction:column;overflow-y:auto;min-height:0;background:var(--glass-bg);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border-left:1px solid var(--line-1);box-shadow:var(--rim);">
+      <div style="padding:18px 20px 22px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
+          <span style="{{ inspIconWrap }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="{{ inspIcon }}"></path></svg></span>
+          <div style="min-width:0;flex:1 1 0;">
+            <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-4);">{{ inspKind }} · {{ selId }}</div>
+            <input type="text" value="{{ selTitle }}" onChange="{{ onTitle }}" style="margin-top:4px;width:100%;box-sizing:border-box;background:var(--bg-inset);border:1px solid var(--line-2);border-radius:8px;color:var(--fg-1);font-family:var(--font-display);font-weight:500;font-size:18px;padding:7px 10px;outline:none;" style-focus="border-color:var(--accent-rim);box-shadow:0 0 0 3px var(--accent-soft);">
+          </div>
+        </div>
+
+        <!-- WORK NODE → PREDICTED EFFECT + ACTIONS + NEEDS -->
+        <sc-if value="{{ isWork }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--bg-2);border:1px solid var(--accent-rim);border-radius:13px;overflow:hidden;box-shadow:var(--glow-soft);">
+          <div style="height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);"></div>
+          <div style="padding:15px 16px 18px;">
+            <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">Vorhergesagte Wirkung</div>
+            <div style="margin-top:12px;display:flex;gap:7px;flex-wrap:wrap;"><sc-for list="{{ indicatorPicker }}" as="ip" hint-placeholder-count="3"><button style="{{ ip.style }}" onClick="{{ ip.onClick }}">{{ ip.name }}</button></sc-for></div>
+            <div role="group" style="margin-top:12px;display:flex;gap:7px;">
+              <button style="{{ dirImproveStyle }}" onClick="{{ onImprove }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg>verbessert</button>
+              <button style="{{ dirWorsenStyle }}" onClick="{{ onWorsen }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>verschlechtert</button>
+            </div>
+            <div style="margin-top:13px;display:flex;align-items:center;gap:9px;">
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);min-width:42px;">μ</span>
+              <input type="number" step="0.01" value="{{ magValue }}" onChange="{{ onMag }}" style="width:84px;background:var(--bg-inset);border:1px solid var(--line-2);border-radius:7px;color:var(--fg-1);font-family:var(--font-mono);font-size:12.5px;padding:6px 8px;outline:none;" style-focus="border-color:var(--accent-rim);box-shadow:0 0 0 3px var(--accent-soft);">
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);min-width:24px;">± σ</span>
+              <input type="number" step="0.01" min="0" value="{{ sdValue }}" onChange="{{ onSd }}" style="width:84px;background:var(--bg-inset);border:1px solid var(--line-2);border-radius:7px;color:var(--fg-1);font-family:var(--font-mono);font-size:12.5px;padding:6px 8px;outline:none;">
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-3);">{{ unitLabel }}</span>
+            </div>
+            <div style="margin-top:12px;background:var(--bg-inset);border:1px solid var(--line-2);border-radius:10px;padding:9px 11px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-4);">Magnitude-Prior</span><span style="font-family:var(--font-mono);font-size:10.5px;color:var(--accent);">{{ priorLabel }}</span></div>
+              <svg viewBox="0 0 240 64" width="100%" height="52" style="display:block;overflow:visible;"><rect x="{{ priorBandX0 }}" y="6" width="{{ priorBandW }}" height="52" fill="var(--accent-soft)" opacity="0.5"></rect><path d="{{ priorArea }}" fill="var(--accent-soft)"></path><path d="{{ priorLine }}" fill="none" stroke="var(--accent)" stroke-width="1.6"></path><line x1="{{ priorMeanX }}" y1="6" x2="{{ priorMeanX }}" y2="58" stroke="var(--accent)" stroke-width="1.1" stroke-dasharray="2 2"></line><line x1="12" y1="58" x2="228" y2="58" stroke="var(--line-2)" stroke-width="1"></line></svg>
+              <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:8.5px;color:var(--fg-4);"><span>−2σ</span><span style="color:var(--accent);">μ</span><span>+2σ</span></div>
+            </div>
+            <div style="margin-top:13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="font-size:12px;color:var(--fg-2);">Konfidenz</span><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--accent);">{{ confLabel }}</span></div>
+            <input type="range" min="0" max="1" step="0.01" value="{{ confValue }}" onChange="{{ onConf }}" onInput="{{ onConf }}" style="width:100%;accent-color:var(--accent);height:4px;cursor:pointer;">
+            <div style="margin-top:14px;font-size:12px;color:var(--fg-2);margin-bottom:8px;">Basis</div>
+            <div role="group" style="display:flex;gap:6px;"><sc-for list="{{ basisPicker }}" as="bp" hint-placeholder-count="3"><button style="{{ bp.style }}" onClick="{{ bp.onClick }}">{{ bp.label }}</button></sc-for></div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-4);margin-bottom:9px;">Aktionen</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;">
+            <sc-for list="{{ actionChips }}" as="a" hint-placeholder-count="1"><span style="display:inline-flex;align-items:center;gap:7px;border-radius:8px;padding:6px 8px 6px 11px;font-size:12.5px;background:var(--bg-2);color:var(--fg-1);border:1px solid var(--line-2);"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent-rim);"></span>{{ a.label }}<button onClick="{{ a.onRemove }}" title="Entfernen" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:none;border:none;color:var(--fg-4);cursor:pointer;" style-hover="color:var(--err);"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button></span></sc-for>
+            <sc-if value="{{ hasActionOptions }}" hint-placeholder-val="{{ true }}"><select onChange="{{ onAddAction }}" style="background:var(--bg-inset);border:1px dashed var(--line-3);border-radius:8px;color:var(--fg-3);font-family:var(--font-body);font-size:12px;padding:6px 9px;outline:none;cursor:pointer;"><option value="">+ Aktion…</option><sc-for list="{{ actionOptions }}" as="o" hint-placeholder-count="2"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select></sc-if>
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-4);margin-bottom:9px;">Bedarf</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;">
+            <sc-for list="{{ needChips }}" as="n" hint-placeholder-count="1"><span style="display:inline-flex;align-items:center;gap:7px;border-radius:8px;padding:6px 8px 6px 11px;font-size:12.5px;background:var(--bg-2);color:var(--fg-1);border:1px solid var(--line-2);">{{ n.label }}<button onClick="{{ n.onRemove }}" title="Entfernen" style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:none;border:none;color:var(--fg-4);cursor:pointer;" style-hover="color:var(--err);"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button></span></sc-for>
+            <sc-if value="{{ hasNeedOptions }}" hint-placeholder-val="{{ true }}"><select onChange="{{ onAddNeed }}" style="background:var(--bg-inset);border:1px dashed var(--line-3);border-radius:8px;color:var(--fg-3);font-family:var(--font-body);font-size:12px;padding:6px 9px;outline:none;cursor:pointer;"><option value="">+ Ressource…</option><sc-for list="{{ needOptions }}" as="o" hint-placeholder-count="2"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select></sc-if>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- GATE NODE → CONFIG + INLINE AUTHORIZE -->
+        <sc-if value="{{ isGate }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--bg-2);border:1px solid rgba(245,181,68,0.4);border-radius:13px;overflow:hidden;">
+          <div style="height:2px;background:linear-gradient(90deg,transparent,var(--warn),transparent);"></div>
+          <div style="padding:15px 16px 18px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="ed-pulse" style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;border-radius:999px;padding:4px 10px;color:var(--warn);background:var(--warn-bg);border:1px solid rgba(245,181,68,0.3);"><span style="width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 6px var(--warn);"></span>{{ gateStateLabel }}</span></div>
+            <p style="margin-top:11px;font-size:13px;color:var(--fg-2);line-height:1.5;text-wrap:pretty;">Ein sichtbarer Entscheidungs-Knoten. Bedingungen lesen sich aus dem Pfad — inline freigeben, keine Modal-Unterbrechung.</p>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px;">
+              <sc-for list="{{ gateConds }}" as="g" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;background:var(--bg-inset);border:1px solid var(--line-2);">
+                  <span style="{{ g.dotStyle }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--fg-on-glow)" stroke-width="3" aria-hidden="true"><path d="{{ g.icon }}"></path></svg></span>
+                  <span style="flex:1 1 0;font-size:13px;color:var(--fg-1);">{{ g.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:15px;display:flex;align-items:center;gap:9px;">
+              <button onClick="{{ onGateApprove }}" style="display:inline-flex;align-items:center;gap:7px;border:none;border-radius:10px;padding:11px 17px;font-family:var(--font-display);font-weight:600;font-size:13.5px;cursor:pointer;background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));color:var(--fg-on-glow);box-shadow:var(--glow);transition:all 120ms;" style-active="transform:scale(0.98);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>Freigeben</button>
+              <button style="display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);border-radius:10px;padding:11px 15px;font-size:13.5px;cursor:pointer;background:var(--bg-2);color:var(--fg-2);font-family:var(--font-body);transition:all 120ms;" style-hover="border-color:var(--err);color:var(--err);">Zurückweisen</button>
+              <sc-if value="{{ gateApproved }}" hint-placeholder-val="{{ false }}"><span style="margin-left:2px;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ok);"><span style="width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 7px var(--ok);"></span>freigegeben</span></sc-if>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- EPIC / ROOT -->
+        <sc-if value="{{ isEpic }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--bg-2);border:1px solid var(--line-1);border-radius:13px;padding:16px;">
+          <p style="font-size:13.5px;color:var(--fg-2);line-height:1.55;text-wrap:pretty;">Die Wurzel des Liefer-Pfads. Sie trägt die Arbeitspakete und Gates darunter — wähle einen Knoten, um seine vorhergesagte Wirkung zu bearbeiten, oder füge mit <span style="color:var(--accent);">+</span> ein Kind hinzu.</p>
+          <div style="margin-top:13px;display:flex;gap:18px;">
+            <div><div style="font-family:var(--font-display);font-weight:700;font-size:24px;color:var(--fg-1);">{{ countWork }}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);">Arbeitspakete</div></div>
+            <div><div style="font-family:var(--font-display);font-weight:700;font-size:24px;color:var(--warn);">{{ countGate }}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);">Gates</div></div>
+            <div><div style="font-family:var(--font-display);font-weight:700;font-size:24px;color:var(--accent);">{{ countEffect }}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--fg-4);">Wirkungen</div></div>
+          </div>
+        </div>
+        </sc-if>
+
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 880}, &quot;item&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;checkout&quot;, &quot;tsType&quot;: &quot;string&quot;}}">
+class Component extends DCLogic {
+  INDICATORS = { cycle: { name: 'Durchlaufzeit', unit: 'h' }, findings: { name: 'Befunde', unit: '' }, latency: { name: 'p95-Latenz', unit: 'h' } };
+  IND_ORDER = ['cycle', 'findings', 'latency'];
+  BASES = [{ id: 'expert', label: 'Experte' }, { id: 'literature', label: 'Literatur' }, { id: 'derived', label: 'abgeleitet' }];
+  ACTION_DEFS = { prbot: 'PR-Bot', verifier: 'Verifier-Wave', merge: 'Merge-Queue', slack: 'Slack-Notify' };
+  NEED_DEFS = { agents: 'Agent-Pool', compute: 'Compute-Budget', review: 'Review-Kapazität' };
+
+  SEED = {
+    checkout: { name: 'Checkout-Rewrite v2', domain: 'Software', root: { id: 'EP-01', kind: 'epic', title: 'Checkout-Rewrite', children: [
+      { id: 'AP-03', kind: 'work', title: 'Adresse-Validierung', effect: { indicator: 'cycle', dir: 'improves', mag: 0.40, sd: 0.15, conf: 0.8, basis: 'literature' }, actions: ['verifier', 'merge'], needs: ['agents'], children: [] },
+      { id: 'AP-05', kind: 'work', title: 'Zahlungs-Adapter', effect: { indicator: 'cycle', dir: 'improves', mag: 0.60, sd: 0.20, conf: 0.7, basis: 'expert' }, actions: ['prbot'], needs: ['agents', 'compute'], children: [
+        { id: 'AP-07', kind: 'work', title: 'Idempotenz-Schlüssel', effect: { indicator: 'findings', dir: 'improves', mag: 2.0, sd: 1.0, conf: 0.5, basis: 'derived' }, actions: ['verifier'], needs: ['review'], children: [] }
+      ] },
+      { id: 'AP-09', kind: 'work', title: 'Telemetrie-Hooks', effect: { indicator: 'latency', dir: 'improves', mag: 0.30, sd: 0.10, conf: 0.6, basis: 'literature' }, actions: [], needs: ['agents'], children: [] },
+      { id: 'GATE-01', kind: 'gate', title: 'Release-Freigabe', conds: [{ label: 'Verifier-Wave grün', ok: true }, { label: 'Durchlaufzeit im Plan', ok: true }, { label: 'Offene Befunde', ok: false }], children: [
+        { id: 'AP-11', kind: 'work', title: 'Lastpfad-Härtung', effect: { indicator: 'latency', dir: 'improves', mag: 0.25, sd: 0.12, conf: 0.55, basis: 'derived' }, actions: [], needs: ['compute'], children: [] }
+      ] }
+    ] } },
+    garden: { name: 'Greenway Community Garden', domain: 'Horticulture', root: { id: 'R', kind: 'epic', title: 'Garden season', children: [ { id: 'G1', kind: 'work', title: 'Install drip irrigation', children: [] }, { id: 'G2', kind: 'work', title: 'Mulch the beds', children: [] }, { id: 'GG', kind: 'gate', title: 'Harvest readiness gate', children: [] } ] } },
+    clinic: { name: 'Maple Clinic Recovery', domain: 'Health', root: { id: 'R', kind: 'epic', title: 'Recovery pathway', children: [ { id: 'C1', kind: 'work', title: 'Physiotherapy', children: [] }, { id: 'C2', kind: 'work', title: 'Strength rehab', children: [] }, { id: 'CG', kind: 'gate', title: 'Discharge review', children: [] } ] } },
+    football: { name: 'Eastside Youth Football', domain: 'Sports', root: { id: 'R', kind: 'epic', title: 'Pre-season', children: [ { id: 'F1', kind: 'work', title: 'Interval running', children: [] }, { id: 'F2', kind: 'work', title: 'Strength block', children: [] }, { id: 'FG', kind: 'gate', title: 'Match-fit sign-off', children: [] } ] } },
+    drip: { name: 'Drip Irrigation Rollout', domain: 'Horticulture', root: { id: 'R', kind: 'epic', title: 'Drip rollout', children: [ { id: 'D1', kind: 'work', title: 'Zone survey', children: [] }, { id: 'D2', kind: 'work', title: 'Lay drip lines', children: [] }, { id: 'DG', kind: 'gate', title: 'Flow sign-off', children: [] } ] } },
+    volunteers: { name: 'Volunteer Onboarding', domain: 'Operations', root: { id: 'R', kind: 'epic', title: 'Onboarding', children: [ { id: 'V1', kind: 'work', title: 'Outreach', children: [] }, { id: 'V2', kind: 'work', title: 'Onboarding session', children: [] }, { id: 'VG', kind: 'gate', title: 'Roster sign-off', children: [] } ] } }
+  };
+
+  SHARED_SYS = { garden: 'customers', drip: 'customers', volunteers: 'org' };
+  NEW_SEED = { name: 'Neues System', domain: 'Neu', root: { id: 'EP-01', kind: 'epic', title: 'Neues System', children: [] } };
+  constructor(props) { super(props); const id = (props && props.item) || 'checkout'; const isNew = id === 'new'; const seed = isNew ? this.NEW_SEED : (this.SEED[id] || this.SEED.checkout); this.state = { root: JSON.parse(JSON.stringify(seed.root)), name: seed.name, domain: seed.domain, selectedId: (seed.root.children[0] || seed.root).id, seq: 1, gateApproved: false, level: isNew ? 'private' : (this.SHARED_SYS[id] || 'private'), isNew }; }
+  renameSelected(v) { const root = this.clone(); const n = this.findById(root, this.state.selectedId); if (n) n.title = v; const patch = { root }; if (n && n.kind === 'epic') patch.name = v; this.setState(patch); }
+
+  // ---- tree helpers ----
+  clone() { return JSON.parse(JSON.stringify(this.state.root)); }
+  walk(node, fn, depth, parent) { fn(node, depth, parent); (node.children || []).forEach(c => this.walk(c, fn, depth + 1, node)); }
+  locate(root, id) { let res = null; const rec = (n, p) => { if (n.id === id) { res = { node: n, parent: p, sibs: p ? p.children : [root], idx: (p ? p.children : [root]).indexOf(n) }; return; } (n.children || []).forEach(c => rec(c, n)); }; rec(root, null); return res; }
+  findById(root, id) { const l = this.locate(root, id); return l ? l.node : null; }
+  defaultEffect() { return { indicator: 'cycle', dir: 'improves', mag: 0.30, sd: 0.12, conf: 0.6, basis: 'literature' }; }
+
+  selNode() { return this.findById(this.state.root, this.state.selectedId); }
+  num(e, d) { const v = parseFloat(e.target.value); return isNaN(v) ? d : v; }
+  confWord(c) { return c < 0.4 ? 'Vermutung' : (c <= 0.75 ? 'etwas Evidenz' : 'gut belegt'); }
+  newId(kind) { const s = this.state.seq + 1; return (kind === 'gate' ? 'GATE-' : 'AP-') + (10 + s); }
+
+  // ---- mutations ----
+  commit(root, sel) { this.setState(st => ({ root, selectedId: sel != null ? sel : st.selectedId, seq: st.seq + 1 })); }
+  patchNode(id, patch) { const root = this.clone(); const n = this.findById(root, id); if (n) Object.assign(n, patch); this.setState({ root }); }
+  patchEffect(patch) { const root = this.clone(); const n = this.findById(root, this.state.selectedId); if (n) { n.effect = Object.assign({}, n.effect || this.defaultEffect(), patch); } this.setState({ root }); }
+  addChild(id, kind) { const root = this.clone(); const n = this.findById(root, id); if (!n) return; const nid = this.newId(kind); const node = kind === 'gate' ? { id: nid, kind: 'gate', title: 'Neues Gate', conds: [{ label: 'Bedingung', ok: true }], children: [] } : { id: nid, kind: 'work', title: 'Neues Arbeitspaket', effect: this.defaultEffect(), actions: [], needs: [], children: [] }; (n.children = n.children || []).push(node); this.commit(root, nid); }
+  addRoot(kind) { const root = this.clone(); const nid = this.newId(kind || 'work'); (root.children = root.children || []).push({ id: nid, kind: 'work', title: 'Neues Arbeitspaket', effect: this.defaultEffect(), actions: [], needs: [], children: [] }); this.commit(root, nid); }
+  remove(id) { const root = this.clone(); const loc = this.locate(root, id); if (!loc || !loc.parent) return; loc.sibs.splice(loc.idx, 1); this.commit(root, loc.parent.id); }
+  move(id, dir) { const root = this.clone(); const loc = this.locate(root, id); if (!loc || !loc.parent) return; const j = loc.idx + dir; if (j < 0 || j >= loc.sibs.length) return; const t = loc.sibs[loc.idx]; loc.sibs[loc.idx] = loc.sibs[j]; loc.sibs[j] = t; this.commit(root, id); }
+  indent(id) { const root = this.clone(); const loc = this.locate(root, id); if (!loc || loc.idx === 0) return; const prev = loc.sibs[loc.idx - 1]; loc.sibs.splice(loc.idx, 1); (prev.children = prev.children || []).push(loc.node); this.commit(root, id); }
+  outdent(id) { const root = this.clone(); const loc = this.locate(root, id); if (!loc || !loc.parent) return; const gloc = this.locate(root, loc.parent.id); if (!gloc || !gloc.parent) return; loc.sibs.splice(loc.idx, 1); gloc.sibs.splice(gloc.idx + 1, 0, loc.node); this.commit(root, id); }
+  toggleAction(arr, key) { const i = arr.indexOf(key); if (i >= 0) arr.splice(i, 1); else arr.push(key); return arr; }
+  addAction(key) { const root = this.clone(); const n = this.findById(root, this.state.selectedId); if (n) { n.actions = (n.actions || []).concat(key); } this.setState({ root }); }
+  removeAction(key) { const root = this.clone(); const n = this.findById(root, this.state.selectedId); if (n) { n.actions = (n.actions || []).filter(a => a !== key); } this.setState({ root }); }
+  addNeed(key) { const root = this.clone(); const n = this.findById(root, this.state.selectedId); if (n) { n.needs = (n.needs || []).concat(key); } this.setState({ root }); }
+  removeNeed(key) { const root = this.clone(); const n = this.findById(root, this.state.selectedId); if (n) { n.needs = (n.needs || []).filter(a => a !== key); } this.setState({ root }); }
+
+  priorPaths() {
+    const x0 = 14, x1 = 226, w = x1 - x0, base = 56, top = 8, half = 3.0, N = 46; const pts = [];
+    for (let i = 0; i <= N; i++) { const t = i / N; const z = (t * 2 - 1) * half; const y = Math.exp(-0.5 * z * z); pts.push([x0 + t * w, base - (base - top) * y]); }
+    const line = 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+    const area = line + ' L' + x1.toFixed(1) + ' ' + base + ' L' + x0.toFixed(1) + ' ' + base + ' Z';
+    const t2lo = (-2 / half + 1) / 2, t2hi = (2 / half + 1) / 2;
+    return { line, area, meanX: x0 + 0.5 * w, bandX0: x0 + t2lo * w, bandW: (t2hi - t2lo) * w };
+  }
+  back() { if (this.props && this.props.onNavigate) this.props.onNavigate('catalog'); else window.location.href = 'Catalog.dc.html'; }
+  run() { if (this.props && this.props.onNavigate) this.props.onNavigate('betrieb'); else window.location.href = 'Betrieb.dc.html'; }
+
+  renderVals() {
+    const sel = this.selNode();
+    let countWork = 0, countGate = 0, countEffect = 0;
+    const flat = [];
+    this.walk(this.state.root, (n, depth, parent) => { flat.push({ n, depth, parent }); if (n.kind === 'work') { countWork++; if (n.effect) countEffect++; } if (n.kind === 'gate') countGate++; }, 0, null);
+
+    const toolStyle = 'width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--fg-3);cursor:pointer;transition:all 120ms;';
+    const toolDis = 'width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--bg-2);border:1px solid var(--line-1);color:var(--fg-4);cursor:not-allowed;opacity:0.4;';
+    const delStyle = 'width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--bg-2);border:1px solid var(--line-2);color:var(--fg-3);cursor:pointer;transition:all 120ms;';
+
+    const rows = flat.map(item => {
+      const n = item.n, depth = item.depth, on = n.id === this.state.selectedId;
+      const isGate = n.kind === 'gate', isEpic = n.kind === 'epic';
+      const loc = this.locate(this.state.root, n.id);
+      const canUp = loc.parent && loc.idx > 0, canDown = loc.parent && loc.idx < loc.sibs.length - 1;
+      const canDel = !!loc.parent, canIndent = loc.parent && loc.idx > 0, canOutdent = loc.parent && this.locate(this.state.root, loc.parent.id).parent;
+      let effectTag = '';
+      if (n.kind === 'work' && n.effect) { const ind = this.INDICATORS[n.effect.indicator]; const s = (n.effect.dir === 'worsens' ? '+' : '−') + Math.abs(n.effect.mag).toFixed(2); effectTag = s + (ind && ind.unit ? ind.unit : ''); }
+      return {
+        id: n.id, title: n.title, isGate, hasEffect: n.kind === 'work' && !!n.effect, effectTag,
+        titleColor: on ? 'var(--fg-1)' : 'var(--fg-2)',
+        rowClass: 'ed-row' + (on ? ' sel' : ''),
+        rowStyle: 'display:flex;align-items:center;padding-left:' + (depth > 0 ? (depth - 1) * 26 + 4 : 0) + 'px;',
+        showElbow: depth > 0,
+        glyphStyle: 'flex:0 0 auto;margin-right:9px;width:9px;height:9px;' + (isGate ? 'border-radius:2px;transform:rotate(45deg);background:var(--warn);box-shadow:0 0 7px var(--warn);' : (isEpic ? 'border-radius:2px;transform:rotate(45deg);background:var(--accent);box-shadow:0 0 7px var(--accent);' : 'border-radius:50%;background:' + (on ? 'var(--accent)' : 'var(--fg-3)') + ';' + (on ? 'box-shadow:0 0 6px var(--accent);' : ''))),
+        cardStyle: 'flex:1 1 0;min-width:0;display:flex;align-items:center;gap:9px;cursor:pointer;border-radius:10px;padding:10px 13px;font-family:var(--font-body);transition:all 120ms;background:' + (on ? 'var(--bg-3)' : 'var(--bg-2)') + ';border:1px solid ' + (on ? 'var(--accent-rim)' : 'var(--line-1)') + ';' + (on ? 'box-shadow:var(--glow-soft);' : ''),
+        onSelect: () => this.setState({ selectedId: n.id }),
+        toolStyle, delStyle,
+        indentStyle: canIndent ? toolStyle : toolDis, outdentStyle: canOutdent ? toolStyle : toolDis, upStyle: canUp ? toolStyle : toolDis, downStyle: canDown ? toolStyle : toolDis,
+        onAddChild: () => this.addChild(n.id, 'work'), onAddGate: () => this.addChild(n.id, 'gate'),
+        onIndent: () => canIndent && this.indent(n.id), onOutdent: () => canOutdent && this.outdent(n.id),
+        onUp: () => canUp && this.move(n.id, -1), onDown: () => canDown && this.move(n.id, 1),
+        onDelete: () => canDel && this.remove(n.id)
+      };
+    });
+
+    // inspector
+    const isWork = sel && sel.kind === 'work', isGate = sel && sel.kind === 'gate', isEpic = sel && sel.kind === 'epic';
+    const seg = (active) => 'border:1px solid ' + (active ? 'var(--accent-rim)' : 'var(--line-2)') + ';background:' + (active ? 'var(--accent-soft)' : 'var(--bg-inset)') + ';color:' + (active ? 'var(--accent)' : 'var(--fg-2)') + ';border-radius:999px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:var(--font-body);transition:all 120ms;' + (active ? 'box-shadow:var(--glow-soft);' : '');
+    const dirSeg = (active) => 'flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;padding:10px 6px;font-size:12.5px;cursor:pointer;font-family:var(--font-body);transition:all 120ms;background:var(--bg-inset);border:1px solid ' + (active ? 'var(--accent-rim)' : 'var(--line-2)') + ';color:' + (active ? 'var(--accent)' : 'var(--fg-2)') + ';' + (active ? 'background:var(--accent-soft);box-shadow:var(--glow-soft);' : '');
+    const basisSeg = (active) => 'flex:1 1 0;border-radius:8px;padding:8px 6px;font-family:var(--font-mono);font-size:11px;cursor:pointer;transition:all 120ms;' + (active ? 'background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-rim);' : 'background:var(--bg-2);color:var(--fg-3);border:1px solid var(--line-2);');
+
+    let iv = {};
+    if (isWork) {
+      const ef = sel.effect || this.defaultEffect(); const ind = this.INDICATORS[ef.indicator];
+      const pc = this.priorPaths();
+      const signed = (ef.dir === 'worsens' ? 1 : -1) * ef.mag;
+      const usedA = sel.actions || [], usedN = sel.needs || [];
+      iv = {
+        indicatorPicker: this.IND_ORDER.map(k => ({ name: this.INDICATORS[k].name, onClick: () => this.patchEffect({ indicator: k }), style: seg(ef.indicator === k) })),
+        dirImproveStyle: dirSeg(ef.dir === 'improves'), dirWorsenStyle: dirSeg(ef.dir === 'worsens'),
+        onImprove: () => this.patchEffect({ dir: 'improves' }), onWorsen: () => this.patchEffect({ dir: 'worsens' }),
+        magValue: ef.mag.toFixed(2), onMag: e => this.patchEffect({ mag: Math.max(this.num(e, ef.mag), 0) }),
+        sdValue: ef.sd.toFixed(2), onSd: e => this.patchEffect({ sd: Math.max(this.num(e, ef.sd), 0) }),
+        unitLabel: ind.unit || '(Index)',
+        priorLabel: (signed < 0 ? '−' : '') + Math.abs(signed).toFixed(2) + ' ± ' + ef.sd.toFixed(2) + (ind.unit ? ' ' + ind.unit : ''),
+        priorArea: pc.area, priorLine: pc.line, priorMeanX: pc.meanX, priorBandX0: pc.bandX0, priorBandW: pc.bandW,
+        confValue: ef.conf, confLabel: this.confWord(ef.conf), onConf: e => this.patchEffect({ conf: Math.max(Math.min(this.num(e, 0.6), 1), 0) }),
+        basisPicker: this.BASES.map(b => ({ label: b.label, onClick: () => this.patchEffect({ basis: b.id }), style: basisSeg(ef.basis === b.id) })),
+        actionChips: usedA.map(k => ({ label: this.ACTION_DEFS[k] || k, onRemove: () => this.removeAction(k) })),
+        actionOptions: Object.keys(this.ACTION_DEFS).filter(k => usedA.indexOf(k) < 0).map(k => ({ value: k, label: this.ACTION_DEFS[k] })),
+        hasActionOptions: Object.keys(this.ACTION_DEFS).some(k => usedA.indexOf(k) < 0),
+        onAddAction: e => { if (e.target.value) { this.addAction(e.target.value); e.target.value = ''; } },
+        needChips: usedN.map(k => ({ label: this.NEED_DEFS[k] || k, onRemove: () => this.removeNeed(k) })),
+        needOptions: Object.keys(this.NEED_DEFS).filter(k => usedN.indexOf(k) < 0).map(k => ({ value: k, label: this.NEED_DEFS[k] })),
+        hasNeedOptions: Object.keys(this.NEED_DEFS).some(k => usedN.indexOf(k) < 0),
+        onAddNeed: e => { if (e.target.value) { this.addNeed(e.target.value); e.target.value = ''; } }
+      };
+    }
+    let gv = {};
+    if (isGate) {
+      gv = {
+        gateStateLabel: this.state.gateApproved ? 'freigegeben' : 'wartet auf Entscheidung',
+        gateConds: (sel.conds || []).map(c => ({ label: c.label, icon: c.ok ? 'M20 6L9 17l-5-5' : 'M12 9v4M12 17h.01', dotStyle: 'width:18px;height:18px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:' + (c.ok ? 'var(--ok)' : 'var(--warn)') + ';box-shadow:0 0 7px ' + (c.ok ? 'var(--ok)' : 'var(--warn)') + ';' })),
+        gateApproved: this.state.gateApproved, onGateApprove: () => this.setState({ gateApproved: true })
+      };
+    }
+
+    const VLM = {
+      private:   { label: 'Privat', color: 'var(--fg-3)', bg: 'var(--bg-2)', border: 'var(--line-2)', icon: [{ d: 'M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z' }, { d: 'M7 11V7a5 5 0 0 1 10 0v4' }] },
+      org:       { label: 'Org — intern teilen', color: 'var(--info)', bg: 'var(--info-bg)', border: 'rgba(109,210,255,0.3)', icon: [{ d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' }, { d: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' }, { d: 'M22 21v-2a4 4 0 0 0-3-3.87' }, { d: 'M16 3.13a4 4 0 0 1 0 7.75' }] },
+      customers: { label: 'Kunden — extern teilen', color: 'var(--ok)', bg: 'var(--ok-bg)', border: 'rgba(34,211,154,0.3)', icon: [{ d: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z' }, { d: 'M2 12h20' }, { d: 'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z' }] }
+    };
+    const vm = VLM[this.state.level] || VLM.private;
+    return {
+      title: this.state.name, domain: this.state.domain,
+      visLabel: vm.label, visIconPaths: vm.icon,
+      visBtnStyle: 'display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;text-transform:uppercase;border-radius:9px;padding:7px 11px;cursor:pointer;transition:all 120ms;color:' + vm.color + ';background:' + vm.bg + ';border:1px solid ' + vm.border + ';',
+      onToggleVis: () => this.setState(s => { const L = ['private', 'org', 'customers']; return { level: L[(L.indexOf(s.level) + 1) % 3] }; }),
+      onBack: () => this.back(), onRun: () => this.run(),
+      runLabel: 'In Foundry ausführen', runIcon: 'M8 5v14l11-7z',
+      runStyle: 'display:inline-flex;align-items:center;gap:9px;border:none;border-radius:11px;padding:11px 18px;font-family:var(--font-display);font-weight:600;font-size:14px;cursor:pointer;transition:all 160ms var(--ease-out);background:linear-gradient(180deg,var(--accent-strong),var(--accent-deep));color:var(--fg-on-glow);box-shadow:var(--glow);',
+      treeSummary: countWork + ' Arbeitspakete · ' + countGate + (countGate === 1 ? ' Gate' : ' Gates'),
+      rows, onAddRoot: () => this.addRoot('work'),
+      // inspector header
+      selId: sel ? sel.id : '', selTitle: sel ? sel.title : '', onTitle: e => this.renameSelected(e.target.value),
+      inspKind: isGate ? 'Founder-Gate' : (isEpic ? 'Epic' : 'Arbeitspaket'),
+      inspIcon: isGate ? 'M3 3v18h18' : (isEpic ? 'm12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z' : 'M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z'),
+      inspIconWrap: 'flex:0 0 auto;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;' + (isGate ? 'color:var(--warn);background:var(--warn-bg);border:1px solid rgba(245,181,68,0.3);' : 'color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-rim);box-shadow:var(--glow-soft);'),
+      isWork, isGate, isEpic,
+      countWork, countGate, countEffect,
+      ...iv, ...gv
+    };
+  }
+}
+</script>
+</body>
+</html>
