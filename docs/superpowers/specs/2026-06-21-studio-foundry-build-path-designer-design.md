@@ -135,12 +135,13 @@ into Studio as authoritative state.
 | 5 | Quality obligations in inspector | Compact derived summary + one effort knob. |
 | 6 | Founder gates UI | **Explicit nodes** (locked Fork 3). |
 | 7 | Smallest live-substrate integration | Draft in-memory; only live wire is `foundry_queue_push` on commit. Proves the port-swap seam (store stays kernel-shaped) without coupling to Foundry internals. |
-| 8 | Recipe Designer relationship | Non-goal for slice 1; future path = author the build-node inspector editors as Recipe data. |
+| 8 | Recipe Designer relationship | Non-goal for slice 1. ~~Future path = author the build-node inspector editors as Recipe data.~~ **SUPERSEDED (founder, 2026-06-24): the recipe-builder is now a standalone component, NOT integrated into the build-path designer; the cockpit's node editors stay hand-coded.** |
 
 ## Forward references (not this slice)
 
 - Read-only re-projection of Foundry observations/claim-state back onto the draft (close the loop).
-- Recipe-Designer-authored node editors → a recipe-driven build-path designer.
+- ~~Recipe-Designer-authored node editors → a recipe-driven build-path designer.~~ **(Dropped
+  2026-06-24 — the recipe-builder is a standalone component; see the cockpit masterplan "Out of scope".)**
 - Live-substrate store swap (the in-memory `BuildPathDraftStore` → a kernel-backed one).
 
 ## Suggested next step

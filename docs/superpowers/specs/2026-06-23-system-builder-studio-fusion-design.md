@@ -141,6 +141,9 @@ Hardcode any one of these into the *face* and the abstract-studio claim silently
 - Not a full IDE / code editor. Not a live worker-orchestration console beyond observe+gate.
 - Not the real regulated oncology product (T2). Not real FHIR/EPD/PHI integration.
 - Not the spine extraction (Phase C is deferred until the tracer earns it).
+- **Not the recipe-builder.** The board-editor authoring tool (`recipe-designer/`) stays a **standalone
+  component** — explicitly NOT fused into the cockpit (founder decision 2026-06-24). It is replanned
+  separately under its own `board-editor-studio` product; we do not integrate it yet.
 
 ### Risks
 - **SDLC assumptions ossify into the face** before B runs → mitigated by sequencing B early.

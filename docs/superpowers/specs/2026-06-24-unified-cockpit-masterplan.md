@@ -67,6 +67,14 @@ runtime). Two boundaries hold it together:
 - **Cockpit, not IDE** — it manages *systems and the process as plan trees*; it is not a code editor
   (the fusion charter's explicit non-goal). You still write code in your editor.
 
+> **Out of scope — recipe-builder / board-editor-studio.** The board-editor authoring tool
+> (`apps/studio-ui/src/app/recipe-designer/`, the `board-editor-studio` foundry product) is **NOT**
+> part of the unified cockpit. It is a **standalone component** on the same substrate + design-system,
+> replanned separately to match its latest handoff (`docs/ui-design/board-editor-studio-handoff/`). The
+> earlier "author the build-node inspector editors as Recipe data" path
+> (2026-06-21-studio-foundry-build-path-designer-design §8) is **dropped** — the cockpit's node editors
+> stay hand-coded. Founder decision 2026-06-24: **we do not integrate it yet.**
+
 ## Phased decomposition (face-first, prove on ONE, then generalize)
 
 Each phase becomes its own `/build-path` **when reached**, authored from the prior phase's reality
