@@ -73,23 +73,11 @@ Three modes form a safety ladder — start at `preview`, graduate to `build`, th
 
 ### Substrate
 
-Autonomous mode is run **BY THE SESSION** as an `Agent`-loop — NOT via the Workflow tool.
-Three reasons make this mandatory:
-
-1. **Workers must run their own verifier waves.** A Workflow `agent()` node is a leaf (no
-   `Agent`/`Task` spawn primitive in its toolset — verified 2026-06-13). Regular `Agent`-tool
-   subagents DO carry the `Agent` tool and CAN fan out child agents, so workers dispatched via
-   `Agent(...)` can run their own `reviewer + qa-engineer + charter-checker` wave. In a
-   Workflow, this is structurally impossible.
-2. **Async founder-gate wait.** The conductor must poll and wait for `foundry_gate_decide`
-   outcomes (which arrive out-of-band, hours later) — a Workflow cannot suspend across turns.
-3. **Runs until context-critical.** The loop continues for N passes over an evolving frontier
-   and must detect and react to its own context budget — a session can introspect this; a
-   Workflow cannot.
-
-The `preview` and `build` modes stay Workflow-based (bounded, deterministic, journaled,
-resumable). Autonomous is Session-based (continuous, auto-merge, async-gate-aware,
-workers-self-wave).
+Autonomous mode is run **BY THE SESSION** as an `Agent`-loop — NOT via the Workflow tool
+(workers must run their own verifier waves, the conductor must wait async on founder gates,
+and the loop runs until context-critical — none of which a Workflow can do). `preview` /
+`build` stay Workflow-based. Full rationale + the empirical capability matrix →
+`references/substrate-rationale.md`.
 
 ### The loop (pseudo-protocol)
 
@@ -103,29 +91,13 @@ ON STARTUP and on every fresh conductor launch:
     store-lock arbitrates; never read activeCoordinators to make a claim/gate/merge decision).
 
   RECOVERY PASS — rebuild the awaiting-merge set from durable sources:
-    PRIMARY: call foundry_status → read the 'BUILT (awaiting merge)' section.
-      Each listed item carries { itemId, prRef } natively — no reconstruction needed.
-      For each: add { itemId, prRef, waveVerdict: 'unknown'|<prior>, gate: 'ship'|'none' }
-      to the awaiting-merge set. A built item is NEVER re-built.
-    BACKSTOP (defense-in-depth): gh pr list --state open for each active repo
-      → match open PRs on feat/<slug> branches (slug encodes the itemId)
-      → for each matched PR NOT already in the set (e.g. a PR opened before the
-         built-release landed): add { itemId, prRef, waveVerdict: 'unknown', gate } to set.
-    ORPHAN ADOPTION (stranded commit on a STALE claim — design §9.3): if foundry_status's
-      STALE CLAIMS section lists an item that ALSO has an open feat/<slug> PR (a worker that
-      pushed its PR then died before releasing 'built', §9 open-question 3 / orphan-reconcile),
-      call foundry_reconcile_claim { itemId, prRef } (prRef from the open gh PR — the STALE
-      CLAIMS board does not print it) — it releases the stale claim as 'built' (adopting the
-      stranded PR), so the item moves to BUILT and the MERGE PASS picks it up.
-      (reconcileClaim refuses if the last claim is still ACTIVE — never adopts over a live
-      worker; it acts only on a stale, unended claim.) Add it to the awaiting-merge set IF NOT
-      ALREADY PRESENT (the BACKSTOP may have matched the same PR) with waveVerdict: 'unknown'.
-      A reconciled orphan enters 'unknown' and MUST be RE-WAVED (run the verifier wave on its
-      PR, set waveVerdict from it) before the MERGE PASS can pass it — a never-waved orphan is
-      never merged.
-    This is the only pass that writes the awaiting-merge cache on startup.
-    Stateless restart is TRUE: the awaiting-merge set (keyed by itemId) is rebuilt from the
-    foundry log's built items (exact), with gh open PRs as backstop (defense-in-depth).
+    foundry_status's 'BUILT (awaiting merge)' section (PRIMARY — each item carries
+    { itemId, prRef } natively; a built item is NEVER re-built), backstopped by
+    gh pr list --state open matched on feat/<slug> branches, plus ORPHAN ADOPTION of
+    stranded PRs on stale claims (foundry_reconcile_claim). This is the only pass that
+    writes the awaiting-merge cache on startup and is what makes stateless restart TRUE.
+    Full recovery procedure (orphan-adoption rules, re-wave requirement) →
+    `references/recovery.md`.
 
 loop (until context-critical OR idle-stop):
 
@@ -295,25 +267,12 @@ the conductor keeps fanning out and merging eligible items in parallel.
 
 ### Context-critical stop and stateless restart (TRUE — proven by the RECOVERY PASS)
 
-The conductor holds **NO durable state** — its durable state is rediscovered from two
-sources on every startup via the RECOVERY PASS:
-  (a) The **foundry log's `built` items** — `foundry_status`'s `BUILT (awaiting merge)`
-      section lists each built item + its `prRef` natively (exact, no reconstruction).
-  (b) **GitHub open PRs** (`gh pr list --state open`) — backstop for PRs opened before a
-      built-release landed; feat/<slug> branch matching fills any gaps.
-
-Both sources are durable; the in-context awaiting-merge set is just a cache the RECOVERY
-PASS rebuilds. This makes stateless restart **true** in practice, not just in theory:
-
-When context nears critical, the conductor stops cleanly and reports its surface state.
-A fresh conductor (or a superconductor) runs the RECOVERY PASS on startup, rebuilds the
-awaiting-merge set from the foundry's built items (exact) + gh backstop, and continues
-exactly where the previous conductor left off — no coordinator handoff, no state
-serialization, no leader-election. A built-but-unmerged PR is NEVER re-built (the
-RECOVERY PASS finds it and routes it to the MERGE PASS).
-
-"Store generators, derive graphs" applied to the conductor itself: the conductor IS a
-generator, not a graph.
+The conductor holds **NO durable state** — it is a generator, not a graph. When context
+nears critical it stops cleanly and reports its surface state; a fresh conductor reruns the
+RECOVERY PASS on startup (foundry `built` items, exact, + gh open-PR backstop) and continues
+exactly where the previous one left off — no handoff, no serialization, no leader-election.
+A built-but-unmerged PR is NEVER re-built. Full detail (the two durable sources, the
+context-critical report contents) → `references/recovery.md`.
 
 ### Autonomous mode worker prompt
 
@@ -370,96 +329,10 @@ then calls foundry_record_merge to terminalize.
 
 ## The conductor Workflow (run via the Workflow tool — preview + build modes only)
 
-```js
-export const meta = {
-  name: 'foundry-conduct',
-  description: 'Foundry conductor: fan out self-serving worker subagents over the disjoint claimable frontier, in waves',
-  phases: [{ title: 'Scout' }, { title: 'Fan-out' }],
-}
-
-// args: { mode: 'preview'|'build', maxWaves?: number, maxWorkers?: number }
-const mode = (args && args.mode) === 'build' ? 'build' : 'preview'
-const maxWaves = (args && args.maxWaves) || (mode === 'build' ? 3 : 1)
-const maxWorkers = (args && args.maxWorkers) || 8
-if (args && args.mode && args.mode !== mode) log(`unrecognized mode '${args.mode}' — defaulting to preview`)
-
-const FRONTIER = {
-  type: 'object', additionalProperties: false,
-  required: ['items'],
-  properties: {
-    error: { type: 'string' },
-    items: {
-      type: 'array',
-      items: {
-        type: 'object', additionalProperties: false,
-        required: ['itemId', 'repo', 'riskTier'],
-        properties: {
-          itemId: { type: 'string' }, title: { type: 'string' }, repo: { type: 'string' },
-          pathPrefix: { type: 'string' }, riskTier: { type: 'string' },
-          priority: { type: 'number' }, qualityObligations: { type: 'array', items: { type: 'string' } },
-        },
-      },
-    },
-  },
-}
-const WORKER = {
-  type: 'object', additionalProperties: false,
-  required: ['itemId', 'outcome'],
-  properties: {
-    itemId: { type: 'string' },
-    outcome: { type: 'string' },              // built-pr | skipped-race | built | error
-    prRef: { type: 'string' }, gate: { type: 'string' }, note: { type: 'string' },
-  },
-}
-
-const workerPrompt = (it) => `You are a Foundry worker subagent dispatched by a conductor. Work EXACTLY this one item, then stop. Follow the workbench 'foundry-worker' skill end-to-end in BUILD-ONLY mode (do NOT merge).
-
-Item: ${it.itemId} · Repo: de-braighter/${it.repo.replace(/^de-braighter\\//, '')} · Scope: ${it.pathPrefix || it.repo} · riskTier: ${it.riskTier}
-Title: ${it.title || it.itemId}
-
-1. CLAIM: mint sess-<ts>-<4hex>; foundry_claim { itemId: "${it.itemId}", sessionId, worktree: "<repo>/.claude/worktrees/<slug>", branch: "feat/<slug>", ttlMinutes: ${it.riskTier === 'T2' ? 360 : 180} } (D6: a finite, build-appropriate TTL by tier — longer for T2's designer-first builds, shorter for T0/T1 — so a dead worker frees the item, and you heartbeat well within it). If rejected as already-claimed/scope-overlap, that is an EXPECTED race with a sibling worker/coordinator — return { itemId, outcome: "skipped-race" } and STOP (never work unclaimed).
-2. ISOLATE (per the skill, AUTO-engaging the warm pool): after CLAIM, self-lease your slot index — foundry_lease_slot { claimId } → reset-on-lease the warm slot (preserves node_modules); on ANY lease failure fall back to a cold \`git worktree add\` off origin/main. NEVER git-op in the shared root clone; set NX_DAEMON=false; install deps if cold. Distinct workers get distinct slots by the store-lock — no conductor-side slot math.
-3. EXECUTE: route via existing skills per tier (designer-first FIRST for T2 — and if your itemId is `<key>/ADR-<n>`, CONSUME that number directly, do NOT read next-free-adr). Honor qualityObligations.
-4. QUALITY: green 'ci:local' in the worktree; confine the diff to the scope pathPrefix; push the branch; open the PR (Producer:/Effort:/Effect: lines). Heartbeat foundry_heartbeat at phase boundaries.
-5. DO NOT MERGE. Release foundry_release { claimId, outcome: "built", prRef: "<owner>/<repo>#<pr>", note: "built; awaiting conductor/founder review+merge" + (T2 ? "; ship gate required" : "") } and report.
-6. RETURN { itemId: "${it.itemId}", outcome: "built-pr", prRef: "<owner>/<repo>#<pr>", gate: "${it.riskTier === 'T2' ? 'ship' : ''}" }. On a build dead-end, foundry_release with outcome: "error" + the reason and return { itemId, outcome: "error", note }.
-Pin your model; keep the whole build under one TTL with heartbeats; on any release, schedule worktree teardown.`
-
-const allResults = []
-let lastKey = ''
-for (let wave = 0; wave < maxWaves; wave++) {
-  phase('Scout')
-  const frontier = await agent(
-    `You are the foundry conductor SCOUT. Call the foundry MCP tool foundry_next with limit 50 and return the claimable frontier as JSON. For each item include itemId, title (<=120 chars), repo, pathPrefix (from scope, if any), riskTier, priority, qualityObligations. Claim NOTHING. If foundry_next errors or the foundry MCP is unavailable, return { items: [], error: "<reason>" }.`,
-    { label: `scout-w${wave}`, phase: 'Scout', schema: FRONTIER }
-  )
-  if (frontier && frontier.error) { log(`scout error: ${frontier.error} — stopping`); break }
-  const items = (frontier && frontier.items) || []
-  if (!items.length) { log(`wave ${wave}: nothing claimable — stopping`); break }
-
-  const key = items.map((i) => i.itemId).sort().join(',')
-  if (key === lastKey) { log('frontier unchanged — no progress, stopping'); break }
-  lastKey = key
-
-  if (mode === 'preview') {
-    log(`PREVIEW: ${items.length} claimable disjoint item(s): ${items.map((i) => `${i.itemId}[${i.riskTier}]`).join(', ')}`)
-    return { mode: 'preview', wavePlan: items }
-  }
-
-  // BUILD: fan out one worker per item, capped at maxWorkers (excess queue behind the concurrency cap)
-  phase('Fan-out')
-  const batch = items.slice(0, maxWorkers)
-  log(`BUILD wave ${wave}: dispatching ${batch.length} worker(s): ${batch.map((i) => i.itemId).join(', ')}`)
-  const results = await parallel(batch.map((it) => () =>
-    agent(workerPrompt(it), { label: `build:${it.itemId}`, phase: 'Fan-out', schema: WORKER, isolation: 'worktree' })))
-  allResults.push(...results.filter(Boolean))
-  // loop: re-scout (deps may have unblocked); stop conditions handled at top
-}
-
-const built = allResults.filter((r) => r.outcome === 'built-pr')
-const gates = built.filter((r) => r.gate).map((r) => ({ itemId: r.itemId, gate: r.gate, prRef: r.prRef }))
-return { mode, waves: maxWaves, built, gatesAwaitingFounder: gates, all: allResults }
-```
+`preview` and `build` modes run via the **Workflow tool** with a fixed program (the SCOUT →
+Fan-out wave loop, the `FRONTIER`/`WORKER` schemas, and the build-only `workerPrompt`). The
+full Workflow source to run is in **`references/workflow.md`** — load it when launching
+`preview` or `build` mode. (Autonomous mode does NOT use it — it runs the Agent-loop above.)
 
 ## Autonomy boundary (the founder's control surface)
 
@@ -476,34 +349,12 @@ return { mode, waves: maxWaves, built, gatesAwaitingFounder: gates, all: allResu
 
 ## Why workers don't run their own wave — and when they do (substrate matrix)
 
-This depends on which conductor mode is active:
-
-**In `preview` / `build` modes (Workflow substrate):** A Workflow `agent()` node is a **leaf**
-— its toolset carries no `Agent`/`Task` spawn primitive (verified empirically 2026-06-13:
-a Workflow agent has Bash/Edit/Read/Skill/ToolSearch/Write/… but no subagent-spawn tool).
-Therefore a Workflow worker **cannot** dispatch its own verifier-wave sub-agents. Review is
-a **sibling pipeline stage** the conductor Workflow runs itself:
-`pipeline(items, buildWorker, reviewWave, mergeOrGate)` — buildWorker and the wave-agents are
-sibling leaf nodes at the top level. In `build` mode v1, review/merge stay out-of-band
-(workers build to a PR; the founder/orchestrator reviews + merges). The slice-2.1 increment
-adds the review stage as a sibling Workflow pipeline stage — never inside a worker node.
-
-**In `autonomous` mode (Agent-loop substrate):** Workers ARE regular `Agent`-tool subagents,
-dispatched via `Agent({ ... })` in the session loop — **not** via the Workflow `agent()` primitive.
-Regular `Agent` subagents carry the `Agent` tool and CAN fan out children. Therefore autonomous
-workers **DO run their own verifier wave** (reviewer + qa-engineer + charter-checker as sibling
-`Agent` sub-calls inside the worker). This self-wave is the prerequisite for the conductor's
-merge rule: the conductor merges on `waveVerdict = 'green'` returned by the worker, not on
-a separate sibling pass.
-
-**The capability matrix (empirically verified 2026-06-13):**
-
-| Execution context | Can fan out sub-agents? | Wave inside worker? |
-|---|---|---|
-| Regular `Agent`-tool subagent | **YES** — `Agent` tool is in its toolset | **YES** (autonomous workers) |
-| Workflow `agent()` node | **NO** — leaf; no spawn primitive | **NO** (preview/build workers) |
-
-This is the substrate trade-off that makes autonomous mode an Agent-loop, not a Workflow.
+Whether a worker self-waves depends on the mode's execution substrate: **preview/build**
+workers are Workflow `agent()` leaves (no spawn primitive → review is a sibling pipeline
+stage, out-of-band in build-v1); **autonomous** workers are regular `Agent`-tool subagents
+that CAN and DO fan out their own `reviewer + qa-engineer + charter-checker` wave (the
+prerequisite for the conductor's `waveVerdict='green'` merge rule). Full explanation +
+the empirically-verified capability matrix → `references/substrate-rationale.md`.
 
 ## Concurrency guards (every worker subagent enforces — from the design §C.2)
 
@@ -513,84 +364,31 @@ throws if the scope was taken) · pin `model:` (model-inheritance death orphans 
 orphan cleanup on release · keep one `FOUNDRY_DATA_DIR` · treat a store-lock timeout as
 transient (bounded backoff), never delete `.lock`.
 
-Every worker leases a warm pool slot (`<repo>/.claude/wt-pool/slot-<i>`) instead of a cold
-`git worktree add` — reset-on-lease keeps `node_modules` warm (see `domains/foundry` `wt-pool`).
-The pool is throughput-only; a lease failure falls back to a cold worktree-add, so it adds no
-correctness dependency. **Auto-engaged (slice-3 per-slot lease, shipped foundry#6):** the worker
-SELF-LEASES its slot index via `foundry_lease_slot { claimId }` (in `foundry-worker` ISOLATE) —
-the foundry allocates the lowest free index under the SAME store-lock that arbitrates `claim()`,
-so every fanned-out worker gets a DISTINCT slot **by construction**, collision-free across N
-conductors and superconductor lanes. There is nothing for the conductor to thread: the old
-"thread a `<slotIndex>` into the dispatch prompt" idea (which collided under the superconductor —
-two conductors on one repo both leasing slot-0) is replaced by the worker self-lease. A slot is
-bound to the worker's claim and frees when the claim releases / hands off / TTL-expires.
+Every worker self-leases a warm pool slot (`foundry_lease_slot { claimId }` in `foundry-worker`
+ISOLATE) instead of a cold `git worktree add` — distinct slots are collision-free by
+construction (the store-lock arbitrates), and the pool is throughput-only (a lease failure
+falls back to a cold worktree-add, so no correctness dependency). There is nothing for the
+conductor to thread — no conductor-side slot math. Full warm-pool mechanism →
+`foundry-worker` skill `references/warm-pool.md`.
 
 ## Pipeline-filler (Component E — never idle)
 
 When the autonomous conductor finds the pipeline empty (nothing claimable AND nothing
-awaiting merge), it does **not** stop — it invokes the pipeline-filler to replenish work.
-The filler runs a **priority ladder** that respects the founder's "drop inputs · decide
-gates" boundary:
+awaiting merge), it does **not** stop — it invokes the pipeline-filler, a **priority ladder**
+that respects the founder's "drop inputs · decide gates" boundary:
 
-### Tier 1 — Continuation (AUTO — no new gate required)
-For each already-**greenlit** product whose charter has unbuilt epics, run `/build-path`
-to decompose and emit the next work items into the foundry queue (including ADR-reservation
-via Component A). This is within the existing greenlight: the product was already approved;
-`/build-path` only emits NEW itemIds (idempotent on existing items). **No founder gate.**
+- **Tier 1 — Continuation (AUTO):** for each already-greenlit product with unbuilt epics, run
+  `/build-path` to emit the next work items (idempotent; within the existing greenlight — no
+  new gate). Greenlit = `foundry_gate_status` shows `gateType:'greenlight'` + `decision:'approved'`.
+- **Tier 2 — Green-desk maintenance (AUTO):** invoke the `/green-desk` skill to emit disjoint
+  debt-cleanup items; the skill OWNS the anti-livelock bounds (git-HEAD repo-suppression +
+  per-cycle cap + no-new-progress stop) — never re-implement them here. No new gate.
+- **Tier 3 — New-product / feature proposals (FOUNDER-GREENLIGHT-GATED):** run
+  `product-strategist` to surface 2–3 ranked proposals, SURFACE to the founder, and
+  STOP-FOR-FOUNDER. NEVER auto-charter or auto-build a new/out-of-masterplan product.
+- **True idle** = all three tiers produced no new work in a complete pass → stop cleanly
+  ("Conductor idle — no unbuilt epics, no repo debt, no greenlit proposals. Re-launch after
+  a masterplan input or greenlight."). Context-critical stop is the backstop; true idle fires first.
 
-**Greenlit predicate (machine-checkable):** A product is greenlit when
-`foundry_gate_status { productKey: <product> }` returns a gate with
-`gateType: 'greenlight'` AND `decision: 'approved'` (or the product's charter status is
-`approved` in the charter file). Use `foundry_gate_status` — NOT an event-log grep. A
-filler MUST NEVER widen its mandate to a non-greenlit product.
-
-→ If new items appear: continue the main loop immediately.
-
-### Tier 2 — Green-desk maintenance (AUTO — within standing mandate)
-Invoke the **`/green-desk` skill** (Component D — implemented): it scans every active repo
-across every debt dimension, drops false-positives via the audit ledger, and emits disjoint
-path-area cleanup items (`green-desk-<repo-slug>/debt-<area>`) under a synthetic
-`green-desk-<repo-slug>` T0 product. Driving repos to a clean desk is part of the standing build
-mandate. The skill owns the anti-livelock mechanism (git-HEAD repo-suppression + per-cycle
-cap + no-new-progress stop); this filler simply invokes it and continues if items appear
-within budget. **No founder gate.**
-
-**Anti-livelock rule (mechanism now lives in the skill):** Tier 2 is suppressed for a
-specific repo within a cycle if no merge has changed that repo since the last sweep of it —
-`/green-desk` derives this from `git rev-parse origin/main` vs the `lastSweptCommit` in its
-per-repo ledger (no foundry event; ADR-176). A per-cycle work-item cap (default 10 items)
-and a no-new-progress stop further bound it; the filler yields when the cap is hit and
-continues on the next IDLE CHECK.
-
-→ If cleanup items appear (within cap): continue the main loop immediately.
-
-### Tier 3 — New-product / new-feature proposals (FOUNDER-GREENLIGHT-GATED)
-Run the **`product-strategist` agent** to surface 2–3 ranked candidate next-features or
-new products from the masterplan, product-ideas backlog, and retros. These proposals **DO
-NOT auto-build.** They hit **Gate 1 (greenlight)**: the conductor SURFACES them to the
-founder and enters a **STOP-FOR-FOUNDER** state. It never auto-charters or auto-builds a
-new product. On a founder greenlight, the dossier→brief→charter→`/build-path` pipeline
-fills the queue, and the conductor resumes from Tier 1.
-
-### Gate boundary (inviolable)
-- **Tiers 1 and 2 are fully autonomous** — they operate within already-granted mandates
-  (greenlit products, standing green-desk obligation) and require zero founder interaction.
-- **Tier 3 ALWAYS requires a founder greenlight** — a new product or out-of-masterplan
-  feature is NEVER auto-built. The conductor surfaces, explains, and waits.
-- **True idle (real, reachable termination) when all three tiers are exhausted:** no
-  unbuilt epic on any greenlit product, no unsuppressed repo debt, and no founder-greenlit
-  proposal. Context-critical stop is the backstop — true idle fires first.
-  Clean stop message: "Conductor idle — no unbuilt epics, no repo debt, no greenlit
-  proposals. Re-launch after a masterplan input or greenlight."
-
-Reuses existing skills: `/build-path` (Tier 1), the `/green-desk` debt-path
-generator (Component D — Tier 2), and the `product-strategist` agent (Tier 3).
-
-## Deferred to the next increment (named)
-
-In-**Workflow** review stage + auto-merge T0/T1 as a **sibling pipeline stage** (pipeline:
-build → wave → merge; slice 2.1 — distinct from autonomous mode which already self-waves inside
-each worker subagent); a lightweight
-`ConductorRegistered` presence record; the external-daemon substrate for 24/7 unattended running
-(design v2 — autonomous Agent-loop mode already covers the unattended case within a single
-session's context budget).
+Full per-tier detail (greenlit predicate, green-desk anti-livelock mechanism, the inviolable
+gate boundary) + the named deferred-to-next-increment items → `references/pipeline-filler.md`.
