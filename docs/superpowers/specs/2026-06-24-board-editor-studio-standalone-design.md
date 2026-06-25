@@ -2,8 +2,41 @@
 
 **Date:** 2026-06-24
 **Product:** `board-editor-studio` (T0) — extends `domains/studio`, **does not** scaffold a new domain.
-**Status:** design (founder-approved 2026-06-24; supersedes the chartered "extends `apps/studio-ui` / adds nav" repo plan — charter amendment is the first gated step).
-**Charter:** `docs/foundry/board-editor-studio/charter.md` (to be amended) · **Build-path:** `docs/foundry/board-editor-studio/build-path.md` (10 items done; this appends two epics).
+**Status:** design (founder-approved 2026-06-24; supersedes the chartered "extends `apps/studio-ui` / adds nav" repo plan — charter amendment is the first gated step). **Amended 2026-06-25 — see §0.**
+**Charter:** `docs/foundry/board-editor-studio/charter.md` (amended) · **Build-path:** `docs/foundry/board-editor-studio/build-path.md` (E1.1–E8.1 + R1a–R4 all done; 16 total).
+
+---
+
+## 0. CORRECTION (2026-06-25) — the `(3)` handoff is a REDESIGN, not a reskin
+
+> **The reconciliation in §4 below was wrong, and this is the load-bearing lesson of the arc.**
+> §4 reconciled the `(3)` handoff as a **reskin** ("same surfaces → KEEP structure, RE-SKIN
+> tokens"). That verdict came from **grepping `Board Editor Studio.dc.html` for surface
+> inventory** (railSections, cards, drawer, settings) and matching those *concepts* to existing
+> components — without **building from the design and comparing rendered views to the
+> screenshots**. R1–R3 therefore re-themed the original `(1)`-built **dense, all-stacked**
+> layout; the founder served the live app (R2/R3) and said it looked **"completely different
+> than (3)"**. They were right.
+>
+> **What the `(3)` handoff actually is:** a single-pane, **`lib`-driven VIEW-SWITCHED** app
+> (`lib ∈ {node, settings, composites, k:<kind>}`) — the LEFT RAIL is a **navigator** (Build →
+> Node layers / Board settings; Compose → Composites; Primitives → per-kind, each with a count +
+> accent indicator), the CENTER shows **one focused view** at a time, the RIGHT is a
+> **persistent** live preview, and a **slide-over drawer** edits definitions. The live app had
+> none of that `lib`-switch — it stacked every surface on one scroll.
+>
+> **The fix — `board-editor-studio/R4`** (studio#77, shipped 2026-06-25): rebuilt the
+> `libs/board-editor` catalog-designer SHELL to the `(3)` view-switched IA, **built directly from
+> `docs/ui-design/board-editor-studio-handoff/Board Editor Studio.dc.html`** (whose
+> `renderVals()` defines the rail / `lib` switch / per-view labels), reusing the model +
+> interpreter + every sub-component byte-identical (parity green), and **browser-verifying each
+> view against the screenshots**. Persistence (E8.1) is tucked behind the top-bar "catalog" pill.
+>
+> **RULE (carry forward):** for a UI design handoff, **BUILD FROM the design source and
+> browser-verify each view against the screenshots before declaring a match.** "The same
+> components exist" ≠ "the same layout." A grep of a `.dc.html` proves inventory, not IA. Treat
+> §3–§4 below as the *standalone + token* reconciliation (correct), NOT the *layout*
+> reconciliation (which §0/R4 supersede).
 
 ---
 
