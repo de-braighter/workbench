@@ -116,9 +116,8 @@ e.g. `Producer: orchestrator/claude-opus-4-8 [brainstorming, writing-plans]`. `b
 
 The signals only accrue if the loop is fed. From `domains/devloop`:
 
-- **After a verifier wave:** `npm run dev -- drain <repo#pr>` — PR-scopes the captured verdicts so `findings` / `qa.score` score (un-scoped drains feed verifier-trust only).
-- **After merge:** `npm run dev -- backfill` then `… reconcile` — parses the `Producer:`/`Effect:` lines and observes the self-observing + Sonar indicators.
-- **Per the retro cadence (notable PRs only):** `npm run dev -- retro '{"repo":"…","pr":N,"kind":"friction|win|improvement","note":"…","by":"<retro-er ≠ author>"}'` — accumulates lessons + the open-improvement backlog (`… retros`).
+- **After merge — ONE command:** `npm run ritual:post-merge -- <owner/repo#pr>` runs the full per-PR sequence in a single fail-loud, idempotent call: `drain <owner/repo#pr>` → `backfill <owner/repo>` → `reviews` → `resolve-findings` → `test:coverage` → `sonar:scan` → `reconcile` → `calibration` (devloop#87, token-audit W2). No more hand-chaining the steps — the consolidation also fixed a latent break (the old chain died at the removed `ingest-foundry` and never reached `reconcile`).
+- **Per the retro cadence (notable PRs only):** `npm run dev -- retro '{"repo":"…","pr":N,"kind":"friction|win|improvement","note":"…","by":"<retro-er ≠ author>"}'` — accumulates lessons + the open-improvement backlog (`… retros`); kept separate from `ritual:post-merge`.
 
 ## Branches
 
