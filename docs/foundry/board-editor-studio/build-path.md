@@ -1,20 +1,23 @@
 ---
 product_key: board-editor-studio
 build_path_date: 2026-06-21
-amended_date: 2026-06-24
+amended_date: 2026-06-25
 status: build-path
 charter: docs/foundry/board-editor-studio/charter.md
 risk_tier: T0
-item_count: 14
+item_count: 16
 ---
 
 # Build Path — Board Editor Studio
 
-> **AMENDMENT 2026-06-24 (founder-gated).** Items E1.1–E8.1 below are **DONE**. The charter
-> amendment (standalone + skin system) adds a follow-on phase **R1a → R1b → R1c → R2** (+ an
-> optional R3 backlog), documented in the new **"## Amendment 2026-06-24 — Standalone & reskin"**
-> section at the end of this file. The original ladder is preserved verbatim for the audit trail;
-> the new items are never collisions with the done set. Design + plan:
+> **AMENDMENT 2026-06-24/25 (founder-gated).** Items E1.1–E8.1 below are **DONE**. The charter
+> amendment (standalone + skin system) adds a follow-on phase **R1a → R1b → R1c → R2 → R3 → R4**
+> (all SHIPPED 2026-06-25; `board-editor-studio` = 16 done), documented in the
+> **"## Amendment 2026-06-24 — Standalone & reskin"** section at the end of this file. R3 (roving
+> toolbar a11y) was founder-requested after R2; **R4 (rebuild to the `(3)` view-switched IA) was
+> added 2026-06-25 to correct a reskin-vs-redesign reconciliation miss** after the founder
+> reviewed the live app. The original ladder is preserved verbatim for the audit trail; the new
+> items never collide with the done set. Design + plan:
 > `docs/superpowers/specs/2026-06-24-board-editor-studio-standalone-design.md` ·
 > `docs/superpowers/plans/2026-06-24-board-editor-studio-standalone.md`.
 
@@ -289,9 +292,9 @@ Obligations are the charter quality plan (incl. the 2026-06-24 `browser-verify` 
 | `tdd` | every R-item | test-first. |
 | `review-floor` | every R-item | ≥1 `/code-review`; full wave on non-trivial PRs. |
 | `opus-whole-branch` | every R-item | non-negotiable for this product. |
-| `parity-proof` | R1a, R2 | moved/reskinned sources prove behaviour unchanged via the existing parity + persistence specs. |
-| `a11y-focus-recovery` | R1b, R2, R3 | the IDE's reorder/remove/drop/drawer focus tests stay green (fixture on `document.body`); R3 adds roving-tabindex. |
-| `browser-verify` | R1b, R2 | serve + screenshot — R1b verifies night renders; R2 verifies all three skins vs the handoff screenshots. |
+| `parity-proof` | R1a, R2, R4 | moved/reskinned/recomposed sources prove behaviour unchanged via the existing parity + persistence specs (R4's shell rebuild keeps the model/interpreter byte-identical). |
+| `a11y-focus-recovery` | R1b, R2, R3, R4 | the IDE's reorder/remove/drop/drawer focus tests stay green (fixture on `document.body`); R3 adds roving-tabindex; R4 keeps it under the new IA. |
+| `browser-verify` | R1b, R2, R4 | serve + screenshot — R1b verifies night renders; R2 verifies all three skins; R4 verifies each VIEW (Node layers/Board settings/card library/drawer) matches the `(3)` handoff. |
 
 ### Work items (amended)
 
@@ -301,28 +304,35 @@ Obligations are the charter quality plan (incl. the 2026-06-24 `browser-verify` 
 | `board-editor-studio/R1b` | Scaffold the STANDALONE app `apps/board-editor-ui` (Angular-CLI, npm-pinned): `index.html` `<html data-theme="night">` + import published `@de-braighter/design-system-css@^1.7.0` `tokens.css`; app shell = the `(3)` top bar (product mark + `catalog` pill + a `[data-theme]` skin switcher writing `ivory\|clinical\|night` on the root + Reset) wrapping the route `'/'` → `CatalogDesignerComponent` (from the lib) with the `CATALOG_STORE`/`LocalStorageCatalogStore` provider. App + root build/test green; BROWSER-VERIFY the app serves + the IDE renders under `night` (screenshot) | studio · `apps/board-editor-ui/` | `board-editor-studio/R1a` | studio | `tdd, review-floor, opus-whole-branch, a11y-focus-recovery, browser-verify` |
 | `board-editor-studio/R1c` | Decouple the cockpit + RETIRE the legacy form: remove the `/recipe-designer` + `/catalog` routes + their imports + the `CATALOG_STORE` provider + the `@de-braighter/board-editor` dep from `apps/studio-ui`; update BOTH route specs (`app.spec.ts` line-29 smoke test → asserts the route is GONE; `app.routes.spec.ts` → new exact table `['', '**', 'operate']`, drop the component assertions); delete the legacy `RecipeDesignerComponent` chain (files reachable ONLY from it: `recipe-designer`/`shapes-editor`/`shape-editor`/`primitives-editor`/`recipe-form`/`sample-tree`†/`plan-kinds.recipe` + specs). knip GREEN (no orphans); cockpit build/test green; cockpit still renders (shell + operate). †`sample-tree` deleted only if R1a confirmed it is NOT shared with the catalog IDE | studio · `apps/studio-ui/` | `board-editor-studio/R1b` | studio | `tdd, review-floor, opus-whole-branch` |
 | `board-editor-studio/R2` | Reskin to the `(3)` chrome contract: rewrite `libs/board-editor` CSS + component inline styles from night-only hardcoded literals (`#22d39a`/`rgba(34,211,154…)`/`#0a0d14`/`#0f1320`/`#7c6dfa`/`#f87171`/`#fbbf24` + the `:host` dark-fallback alias block) to PURE canonical + chrome tokens per spec §4.1 (`--accent\|-soft\|-rim\|-on`, `--bg\|-elev\|-sunken`, `--paper`, `--ink/-2/-3/-4`, `--rule\|-strong`, `--glass-bg\|-blur`, `--rail-bg`, `--scrim`, `--glass-shadow`, `--grid-dot`, `--code-str\|-num`, status `--color-*`); add a token-hygiene test asserting NO retired/literal tokens remain; resolve the `anyComponentStyle` 8 kB budget (raise it or globalize the catalog CSS — document). BROWSER-VERIFY ALL THREE skins (`night`/`ivory`/`clinical`) render (no blank panels) + diff vs `screenshots/{migrated,ivory,clinical}.png`. Do NOT token-swap authored node-card `fill`s. Existing parity/focus specs stay green | studio · *(whole repo — touches `libs/board-editor/src/` + `apps/board-editor-ui/`)* | `board-editor-studio/R1c` | studio | `tdd, review-floor, opus-whole-branch, parity-proof, a11y-focus-recovery, browser-verify` |
+| `board-editor-studio/R3` | Instance Row roving-toolbar a11y: adopt the published `DbRovingToolbar`/`DbRovingItem` (APG roving-tabindex) on the Instance Row ↑↓/dup/del toolbar (one tab stop + Arrow roving + disabled-skip); COMPOSE with the existing WCAG-2.4.3 focus recovery — defer `recoverFocus` via `queueMicrotask` so the host's semantic target drains LAST (deterministic by Angular afterRender insertion order) + a convergence test; browser-verify keyboard nav. Necessary dep-floor bump `apps/board-editor-ui` `@de-braighter/design-system-angular` `^1.10.0→^1.14.0` (the host AOT-compiles the lib template referencing the directive) | studio · `libs/board-editor/` (+ `apps/board-editor-ui/package.json`) | `board-editor-studio/R2` | studio | `tdd, review-floor, opus-whole-branch, a11y-focus-recovery` |
+| `board-editor-studio/R4` | Rebuild the catalog IDE SHELL to the `(3)` handoff IA — **corrects the reskin-vs-redesign reconciliation miss** (R1–R3 re-themed the original `(1)` stacked layout; the founder served the live app and flagged it "completely different than (3)"). A single-pane `lib`-driven VIEW-SWITCHED app (`lib` ∈ `node\|settings\|composites\|k:<kind>`): left rail = NAVIGATOR (Build/Compose/Primitives + counts + accent indicator), center = ONE focused view (node-layers / settings / card-library), right = persistent live-preview, slide-over DRAWER on card click. Align the `apps/board-editor-ui` top bar (logo + "Board editor / studio" + catalog pill; keep skin switcher); REMOVE the old "Catalog Designer" h1 + CATALOGS bar; tuck E8.1 persistence behind the "catalog" pill popover. Built FROM `docs/ui-design/board-editor-studio-handoff/Board Editor Studio.dc.html`; model/interpreter/sub-components REUSED byte-identical (parity green); BROWSER-VERIFY each view vs the screenshots | studio · `libs/board-editor/` (+ `apps/board-editor-ui/`) | `board-editor-studio/R3` | studio | `tdd, review-floor, opus-whole-branch, parity-proof, a11y-focus-recovery, browser-verify` |
 
-**R3 (optional backlog — NOT pushed):** `board-editor-studio/R3` — adopt `DbRovingToolbar`/
-`DbRovingItem` (APG roving-tabindex) on the Instance Row ↑↓/dup/del toolbar (scope
-`libs/board-editor/src/lib/instance-row.component.ts`; dependsOn R2; `tdd, review-floor,
-opus-whole-branch, a11y-focus-recovery`). Queue on founder request after R2.
+**Outcome (2026-06-25): R1a–R4 ALL SHIPPED + the live app matches the `(3)` handoff.** PRs:
+R1a studio#68 · R1b studio#69 · R1c studio#71 · css 1.8.0 design-system#216 · R2 studio#72 ·
+R3 studio#74 · R4 studio#77. `board-editor-studio` = **16 done**. (R3 was the once-"optional
+backlog" item — the founder requested it after R2; R4 was added 2026-06-25 to correct the
+layout reconciliation after the founder reviewed the live app.) ZERO kernel/brick change end
+to end; the `(3)` lesson — **build UI from the design source + browser-verify each view; "same
+components exist" ≠ "same layout"** — is recorded in the standalone design spec §0.
 
 ### Disjointness proof (amended)
 
-The new items are a **pure `dependsOn` chain** `R1a → R1b → R1c → R2`: every pair is ordered by
-transitive `dependsOn`, so the foundry `scopesDisjoint` **share-scope exemption** applies and
-there are **ZERO unordered pairs** to pairwise-check — even though R1a and R2 claim the whole
-`studio` repo and R1b (`apps/board-editor-ui/`) / R1c (`apps/studio-ui/`) nest under it. R1a is
-the **sequencing item** (it mutates the shared shell files `pnpm-workspace.yaml` +
-`apps/studio-ui/app.routes.ts` + `package.json`), and every later item transitively depends on
-it, so none can be claimed concurrently with it.
+The new items are a **pure `dependsOn` chain** `R1a → R1b → R1c → R2 → R3 → R4`: every pair is
+ordered by transitive `dependsOn`, so the foundry `scopesDisjoint` **share-scope exemption**
+applies and there are **ZERO unordered pairs** to pairwise-check — even though R1a/R2 claim the
+whole `studio` repo and R1b (`apps/board-editor-ui/`) / R1c (`apps/studio-ui/`) / R3+R4
+(`libs/board-editor/`) nest under it. R1a is the **sequencing item** (it mutates the shared shell
+files `pnpm-workspace.yaml` + `apps/studio-ui/app.routes.ts` + `package.json`), and every later
+item transitively depends on it, so none can be claimed concurrently with it. R3 + R4 ran
+disjoint from concurrent `system-builder-studio` claims in the same clone (those touch
+`apps/studio-ui`/`domains/foundry`; R3/R4 touch `libs/board-editor`/`apps/board-editor-ui`).
 
 | Pair class | Ordered? | Resolution |
 | --- | --- | --- |
-| every pair in `R1a → R1b → R1c → R2` | yes (transitive `dependsOn`) | share-scope exemption — no disjointness check required |
+| every pair in `R1a → R1b → R1c → R2 → R3 → R4` | yes (transitive `dependsOn`) | share-scope exemption — no disjointness check required |
 | R-items vs the DONE E-items | n/a | done items hold no claims; never re-claimed |
 | (no unordered R-pair exists) | — | — |
 
 **Dangling-dependency check:** `R1a` deps `—`; `R1b` deps `R1a`; `R1c` deps `R1b`; `R2` deps
-`R1c` — all referenced ids are emitted in this table. No dangling deps. (No ADR items — none
-needed.)
+`R1c`; `R3` deps `R2`; `R4` deps `R3` — all referenced ids are emitted in this table. No dangling
+deps. (No ADR items — none needed.)
