@@ -7,8 +7,8 @@
 
 **Warm pool (throughput; correctness never depends on it; AUTO-ENGAGED via self-lease).**
 After you CLAIM (Phase 1 — you now hold a `claimId`), lease your own warm slot. The foundry
-allocates your slot **index** under the same store-lock that arbitrates `claim()`, so the index
-is collision-free across ALL coordinators (N conductors, every superconductor lane, or a lone
+allocates your slot **index** (the lowest free index) under the same store-lock that arbitrates
+`claim()`, so the index is collision-free across ALL coordinators (N conductors, every superconductor lane, or a lone
 item-/pool-mode worker) **by construction** — call the MCP tool:
 
 > `foundry_lease_slot { claimId: <your claimId> }`  →  `{ slotIndex, repo, claimId }`

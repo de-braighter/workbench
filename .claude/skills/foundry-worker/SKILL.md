@@ -94,11 +94,11 @@ cd .claude/worktrees/<slug>
 npm install   # or pnpm install — lockfile decides; a fresh worktree starts without node_modules
 ```
 
-**Warm pool (throughput optimization — OPTIONAL).** Instead of the cold `git worktree add`
-above, you may self-lease a warm slot that preserves `node_modules` (`foundry_lease_slot
-{ claimId }` → reset-on-lease). It is a throughput layer, NEVER a correctness dependency —
-any lease failure falls back to the cold recipe above. To use it, read
-`references/warm-pool.md`.
+**Warm pool (throughput; correctness never depends on it; AUTO-ENGAGED via self-lease).**
+Instead of the cold `git worktree add` above, self-lease a warm slot that preserves
+`node_modules` (`foundry_lease_slot { claimId }` → reset-on-lease). It is a throughput layer,
+NEVER a correctness dependency — any lease failure falls back to the cold recipe above. Full
+self-lease recipe → read `references/warm-pool.md`.
 
 - **Worktree/branch already exists at the slug, or creation fails** (usually an
   expired claim, but slugs CAN collide across itemIds — never assume): handle per
