@@ -62,6 +62,7 @@ interface DispatchProgressRow {
 ```
 
 Inputs, all foundry-owned:
+
 - **Active claims + worktree path** — from the folded state (the `ClaimAcquired` payload carries `worktree`).
 - **Liveness** — the latest `ClaimHeartbeat` for the claim.
 - **Git fields** — shelled in the claim's worktree (injected `run(cmd, cwd)` for tests).

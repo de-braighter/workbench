@@ -25,11 +25,13 @@ Every task's requirements implicitly include this section. Values copied verbati
 ### Task 1: Daemon log tail + shared log-path helper
 
 **Files:**
+
 - Create: `src/dispatch/logtail.ts`
 - Modify: `src/dispatch/spawn.ts` (use the shared `dispatchLogPath` so writer + reader never drift)
 - Test: `test/dispatch-logtail.test.ts`
 
 **Interfaces:**
+
 - Produces: `dispatchLogPath(dataDir: string): string`, `tailLines(text: string, n: number): string[]`, `readDispatchLogTail(dataDir: string, n: number): string[]`.
 
 - [ ] **Step 1: Write the failing test**
@@ -181,10 +183,12 @@ EOF
 ### Task 2: Control file carries the in-flight set; status surfaces uptime + in-flight
 
 **Files:**
+
 - Modify: `src/dispatch/control.ts`
 - Test: `test/dispatch-control.test.ts` (append two cases)
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: `DispatchControlState.inFlight?: string[]`; `DispatchStatusView.inFlight?: string[]` and `.uptimeSeconds?: number`; `makeHeartbeat(dataDir, now)` now returns `(inFlight?: readonly string[]) => void`.
 
@@ -319,10 +323,12 @@ EOF
 ### Task 3: Loop publishes the in-flight set each heartbeat; flip the permission default
 
 **Files:**
+
 - Modify: `src/dispatch/loop.ts`
 - Test: `test/dispatch-loop.test.ts` (append cases)
 
 **Interfaces:**
+
 - Consumes: `makeHeartbeat`'s `(inFlight?) => void` (Task 2) via `cli.ts` wiring (already assignable — no `cli.ts` edit needed).
 - Produces: `DispatchLoopIO.recordHeartbeat: (inFlight: readonly string[]) => void`; `DEFAULT_DISPATCH_CONFIG.permissionMode === 'bypassPermissions'`.
 
@@ -440,10 +446,12 @@ EOF
 ### Task 4: Read-only `GET /api/dispatch/status` (enriched live view)
 
 **Files:**
+
 - Modify: `src/dashboard/server.ts`
 - Test: `test/dispatch-cockpit.acid.test.ts` (append a describe block)
 
 **Interfaces:**
+
 - Consumes: `dispatchStatus` (already imported in `server.ts`), `readDispatchLogTail` (Task 1), `fold`/`readEnvelopes` (already imported).
 - Produces: `GET /api/dispatch/status` → JSON `{ ...DispatchStatusView, inFlight: Array<{itemId,title?,riskTier?,productKey?}>, logTail: string[] }`.
 
@@ -553,10 +561,12 @@ EOF
 ### Task 5: Rebuild `dispatchSection` — two-column body, Start form, gated styles
 
 **Files:**
+
 - Modify: `src/dashboard/render.ts` (replace `dispatchSection`; add `dispatchPanelBody`, `dispatchForm`, `dispatchStyles`)
 - Test: `test/dispatch-cockpit.acid.test.ts` (extend render assertions)
 
 **Interfaces:**
+
 - Consumes: `opts.dispatch: DispatchStatusView`, the module-private `esc`.
 - Produces: the panel markup the client mirror (Task 6) must match — element ids/classes `dispatch-panel`, `disp-grid`, `disp-left`, `disp-right`, `disp-inflight`, `disp-loglist`, `dispbtn start|stop`, `disp-form`, and the gated `<!-- DISPATCH-STYLES -->` marker.
 
@@ -748,10 +758,12 @@ EOF
 ### Task 6: Make the panel live — poll, DOM-patch, form submit
 
 **Files:**
+
 - Modify: `src/dashboard/render.ts` (replace the `dispatchScript` const)
 - Test: `test/dispatch-cockpit.acid.test.ts` (assert script markers present interactive / absent static)
 
 **Interfaces:**
+
 - Consumes: `GET /api/dispatch/status` (Task 4), the panel classes/ids from Task 5.
 - Produces: client globals `__dispatchPoll`, `__dispatchRenderPanel`, `__dispatchStart`, `__dispatchStop`, `__dispatchToggleForm`, `__dispatchToggleAdvanced`.
 
@@ -969,6 +981,7 @@ Expected: clean (all changes already committed across Tasks 1–6). If `dash-aft
 ## Self-Review
 
 **Spec coverage** (against `2026-06-26-foundry-dispatch-cockpit-design.md`):
+
 - §3 D1 four directions → Task 4 (status endpoint feeds live status + log tail), Task 2/3 (in-flight), Task 5/6 (panel + form). ✓
 - §3 D2 GET status + DOM patch → Task 4 + Task 6. ✓
 - §3 D3 daemon publishes in-flight → Task 2 (`makeHeartbeat`) + Task 3 (loop passes ids). ✓

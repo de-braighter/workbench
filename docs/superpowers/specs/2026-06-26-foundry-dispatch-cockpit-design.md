@@ -73,7 +73,7 @@ claims, merges, or decides a gate (governance stays with the founder gate + the 
 
 ### 4.2 Data flow (the poll)
 
-```
+```text
 browser poll (~3s) ──GET /api/dispatch/status──> server.ts
     ├─ dispatchStatus(deps, now)            control file → status/healthy/uptime/staleSeconds/config/inFlight ids
     ├─ fold(readEnvelopes(logPath))         enrich each inFlight id → { title, riskTier, productKey }
@@ -140,7 +140,7 @@ makes "in flight (2)" mean exactly "this daemon has 2 workers running."
 
 **Running state** (the watch state) — two columns:
 
-```
+```text
 headless dispatch · foundry-dispatchd
 ┌─────────────────────┬───────────────────────┐
 │ ● running           │ in flight (2)          │
@@ -157,7 +157,7 @@ headless dispatch · foundry-dispatchd
 **Stopped / never-started / crashed state** — the status line + a `[ Start daemon ▸ ]`
 button that reveals the form:
 
-```
+```text
 cap [ 2 ]   cheap model [ sonnet ]   capable model [ opus ]
 permission mode [ bypassPermissions ▾ ]   (acceptEdits | default | plan)
 ▸ advanced  →  pollIntervalMs · backoffBaseMs · backoffMaxMs · maxAttemptsPerItem · workerTimeoutMs

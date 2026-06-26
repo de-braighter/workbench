@@ -22,12 +22,14 @@
 ### Task 1: Add the optional `planRef` field to the WorkItem
 
 **Files:**
+
 - Modify: `src/events.ts` (the `WorkItemQueued` zod schema)
 - Modify: `src/state.ts` (`ItemState` interface + the `ITEM_QUEUED` fold)
 - Modify: `src/ops.ts` (the `ItemInput` interface)
 - Test: `test/state.test.ts` (append a case)
 
 **Interfaces:**
+
 - Produces: `ItemInput.planRef?: string`, `WorkItemQueued` payload `planRef?: string`, `ItemState.planRef?: string`.
 
 - [ ] **Step 1: Write the failing test**
@@ -121,10 +123,12 @@ EOF
 ### Task 2: The derived progress query
 
 **Files:**
+
 - Create: `src/dispatch/progress.ts`
 - Test: `test/dispatch-progress.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ItemState.planRef` (Task 1), `activeClaim`/`itemDone` from `state.js`.
 - Produces: `DispatchProgressRow`, `countPlanTasks(text): number`, `deriveDispatchProgress(state, nowMs, {run?, readFile?}): DispatchProgressRow[]`, types `GitRun`/`ReadFile`.
 
@@ -319,10 +323,12 @@ EOF
 ### Task 3: Surface progress in `foundry_status`
 
 **Files:**
+
 - Modify: `src/status.ts`
 - Test: `test/dispatch-progress.test.ts` (append) or `test/mcp-tools.test.ts` — use a `statusText` unit test here.
 
 **Interfaces:**
+
 - Consumes: `deriveDispatchProgress` (Task 2).
 - Produces: a `DISPATCH PROGRESS` section in `statusText`'s output.
 
@@ -406,11 +412,13 @@ EOF
 ### Task 4: `foundry_dispatch progress` MCP action
 
 **Files:**
+
 - Modify: `src/mcp/tools.ts` (the `foundry_dispatch` handler)
 - Modify: `src/mcp/server.ts` (the `foundry_dispatch` action enum)
 - Test: `test/mcp-tools.test.ts` (append)
 
 **Interfaces:**
+
 - Consumes: `deriveDispatchProgress` (Task 2).
 - Produces: `foundry_dispatch({ action: 'progress' })` → `DispatchProgressRow[]`.
 
@@ -480,11 +488,13 @@ EOF
 ### Task 5: Cockpit in-flight row shows progress
 
 **Files:**
+
 - Modify: `src/dashboard/server.ts` (`GET /api/dispatch/status` enrichment)
 - Modify: `src/dashboard/render.ts` (`__dispatchRenderPanel` in-flight `<li>`)
 - Test: `test/dispatch-cockpit.acid.test.ts` (append)
 
 **Interfaces:**
+
 - Consumes: `deriveDispatchProgress` (Task 2); the merged cockpit's `GET /api/dispatch/status` (enriches `inFlight` ids → `{itemId,title,riskTier,productKey}`).
 - Produces: each in-flight object additionally carries `{ taskN?, tasksTotal?, lastCommitSubject?, heartbeatAgeSeconds? }`; the cockpit row renders `task N/M · <subject> · ♥ <age>s`.
 
@@ -600,6 +610,7 @@ EOF
 ## Self-Review
 
 **Spec coverage** (against `2026-06-26-foundry-dispatch-progress-signal-design.md`):
+
 - §3 D1 surfaces → Task 3 (`foundry_status`), Task 4 (MCP `progress`), Task 5 (cockpit row). ✓
 - §3 D2 parse-the-plan denominator → Task 2 `countPlanTasks` + `taskN/tasksTotal`. ✓
 - §3 D3 `planRef` field → Task 1. ✓
