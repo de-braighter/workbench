@@ -136,6 +136,20 @@ is disjoint from every ACTIVE claim. Design consequences:
    Emit `yields` on items whose primary output IS a discrete substance unit (e.g.
    the scaffold item that produces the pack, a UI epic that produces a board); omit
    it on sequencing, ADR-authoring, and purely infrastructural items.
+
+   **`generationKind` — mark an item generation-eligible (ADR-277).** An item MAY
+   declare `generationKind: '<kind>'` when its primary artifact is a kind the
+   Generation SDK renders — check the LIVE registry with `gen_list_kinds` (today
+   `angular-feature`, `service-method`, and `pack-scaffold`). A tagged item routes the worker to the
+   GENERATION PATH: it **authors a model** the SDK deterministically renders instead
+   of hand-authoring the artifact (the worker's `references/generation-path.md`).
+   Tag ONLY when ALL hold: (a) the artifact is a renderable kind, (b) that kind's
+   `neverAiFree` is `false` (per `gen_list_kinds`), and (c) the product is **non-T2**
+   — never tag a T2/oncology item until the regulated NEVER-AI-free set is decided
+   (OQ-2 [FOUNDER]). `generationKind` is inert routing metadata — it NEVER affects
+   scope/claim/disjointness (the worker re-validates the tag against the live
+   `gen_list_kinds` at execution). Omit it on sequencing, ADR-authoring, and items
+   whose artifact no kind renders.
 8. **Disjointness proof.** Enumerate every UNORDERED pair (neither transitively
    depends on the other) in a table: pair → evidence (`different repo` /
    `non-nested paths: <a> vs <b>` / `distinct issues`) → verdict. Any pair
@@ -173,7 +187,7 @@ is disjoint from every ACTIVE claim. Design consequences:
    ## Quality battery config
    ## Lanes & parallelism
    ## Work items
-   <table: itemId · title · scope · dependsOn · lane · qualityObligations · yields>
+   <table: itemId · title · scope · dependsOn · lane · qualityObligations · yields · generationKind>
    ## Disjointness proof
    <the unordered-pair table>
    ```
