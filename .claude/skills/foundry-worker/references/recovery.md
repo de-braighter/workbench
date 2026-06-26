@@ -68,4 +68,4 @@ attached. Never bypass, never `--no-verify`.
 | Quality floor red | `foundry_release(blocked)` with the failure attached. |
 | Build dead-ends mid-EXECUTE (infeasible / unresolvable) | `foundry_release(blocked)` + why — never hold the claim until TTL. |
 | Heartbeat errors (claim superseded) | Stop working immediately; report. |
-| Founder gate still pending at session end | `foundry_release(blocked)` + note the gateId — the item re-queues; a later session merges after approval. Gates never block other products' lanes. |
+| Founder gate still pending at session end | NOT a failure — the build SUCCEEDED (PR open). Release **built**: `foundry_release { claimId, outcome: "built", prRef: "<owner>/<repo>#<pr>", note: "gate <gateId> pending" }`. `built` keeps it OUT of the frontier (no daemon re-dispatch) AND `record_merge`-able; `blocked` would RE-QUEUE it and break `record_merge`. The founder merges after approval. Gates never block other products' lanes. |
