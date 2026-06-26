@@ -140,7 +140,7 @@ is disjoint from every ACTIVE claim. Design consequences:
    **`generationKind` — mark an item generation-eligible (ADR-277).** An item MAY
    declare `generationKind: '<kind>'` when its primary artifact is a kind the
    Generation SDK renders — check the LIVE registry with `gen_list_kinds` (today
-   `angular-feature` and `service-method`). A tagged item routes the worker to the
+   `angular-feature`, `service-method`, and `pack-scaffold`). A tagged item routes the worker to the
    GENERATION PATH: it **authors a model** the SDK deterministically renders instead
    of hand-authoring the artifact (the worker's `references/generation-path.md`).
    Tag ONLY when ALL hold: (a) the artifact is a renderable kind, (b) that kind's

@@ -48,9 +48,13 @@ reason — never silently hand-author a run that claims to be generated.
    none). Each `<generation:logic-slot id=...>` fence ships a typed throwing stub.
    Fill the body + write its named unit test (the policy requires one). This is the
    irreducible domain logic — the 20% that is genuinely yours to write.
-9. **Verify** — `gen_verify_artifact(report)` → slot-filled check + golden/lint. A
-   `slot-unfilled` finding means a stub remains; a `golden-drift` means a template
-   regression. Fix until `ok`.
+9. **Verify** — `gen_verify_artifact(report)` → reproducibility (`golden-drift`) +
+   a slot-filled check. NOTE (slice-1): the slot check is **report-trusting** — it
+   reads the generate-time report, not your worktree (disk re-read is a deferred
+   follow-up), so it is ADVISORY for slots you fill in step 8. The AUTHORITATIVE
+   slot-fill gate is the generated **named unit test**, run under `ci:local` in
+   Phase 4 (a still-throwing slot fails its test). A `golden-drift` finding means a
+   template regression — fix the model or escalate the template.
 
 ## Then rejoin the standard protocol
 

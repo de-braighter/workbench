@@ -118,7 +118,7 @@ Route by situation — never invent a new build style:
 | Trivial, well-scoped fix | superpowers:test-driven-development directly |
 | Risky change (new ports, kernel primitives, cross-cutting) or **any T2 item** | designer-first (`workflows/designer-first.md`) FIRST — mandatory at T2 |
 | Green-desk cleanup item (`green-desk-<repo-slug>/debt-<area>-<sha7>`) | fix the offenses the title names DIRECTLY under the quality floor, diff confined to the area `pathPrefix`; detail (`/tech-debt` reuse limits, scope confinement) → `references/green-desk-items.md` |
-| Item carries a `generationKind` tag (a generation-eligible artifact, ADR-277) | the GENERATION PATH — **AUTHOR A MODEL** the SDK renders via the `gen_*` MCP, do NOT hand-author; full loop → `references/generation-path.md` |
+| Item carries a `generationKind` tag (a generation-eligible artifact, ADR-277) | the GENERATION PATH — **AUTHOR A MODEL** the SDK renders via the `gen_*` MCP, do NOT hand-author; full loop → `references/generation-path.md`. If the item is ALSO risky (new ports / kernel / cross-cutting), do designer-first FIRST for the design, then the gen path for execution. |
 
 **Reserved ADR numbers:** if the claimed item's `itemId` is `<key>/ADR-<n>`,
 the number is already in the itemId — consume it directly; do NOT read or
