@@ -172,9 +172,12 @@ reservation aggregate is a slice-3 follow-up.)
 
 1. Merge per tier: **T0** green wave → squash-merge. **T1** green wave + Sonar →
    squash-merge. **T2** → `foundry_gate_request { productKey, gateType: "ship",
-   payloadRef: <pr url> }` and WAIT for the founder — never auto-merge (still
-   pending at session end → `foundry_release { claimId, outcome: "blocked",
-   note: "gate <gateId> pending" }`).
+   payloadRef: <pr url> }` and WAIT for the founder — never auto-merge. The build
+   SUCCEEDED (PR open), so at session end release **built**, NOT `blocked`:
+   `foundry_release { claimId, outcome: "built", prRef: "<owner>/<repo>#<pr>",
+   note: "gate <gateId> pending" }`. `built` keeps the item OUT of the claimable
+   frontier (no daemon re-dispatch) AND lets the founder's `record_merge` mark it
+   done after the merge; `blocked` would RE-QUEUE the item and break `record_merge`.
 2. Twin ritual (mandatory, from `domains/devloop`): after the wave
    `npm run dev -- drain <repo#pr>` (short form OK for drain); after merge
    `npm run dev -- backfill <owner>/<repo>` (full form, like `post-findings`)
@@ -191,6 +194,10 @@ reservation aggregate is a slice-3 follow-up.)
 ```text
 foundry_release { claimId, outcome: "done", prRef: "<owner>/<repo>#<pr>" }
 ```
+
+`done` is for an item YOU merged (T0/T1). A **T2 item already released `built` in Phase 5**
+(gate-halt) — do NOT also release it here. `blocked` is ONLY for a genuine inability to
+finish (quality floor red, build dead-end) — never for a successful-but-gate-pending build.
 
 Then STOP. Final report: item, PR, wave verdicts, ritual confirmations, claim released.
 
