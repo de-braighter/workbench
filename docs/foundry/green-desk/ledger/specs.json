@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/specs",
+  "lastSweptCommit": "46ca8ff8f5674215dc37f548cbc0b89000fdabc9",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": {},
+  "unscanned": ["tsc", "lint", "knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. NO-CODE repo: specs is the standards/ADR knowledge corpus (no package.json/tsconfig; has its own markdownlint gate handled by spec-auditor, not green-desk). No path-bearing CODE dimension wired - all UNSCANNED (not fabricated 0). No code-debt emit possible."
+}

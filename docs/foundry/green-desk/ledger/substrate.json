@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/substrate",
+  "lastSweptCommit": "ae190c3e7e8da6f8bb7b89a8cc75117c82ea6a18",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 8,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "lint": 0, "knip": 1, "debtMarkers": 7 },
+  "unscanned": ["coverage", "mutation", "sonar"],
+  "emittedItems": ["green-desk-substrate/debt-field-encryption-ae190c3"],
+  "green": false,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. tsc 0, lint 0 errors (warnings non-gating; 270 enforce-module-boundaries were a junction scan-artifact, dropped). knip 1 low-conf dead export (inference-adapter-kit handleIdFor - possibly intentional kit API). 7 TODO markers (5 tracked-deferred: #147 + unbuilt KmsKekClient port). Emitted 1 lane (field-encryption, 2 markers); remaining markers + low-conf knip yield to next cycle. coverage/mutation/sonar UNSCANNED (not fabricated)."
+}

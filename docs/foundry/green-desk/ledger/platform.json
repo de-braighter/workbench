@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/platform",
+  "lastSweptCommit": "d1d590f971bd45755c4465bdb5409c4f40af7df6",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": {},
+  "unscanned": ["tsc", "lint", "knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. NO-CODE repo: platform has no package.json/tsconfig (docs-only layer). No path-bearing CODE dimension wired - all UNSCANNED (not fabricated 0). No code-debt emit possible; markdown is /md-quality-review territory."
+}

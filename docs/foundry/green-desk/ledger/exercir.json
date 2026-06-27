@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/exercir",
+  "lastSweptCommit": "27b0ed36bfeb2d801cbacbe5f0557a0b98f225ca",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 4,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "lint": 0, "debtMarkers": 0 },
+  "unscanned": ["knip", "coverage", "mutation", "sonar"],
+  "emittedItems": ["green-desk-exercir/debt-libs-pack-kids-football-ui-27b0ed3"],
+  "green": false,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. Effectively green on gates: tsc 0 (via tsc -b; tsconfig.base raw run gives decorator/path FALSE-positives, dropped), lint 0 errors (491 warnings non-gating), markers 0. Real actionable debt: 4 no-unused-vars (dead imports/args) across 3 disjoint lib areas. Emitted the densest (libs/pack-kids-football-ui, kf-registry.ts 2 dead imports); the other 2 (pack-football-ui player-view-layout.ts unused arg, pack-football outbox-dispatcher.spec.ts unused import) yield to next cycle. knip unwired; coverage UNSCANNED."
+}

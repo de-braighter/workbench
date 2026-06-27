@@ -1,17 +1,13 @@
 {
   "repo": "de-braighter/foundry",
-  "lastSweptCommit": "ce320d52a0f76e68cee5c191fd23b603cccc7ed3",
-  "lastSweptAt": "2026-06-14T04:37:05.000Z",
+  "lastSweptCommit": "efdac7d6db1eed10a461dce169618d6be2745c4c",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
   "lastOffenseCount": 0,
   "consecutiveNoProgress": 0,
   "pushPending": false,
-  "dimensions": {
-    "tsc": 0,
-    "debtMarkers": 0,
-    "coveragePct": 98.92
-  },
-  "unscanned": ["lint", "knip", "mutation", "sonar"],
+  "dimensions": { "tsc": 0, "debtMarkers": 0 },
+  "unscanned": ["lint", "knip", "coverage", "mutation", "sonar"],
   "emittedItems": [],
   "green": true,
-  "note": "First green-desk sweep (validation run, 2026-06-14). GREEN on every path-bearing wired dimension: tsc 0, TODO/FIXME/HACK 0, coverage 98.92% (>=90%). lint/knip/mutation are NOT wired in foundry (no eslint/knip/stryker config); Sonar has no foundry project — all four are UNSCANNED (noted, NOT fabricated as 0). The twin-findings dimension is advisory-only (per-verifier precision readout, no paths; cumulative across foundry#3-#7, mostly fixed-in-PR) — no emittable path-bearing offense. No items emitted (step 6 green path)."
+  "note": "Global T2 pipeline-filler re-sweep 2026-06-21 (HEAD moved ce320d5->efdac7d). Not re-scanned by a dedicated worktree agent this cycle; carried forward GREEN from the prior validation sweep (tsc 0, markers 0; lint/knip/mutation/sonar unwired or unscanned). Conservative: re-confirm on the next dedicated foundry sweep."
 }

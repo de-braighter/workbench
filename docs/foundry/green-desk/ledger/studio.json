@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/studio",
+  "lastSweptCommit": "68fda1f7be6f1cb8aeb8550cbd60dac3a510aca2",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "debtMarkers": 0 },
+  "unscanned": ["lint", "knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. GREEN on wired dims: tsc 0 (tsc -p tsconfig.app.json AND full ng build template typecheck), markers 0. lint is an echo no-lint stub (UNWIRED); knip unwired; coverage UNSCANNED. NB: studio has ACTIVE claim system-builder-studio/E1.1 + greenlit conflict-blocked items; this run emitted NO studio debt lane (repo is green), so no store-lock conflict-filter was needed this cycle."
+}

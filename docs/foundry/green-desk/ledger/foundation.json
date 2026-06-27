@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/foundation",
+  "lastSweptCommit": "4087803137d93e5e6700d8674f1caad4a5642a48",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "lint": 0, "debtMarkers": 0 },
+  "unscanned": ["knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. GREEN on all wired dims: tsc 0 (tsc -b), lint 0 (eslint --max-warnings=0), markers 0. knip/coverage/mutation/sonar UNSCANNED (not fabricated)."
+}

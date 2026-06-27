@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/scenario-lab",
+  "lastSweptCommit": "fbecd69dda388a2c101b3adbfdf8a65700b1da4b",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "debtMarkers": 0 },
+  "unscanned": ["lint", "knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. GREEN on wired dims: tsc 0, markers 0. lint/knip UNWIRED. coverage UNSCANNED."
+}

@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/markets",
+  "lastSweptCommit": "1475d1d2ab3d57b1cca3857e1682055079969902",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "debtMarkers": 0 },
+  "unscanned": ["lint", "knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. GREEN on wired dims: tsc 0 (pnpm -r typecheck; markets-ui Angular template typecheck not covered by plain tsc), markers 0. lint UNWIRED (no eslint config). knip/coverage UNSCANNED."
+}
