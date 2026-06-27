@@ -19,7 +19,6 @@ repos:
     - devloop         # SDLC-on-substrate — the dev twin (internal tooling)
     - herdbook        # livestock registry (animal CRUD, pedigree, people/roles)
     - markets         # external-source integration demonstrator (source spine + crypto consumer)
-    - gridiron        # NFL 4th-down what-if — inference showcase on real nflverse data
     - agri-ecosystem-twin  # regenerative-farm digital twin — A-vs-B ecological counterfactuals (Foundry T0)
     - studio          # plan-tree authoring studio seed — Angular app over the published board-kit brick (private)
     - foundry         # the Foundry control plane — claim-MCP server for the multi-product machine (queue + atomic claims + founder gates + warm pool); ADR-241

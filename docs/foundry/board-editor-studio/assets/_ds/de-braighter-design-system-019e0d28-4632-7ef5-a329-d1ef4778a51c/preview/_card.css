@@ -1,0 +1,28 @@
+/* Shared chrome for every Design-System preview card */
+@import url("../colors_and_type.css");
+
+html, body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 80% -20%, rgba(109,210,255,0.10), transparent 55%),
+    radial-gradient(ellipse at 10% 110%, rgba(167,139,250,0.06), transparent 55%),
+    var(--bg-0);
+  min-height: 100vh;
+  color: var(--fg-1);
+}
+.card {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.row { display: flex; gap: 12px; align-items: center; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.mono { font-family: var(--font-mono); }
