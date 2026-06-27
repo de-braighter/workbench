@@ -1,0 +1,17 @@
+# {{DOMAIN}}
+
+{{PURPOSE}}
+
+Substrate domain on the de-braighter cluster (pack-on-platform, ADR-027). Consumes the
+published `@de-braighter/*` packages.
+
+## Develop
+
+    pnpm install
+    pnpm run ci:local        # build + typecheck + test (all packages)
+
+## Layout
+
+- `libs/{{DOMAIN}}-spine` — reusable capability (no domain knowledge)
+- `libs/{{DOMAIN}}-pack`  — the domain pack (consumes the spine)
+- `apps/{{DOMAIN}}-api`   — NestJS host (`GET /health`)

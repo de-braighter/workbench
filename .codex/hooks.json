@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"D:/development/projects/de-braighter/domains/devloop/hooks/capture-verdict.mjs\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
