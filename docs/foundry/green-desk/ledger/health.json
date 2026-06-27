@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/health",
+  "lastSweptCommit": "da144fde0a20ef884f6e87a3aadc9eba472bfccc",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "debtMarkers": 0 },
+  "unscanned": ["lint", "knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. GREEN on wired dims: tsc 0 (pnpm -r typecheck both libs), markers 0. lint/knip UNWIRED. coverage UNSCANNED. NB: health main-clone local HEAD is 69 files ahead of origin/main (unpushed); scan correctly ran origin/main da144fde in worktree."
+}

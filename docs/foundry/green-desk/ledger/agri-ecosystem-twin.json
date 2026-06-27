@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/agri-ecosystem-twin",
+  "lastSweptCommit": "a8ea923cea989b4fa1ce78298e5a81f96be4f8ae",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 2,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "lint": 0, "knip": 2, "debtMarkers": 0 },
+  "unscanned": ["coverage", "mutation", "sonar"],
+  "emittedItems": ["green-desk-agri-ecosystem-twin/debt-apps-ui-a8ea923", "green-desk-agri-ecosystem-twin/debt-apps-api-a8ea923"],
+  "green": false,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. tsc 0 (build-first; unbuilt-dist cascade FPs dropped), lint 0. knip 2 real findings: 1 unused dep @angular/platform-browser-dynamic (ui) + 1 unused export AGRI tenant-id (api/config/tenants.ts). Emitted 2 path-disjoint lanes. coverage UNSCANNED. INCIDENT: this repo libs/ dirs were accidentally deleted-on-disk by a sibling scanner junction-cleanup bug during this sweep (committed at HEAD 054dc16, recoverable via git checkout -- libs/; the staged apps/ WIP was untouched). Surfaced to founder/superconductor; NOT auto-restored by this sweep-only run (classifier blocked the destructive checkout)."
+}

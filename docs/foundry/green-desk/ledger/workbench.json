@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/workbench",
+  "lastSweptCommit": "9821c1d55be4ca0646afeb519851c0790c9792a9",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 0,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": {},
+  "unscanned": ["tsc", "lint", "knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": true,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. NO-CODE repo: workbench is declarative content + design docs only (no package.json, no tsconfig, no lint/knip/coverage). No path-bearing CODE dimension is wired, so all are UNSCANNED (not fabricated 0). debt-markers in design docs are documentation, not code debt - not emitted. Effectively green/no-op for green-desk; markdown quality is /md-quality-review territory, not green-desk."
+}

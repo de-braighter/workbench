@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/herdbook",
+  "lastSweptCommit": "979a7fd86e2d5aabb65ad1ab89bdabd198d0a0b8",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 7,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "lint": 6, "debtMarkers": 1 },
+  "unscanned": ["knip", "coverage", "mutation", "sonar"],
+  "emittedItems": ["green-desk-herdbook/debt-apps-web-979a7fd", "green-desk-herdbook/debt-libs-herdbook-pack-979a7fd"],
+  "green": false,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. tsc 0 (build-first; raw typecheck gives workspace-dist resolution FPs, dropped). lint 6 ERRORS (gating) all sonarjs/no-nested-conditional in apps/web/mating (3 components). 1 TODO in libs/herdbook-pack (external-dep workaround). Emitted 2 path-disjoint lanes (apps/web + libs/herdbook-pack). knip unwired; coverage UNSCANNED."
+}

@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/design-system",
+  "lastSweptCommit": "12276a3c7b189c73867fc3bc6a31e339a51758d4",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 1,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "lint": 0, "debtMarkers": 0 },
+  "unscanned": ["knip", "coverage", "mutation", "sonar"],
+  "emittedItems": [],
+  "green": false,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. tsc 0, lint 0 errors (427 warnings non-gating: no-non-null-assertion in specs + sonarjs/pseudo-random in visual cmpts), markers 0. Only concrete offense: 1 stale eslint-disable at libs/design-system-angular/src/public/date-picker/date-picker.component.ts:394 (cognitive-complexity disable no longer suppresses anything). Marginal warning-only lane yielded to next cycle to stay under the per-cycle cap. knip unwired; coverage UNSCANNED (not fabricated)."
+}

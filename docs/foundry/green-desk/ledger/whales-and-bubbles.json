@@ -1,0 +1,13 @@
+{
+  "repo": "de-braighter/whales-and-bubbles",
+  "lastSweptCommit": "b742c265aca9026a371ba0f2e1794f30f4843539",
+  "lastSweptAt": "2026-06-21T02:25:42.000Z",
+  "lastOffenseCount": 3,
+  "consecutiveNoProgress": 0,
+  "pushPending": false,
+  "dimensions": { "tsc": 0, "lint": 0, "knip": 3, "debtMarkers": 0 },
+  "unscanned": ["coverage", "mutation", "sonar"],
+  "emittedItems": ["green-desk-whales-and-bubbles/debt-apps-ui-b742c26", "green-desk-whales-and-bubbles/debt-apps-api-b742c26"],
+  "green": false,
+  "note": "Global T2 pipeline-filler sweep 2026-06-21. tsc 0, lint 0 (max-warnings 0). knip 3 real findings (FPs dropped: substrate-runtime via entry-script setup.mjs; redundant-entry hints): 1 unused dep @angular/platform-browser-dynamic (ui) + 2 unused exports (api/config). Emitted 2 path-disjoint lanes (apps-ui + apps-api). coverage UNSCANNED."
+}
