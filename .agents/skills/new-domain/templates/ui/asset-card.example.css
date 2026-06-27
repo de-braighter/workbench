@@ -1,0 +1,97 @@
+.asset-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 240px;
+}
+
+/* EXAMPLE accent borders by item id — replace with your domain's item ids. */
+.asset-card[data-item="example-a"] { border-top: 2px solid var(--accent-a); }
+.asset-card[data-item="example-b"] { border-top: 2px solid var(--accent-b); }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.item-name { font-family: var(--font-display); font-weight: 600; font-size: 1rem; color: var(--fg-1); }
+.item-code { font-family: var(--font-mono);  font-size: 0.75rem; color: var(--fg-3); letter-spacing: 0.1em; }
+
+.value-block { display: flex; flex-direction: column; gap: 4px; }
+
+.value-mean {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--fg-1);
+  letter-spacing: -0.02em;
+}
+
+.value-ci {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.health-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* NOTE: use [ngClass] (not [class]) for additive status classes — [class]="str" replaces static class. */
+.health-online  { background: var(--ok-bg);   color: var(--ok);   }
+.health-stale   { background: var(--warn-bg);  color: var(--warn); }
+.health-offline { background: var(--err-bg);   color: var(--err);  }
+
+.confidence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.confidence-label { font-size: 0.6875rem; color: var(--fg-4); text-transform: uppercase; letter-spacing: 0.08em; }
+.confidence-value { font-size: 0.75rem; color: var(--fg-3); font-family: var(--font-mono); min-width: 32px; text-align: right; }
+
+.confidence-bar {
+  flex: 1;
+  max-width: 60px;
+  height: 3px;
+  background: var(--line-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.confidence-bar-fill {
+  height: 100%;
+  background: var(--ok);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.error-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--err);
+  font-family: var(--font-mono);
+}

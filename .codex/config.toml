@@ -1,0 +1,14 @@
+[shell_environment_policy]
+inherit = "core"
+
+[shell_environment_policy.set]
+HOME = "C:/Users/stibe"
+KG_S3_ACCESS_KEY_ID = "0e41ed6649b24e79b7d8dc9be9d04334"
+KG_S3_SECRET_ACCESS_KEY = "948e814a4b2a4e2f8c38250143ef4093"
+
+[mcp_servers.foundry]
+command = "node"
+args = [
+    "domains/foundry/node_modules/tsx/dist/cli.mjs",
+    "domains/foundry/src/mcp/server.ts",
+]

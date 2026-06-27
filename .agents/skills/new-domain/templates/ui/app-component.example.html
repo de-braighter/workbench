@@ -1,0 +1,31 @@
+<!-- EXAMPLE shell — replace the title, subtitle, and card binding with your domain's. -->
+<main class="shell">
+  <header class="shell-header">
+    <h1 class="shell-title">{{DOMAIN_PASCAL}}</h1>
+    <p class="shell-subtitle">Replace with your domain's one-line description</p>
+
+    <div class="header-actions">
+      <button class="btn-ingest" (click)="triggerIngest()" [disabled]="ingesting()">
+        {{ ingesting() ? 'Ingesting…' : 'Ingest now' }}
+      </button>
+      @if (readout()) {
+        <span class="last-update">Updated {{ readout()!.readoutAt | date:'HH:mm:ss' }}</span>
+      }
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="state-msg">Loading…</p>
+  } @else if (error()) {
+    <p class="state-msg state-error">Error: {{ error() }}</p>
+  } @else if (readout()) {
+    <div class="card-grid">
+      @for (item of readout()!.items; track item.id) {
+        <app-asset-card [asset]="item" />
+      }
+    </div>
+    <p class="footer-note">
+      Replace with your domain's footer note (data source, polling interval, etc.).
+    </p>
+  }
+</main>
