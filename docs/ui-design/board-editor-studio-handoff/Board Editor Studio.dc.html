@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/colors_and_type.css">
+  <link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/ui_kits/exercir/app.css">
+  <link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/ui_kits/exercir/forms.css">
+  <script src="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/_ds_bundle.js"></script>
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;}
+    input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0;}
+    input[type=number]{-moz-appearance:textfield;}
+    input[type=color]{-webkit-appearance:none;appearance:none;}
+    input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
+    input[type=color]::-webkit-color-swatch{border:none;border-radius:4px;}
+    .bes-scroll::-webkit-scrollbar{width:9px;height:9px;}
+    .bes-scroll::-webkit-scrollbar-thumb{background:var(--rule-strong);border-radius:8px;}
+    @keyframes bes-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+    @keyframes bes-drawer{from{transform:translateX(20px);opacity:0;}to{transform:none;opacity:1;}}
+  </style>
+</helmet>
+<div data-theme="{{ theme }}" style="display:flex;flex-direction:column;height:100vh;overflow:hidden;font-family:var(--font-ui);color:var(--ink);background:var(--bg);">
+
+  <!-- TOP BAR -->
+  <header style="flex:none;display:flex;align-items:center;gap:14px;height:56px;padding:0 18px;border-bottom:1px solid var(--rule);background:var(--glass-bg);backdrop-filter:var(--glass-blur);position:relative;z-index:6;">
+    <div style="display:flex;align-items:center;gap:11px;min-width:0;">
+      <div style="width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:9px;background:var(--accent-soft);border:1px solid color-mix(in oklch,var(--accent) 40%,transparent);box-shadow:0 0 16px -4px var(--accent-rim);">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+          <rect x="5" y="1.5" width="6" height="4" rx="1"></rect><rect x="1.5" y="10.5" width="5" height="4" rx="1"></rect><rect x="9.5" y="10.5" width="5" height="4" rx="1"></rect><path d="M8 5.5 V8 M8 8 H4 V10.5 M8 8 H12 V10.5"></path>
+        </svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <span style="font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:-0.02em;line-height:1;">Board editor</span>
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-3);">studio</span>
+      </div>
+      <span style="margin-left:4px;display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:var(--bg-sunken);border:1px solid var(--rule-strong);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;color:var(--ink-3);">catalog</span>
+    </div>
+    <div style="flex:1;"></div>
+    <sc-if value="{{ showSearch }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg-sunken);border:1px solid var(--rule-strong);border-radius:9px;padding:7px 11px;width:220px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input value="{{ query }}" onInput="{{ onSearch }}" placeholder="Search {{ libLabelLower }}…" style="flex:1;min-width:0;background:none;border:none;outline:none;color:var(--ink);font-family:var(--font-ui);font-size:13px;">
+      </div>
+    </sc-if>
+    <sc-if value="{{ showNew }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ onNew }}" class="xbtn xbtn-primary" style="height:34px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>{{ newLabel }}</button>
+    </sc-if>
+    <button class="xbtn xbtn-ghost" onClick="{{ reset }}" style="height:34px;">↺ Reset</button>
+  </header>
+
+  <div style="flex:1;display:flex;min-height:0;">
+
+    <!-- LEFT RAIL -->
+    <aside class="bes-scroll" style="flex:none;width:214px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;padding:14px 11px;border-right:1px solid var(--rule);background:var(--rail-bg);">
+      <sc-for list="{{ railSections }}" as="sec" hint-placeholder-count="3">
+        <div style="padding:8px 8px 6px;margin-top:{{ sec.topGap }};font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-4);">{{ sec.title }}</div>
+        <sc-for list="{{ sec.items }}" as="r" hint-placeholder-count="2">
+          <button onClick="{{ r.onClick }}" style="{{ r.style }}" style-hover="background:var(--bg-elev);">
+            <span style="{{ r.indicator }}"></span>
+            <span style="{{ r.iconWrap }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><sc-for list="{{ r.iconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg></span>
+            <span style="flex:1;text-align:left;font-size:13px;color:{{ r.labelColor }};font-weight:{{ r.weight }};">{{ r.label }}</span>
+            <sc-if value="{{ r.hasCount }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-mono);font-size:11px;color:{{ r.countColor }};">{{ r.count }}</span></sc-if>
+          </button>
+        </sc-for>
+      </sc-for>
+    </aside>
+
+    <!-- CATALOG MAIN -->
+    <div style="flex:1;position:relative;min-width:0;display:flex;">
+      <div class="bes-scroll" style="flex:1;min-width:0;overflow:auto;padding:22px 24px 36px;">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:4px;">
+          <div style="min-width:0;">
+            <h1 style="font-family:var(--font-display);font-weight:600;font-size:23px;letter-spacing:-0.02em;color:var(--ink);margin:0;">{{ libLabel }}</h1>
+            <p style="margin:6px 0 0;font-size:13px;color:var(--ink-2);line-height:1.5;max-width:560px;text-wrap:pretty;">{{ libIntro }}</p>
+          </div>
+          <sc-if value="{{ showSearch }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);white-space:nowrap;">{{ resultCount }}</span></sc-if>
+        </div>
+
+        <!-- CARDS (composites / primitive kinds) -->
+        <sc-if value="{{ isCards }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;">
+            <sc-for list="{{ cards }}" as="c" hint-placeholder-count="4">
+              <div onClick="{{ c.onClick }}" style="{{ c.cardStyle }}" style-hover="border-color:var(--rule-strong);">
+                <div style="height:92px;border-radius:10px;background:var(--bg-sunken);border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden;">{{ c.preview }}</div>
+                <div style="margin-top:12px;display:flex;align-items:flex-start;gap:10px;">
+                  <span style="{{ c.iconWrap }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><sc-for list="{{ c.iconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg></span>
+                  <div style="min-width:0;flex:1;">
+                    <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-4);">{{ c.kindLabel }}</div>
+                    <div style="margin-top:2px;font-family:var(--font-display);font-weight:600;font-size:14.5px;letter-spacing:-0.01em;color:var(--ink);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.name }}</div>
+                  </div>
+                  <sc-if value="{{ c.unused }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ c.onTrash }}" title="Drop — unused" style="flex:none;width:26px;height:26px;display:grid;place-items:center;border-radius:7px;background:var(--bg-sunken);border:1px solid var(--rule-strong);color:var(--ink-4);cursor:pointer;transition:all .12s;" style-hover="color:var(--color-risk);border-color:var(--color-risk);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg></button>
+                  </sc-if>
+                </div>
+                <div style="margin-top:9px;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.metaText }}</div>
+                <div style="margin-top:11px;padding-top:10px;border-top:1px solid var(--rule);display:flex;align-items:center;gap:7px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ c.relColor }}" stroke-width="1.7" style="flex:none;"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path></svg>
+                  <span style="font-size:11px;color:{{ c.relTextColor }};">{{ c.relText }}</span>
+                </div>
+              </div>
+            </sc-for>
+            <button onClick="{{ onNew }}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border-radius:14px;border:1.5px dashed var(--rule-strong);background:none;padding:20px;min-height:200px;cursor:pointer;transition:all .14s;" style-hover="border-color:var(--accent-rim);">
+              <span style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--bg-elev);border:1px solid var(--rule-strong);color:var(--accent);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"></path></svg></span>
+              <span style="font-size:13px;color:var(--ink-2);">{{ newLabel }}</span>
+            </button>
+          </div>
+          <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:50px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--ink-4);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+              <span style="font-size:13px;">No {{ libLabelLower }} match “{{ query }}”.</span>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <!-- NODE LAYERS -->
+        <sc-if value="{{ isNode }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;display:flex;flex-direction:column;gap:9px;max-width:680px;">
+            <sc-for list="{{ root }}" as="r" hint-placeholder-count="1">
+              <div style="width:100%;animation:bes-in .22s var(--ease-out);"><dc-import name="Instance Row" i="{{ r }}" hint-size="100%,64px"></dc-import></div>
+            </sc-for>
+            <div>
+              <sc-if value="{{ placeOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px;animation:bes-in .2s var(--ease-out);">
+                  <sc-for list="{{ placeTypes }}" as="a" hint-placeholder-count="2">
+                    <button onClick="{{ a.on }}" style="display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:8px;background:var(--bg-sunken);border:1px solid var(--rule);color:var(--ink);font-family:var(--font-mono);font-size:11px;cursor:pointer;transition:all .14s;" style-hover="border-color:var(--accent);background:var(--accent-soft);"><span style="width:7px;height:7px;border-radius:50%;background:{{ a.dot }};box-shadow:0 0 6px {{ a.dot }};"></span>{{ a.name }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <button onClick="{{ togglePlace }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed color-mix(in oklch,var(--accent) 40%,var(--rule-strong));border-radius:10px;background:transparent;color:var(--accent);font-family:var(--font-mono);font-size:12px;letter-spacing:0.04em;cursor:pointer;transition:all .15s;" style-hover="border-color:var(--accent);background:var(--accent-soft);">{{ placeLabel }}</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- BOARD SETTINGS -->
+        <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;display:flex;flex-direction:column;gap:22px;max-width:560px;">
+            <div>
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px;">Identity</div>
+              <div style="display:flex;flex-direction:column;gap:13px;">
+                <div class="fc-field"><span class="fc-label mono">kind</span><div class="fc-input"><span class="fc-input-icon" style="font-family:var(--font-mono);font-size:12px;color:var(--accent);">#</span><input value="{{ kind }}" onInput="{{ setKind }}" placeholder="card-node" style="font-family:var(--font-mono);"></div></div>
+                <div class="fc-field"><span class="fc-label mono">accessible name</span><div class="fc-input"><input value="{{ ariaName }}" onInput="{{ setAria }}" placeholder="{label} node"></div><div class="fc-hint">tokens · {label} · {kind} · {meta}</div></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px;">Interactions</div>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <sc-for list="{{ ix }}" as="i" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px;border-radius:8px;">
+                    <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:13px;color:var(--ink);font-weight:500;">{{ i.label }}</span><span style="font-size:11px;color:var(--ink-3);">{{ i.desc }}</span></div>
+                    <button class="fc-toggle fc-toggle-md {{ i.cls }}" onClick="{{ i.toggle }}" style="flex:none;"><span class="fc-toggle-knob"></span></button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px;">Bounds</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+                <sc-for list="{{ bounds }}" as="b" hint-placeholder-count="4">
+                  <div><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px;">{{ b.label }}</div><input type="number" value="{{ b.value }}" onInput="{{ b.on }}" style="width:100%;height:34px;background:var(--bg-sunken);border:1px solid var(--rule);border-radius:8px;color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:0 8px;text-align:center;outline:none;transition:all .14s;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);"></div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- DETAIL DRAWER -->
+      <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:5;display:flex;justify-content:flex-end;">
+          <div onClick="{{ onCloseDrawer }}" style="position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(2px);"></div>
+          <aside class="bes-scroll" style="position:relative;width:452px;max-width:92%;height:100%;overflow-y:auto;background:var(--glass-bg);backdrop-filter:var(--glass-blur);border-left:1px solid var(--rule);box-shadow:var(--glass-shadow);display:flex;flex-direction:column;animation:bes-drawer .22s var(--ease-out);">
+            <div style="flex:1;padding:20px 22px 16px;">
+              <div style="display:flex;align-items:flex-start;gap:12px;">
+                <span style="flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);border:1px solid var(--accent-rim);color:var(--accent);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><sc-for list="{{ drawer.iconPaths }}" as="p" hint-placeholder-count="1"><path d="{{ p.d }}"></path></sc-for></svg></span>
+                <div style="min-width:0;flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;"><span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-4);">{{ drawer.kindLabel }}</span><sc-if value="{{ drawer.unused }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.04em;border-radius:5px;padding:2px 7px;color:var(--color-warn);background:var(--color-warn-soft);border:1px solid rgba(245,181,68,0.3);">unused</span></sc-if></div>
+                  <input value="{{ drawer.name }}" onInput="{{ drawer.nameOn }}" style="margin-top:4px;width:100%;background:none;border:0;border-bottom:1px solid transparent;color:var(--ink);font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:-0.02em;outline:none;padding:2px 0;transition:border-color .14s;" style-focus="border-bottom-color:var(--accent-rim);">
+                </div>
+                <button onClick="{{ onCloseDrawer }}" title="Close" style="flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:8px;background:var(--bg-elev);border:1px solid var(--rule-strong);color:var(--ink-3);cursor:pointer;" style-hover="color:var(--ink);border-color:var(--rule-strong);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+              </div>
+
+              <div style="margin-top:16px;height:130px;border-radius:11px;background:var(--bg-sunken);border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;padding:12px;overflow:hidden;">{{ drawer.preview }}</div>
+
+              <!-- primitive fields -->
+              <sc-if value="{{ drawer.isPrimitive }}" hint-placeholder-val="{{ true }}">
+                <div style="margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:start;">
+                  <sc-for list="{{ drawer.fields }}" as="f" hint-placeholder-count="6">
+                    <div style="{{ f.cellStyle }}">
+                      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px;">{{ f.label }}</div>
+                      <sc-if value="{{ f.isNum }}" hint-placeholder-val="{{ true }}"><input type="number" value="{{ f.value }}" onInput="{{ f.on }}" style="width:100%;height:34px;background:var(--bg-elev);border:1px solid var(--rule-strong);border-radius:7px;color:var(--ink);font-family:var(--font-mono);font-size:12px;padding:0 8px;text-align:center;outline:none;transition:all .14s;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);"></sc-if>
+                      <sc-if value="{{ f.isColor }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;height:34px;"><input type="color" value="{{ f.value }}" onInput="{{ f.on }}" style="width:34px;height:32px;border:1px solid var(--rule-strong);border-radius:7px;background:none;cursor:pointer;padding:0;flex:none;"><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-2);text-transform:uppercase;">{{ f.value }}</span></div></sc-if>
+                      <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ false }}"><input type="text" value="{{ f.value }}" onInput="{{ f.on }}" style="width:100%;height:34px;background:var(--bg-elev);border:1px solid var(--rule-strong);border-radius:7px;color:var(--ink);font-family:var(--font-mono);font-size:12px;padding:0 10px;outline:none;transition:all .14s;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);"></sc-if>
+                      <sc-if value="{{ f.isAlign }}" hint-placeholder-val="{{ false }}"><div style="display:inline-flex;gap:3px;background:var(--bg-elev);border:1px solid var(--rule-strong);border-radius:7px;padding:3px;"><button onClick="{{ f.setL }}" style="{{ f.lStyle }}">left</button><button onClick="{{ f.setC }}" style="{{ f.cStyle }}">center</button><button onClick="{{ f.setR }}" style="{{ f.rStyle }}">right</button></div></sc-if>
+                      <sc-if value="{{ f.isArea }}" hint-placeholder-val="{{ false }}"><textarea value="{{ f.value }}" onInput="{{ f.on }}" spellcheck="false" style="width:100%;min-height:120px;background:var(--bg-elev);border:1px solid var(--rule-strong);border-radius:8px;color:var(--ink);font-family:var(--font-mono);font-size:11px;line-height:1.6;padding:10px 12px;outline:none;resize:vertical;white-space:pre;box-sizing:border-box;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);"></textarea></sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <!-- composite parts -->
+              <sc-if value="{{ drawer.isComposite }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:18px;">
+                  <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-4);margin-bottom:10px;">Parts · references</div>
+                  <div style="display:flex;flex-direction:column;gap:8px;">
+                    <sc-for list="{{ drawer.parts }}" as="c" hint-placeholder-count="2">
+                      <div style="width:100%;"><dc-import name="Instance Row" i="{{ c }}" hint-size="100%,64px"></dc-import></div>
+                    </sc-for>
+                    <div>
+                      <sc-if value="{{ drawer.addOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;animation:bes-in .2s var(--ease-out);">
+                          <sc-for list="{{ drawer.partTypes }}" as="a" hint-placeholder-count="3"><button onClick="{{ a.on }}" style="display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:7px;background:var(--bg-elev);border:1px solid var(--rule-strong);color:var(--ink);font-family:var(--font-mono);font-size:11px;cursor:pointer;transition:all .14s;" style-hover="border-color:var(--accent);background:var(--accent-soft);"><span style="width:7px;height:7px;border-radius:50%;background:{{ a.dot }};box-shadow:0 0 6px {{ a.dot }};"></span>{{ a.name }}</button></sc-for>
+                        </div>
+                      </sc-if>
+                      <button onClick="{{ drawer.toggleAdd }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px;border:1.5px dashed var(--rule-strong);border-radius:9px;background:transparent;color:var(--ink-3);font-family:var(--font-mono);font-size:11px;cursor:pointer;transition:all .15s;" style-hover="border-color:var(--accent);color:var(--accent);">{{ drawer.addLabel }}</button>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- cross-references -->
+              <div style="margin-top:20px;">
+                <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-4);margin-bottom:9px;">Used in</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <sc-for list="{{ drawer.usedIn }}" as="rf" hint-placeholder-count="1"><button onClick="{{ rf.onClick }}" style="{{ rf.style }}" style-hover="border-color:var(--accent);"><span>{{ rf.text }}</span><sc-if value="{{ rf.nav }}" hint-placeholder-val="{{ true }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.7;"><path d="M7 17L17 7M9 7h8v8"></path></svg></sc-if></button></sc-for>
+                  <sc-if value="{{ drawer.usedInEmpty }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:var(--ink-4);font-style:italic;">Not used anywhere yet</span></sc-if>
+                </div>
+              </div>
+            </div>
+
+            <div style="flex:none;position:sticky;bottom:0;padding:14px 22px 18px;border-top:1px solid var(--rule);background:var(--glass-bg);backdrop-filter:var(--glass-blur);display:flex;flex-direction:column;gap:9px;">
+              <button onClick="{{ drawer.place }}" class="xbtn xbtn-glass" style="width:100%;height:38px;justify-content:center;">place in node →</button>
+              <sc-if value="{{ drawer.unused }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ drawer.onDrop }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:11px;font-size:13px;font-weight:500;cursor:pointer;background:var(--color-risk-soft);color:var(--color-risk);border:1px solid rgba(255,93,108,0.35);transition:all .12s;" style-hover="background:rgba(255,93,108,0.16);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>Drop definition</button>
+              </sc-if>
+              <sc-if value="{{ drawer.inUse }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;background:var(--bg-sunken);border:1px solid var(--rule-strong);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="1.7" style="flex:none;"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg><span style="font-size:11.5px;color:var(--ink-3);line-height:1.4;">{{ drawer.lockText }}</span></div>
+              </sc-if>
+            </div>
+          </aside>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- RIGHT — live preview -->
+    <aside style="flex:none;width:404px;display:flex;flex-direction:column;min-width:0;border-left:1px solid var(--rule);background:radial-gradient(ellipse at 80% -10%,color-mix(in oklch,var(--accent) 9%,transparent),transparent 55%),var(--bg);">
+      <div style="height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--rule);">
+        <div style="display:inline-flex;align-items:center;gap:9px;padding:5px 11px;border-radius:999px;background:var(--bg-elev);border:1px solid var(--rule-strong);">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px var(--accent);animation:xpulse 1.6s ease-in-out infinite;"></span>
+          <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:var(--ink-2);">live preview</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;padding:3px;background:var(--bg-sunken);border:1px solid var(--rule);border-radius:8px;">
+          <button onClick="{{ setDiagram }}" style="{{ tabDiagramStyle }}">◇ diagram</button>
+          <button onClick="{{ setCode }}" style="{{ tabCodeStyle }}">{ } code</button>
+        </div>
+      </div>
+      <div style="flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:26px;background-image:{{ gridBg }};background-size:24px 24px;">
+        <div style="position:absolute;inset:-20% 6% auto 6%;height:55%;background:radial-gradient(ellipse at 50% 0%,var(--accent-soft),transparent 65%);filter:blur(48px);pointer-events:none;"></div>
+        <sc-if value="{{ isDiagram }}" hint-placeholder-val="{{ true }}">
+          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;">{{ previewEl }}</div>
+          <div style="position:absolute;left:16px;bottom:12px;display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;color:var(--ink-4);"><b style="color:var(--ink);font-weight:500;">{{ nodeCount }}</b> nodes · <b style="color:var(--ink);font-weight:500;">{{ layerCount }}</b> drawn</div>
+        </sc-if>
+        <sc-if value="{{ isCode }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%;height:100%;display:flex;flex-direction:column;position:relative;z-index:1;background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--rule);border-radius:12px;overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid var(--rule);flex:none;">
+              <div style="display:flex;align-items:center;gap:9px;"><div style="display:flex;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--color-risk);"></span><span style="width:8px;height:8px;border-radius:50%;background:var(--color-warn);"></span><span style="width:8px;height:8px;border-radius:50%;background:var(--color-ok);"></span></div><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-2);letter-spacing:0.04em;">shape.json</span></div>
+              <button onClick="{{ copyJson }}" class="xb xb-neutral" style="cursor:pointer;">{{ copyLabel }}</button>
+            </div>
+            <div class="bes-scroll" style="flex:1;overflow:auto;min-height:0;background:var(--bg-sunken);">{{ jsonElBig }}</div>
+          </div>
+        </sc-if>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: &quot;100%&quot;, &quot;height&quot;: &quot;100%&quot; },
+  &quot;theme&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;night&quot;, &quot;ivory&quot;, &quot;clinical&quot;], &quot;default&quot;: &quot;night&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;canvasGrid&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot; }
+}">
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = this.initial(); }
+
+  NODES = [
+    { id: 'n_ws', label: 'Workspace', meta: 'root', x: 356, y: 30, parent: null },
+    { id: 'n_srv', label: 'Servers', meta: '2 online', x: 150, y: 206, parent: 'n_ws' },
+    { id: 'n_tool', label: 'Tools', meta: '18 active', x: 560, y: 206, parent: 'n_ws' },
+    { id: 'n_stripe', label: 'stripe-prod', meta: 'healthy', x: 38, y: 382, parent: 'n_srv' },
+    { id: 'n_gh', label: 'github', meta: 'healthy', x: 268, y: 382, parent: 'n_srv' },
+    { id: 'n_vec', label: 'vector-db', meta: 'degraded', x: 560, y: 382, parent: 'n_tool' },
+  ];
+
+  TYPEDOT = { rectangle: '#6dd2ff', text: '#c9a9ff', circle: '#22d39a', line: '#f5b544', svg: '#6df0b3', composite: '#6dd2ff' };
+  LEAF = ['rectangle', 'text', 'circle', 'line', 'svg'];
+  KIND_LABEL = { rectangle: 'Rectangle', text: 'Text', circle: 'Circle', line: 'Line', svg: 'SVG', composite: 'Composite' };
+  KIND_PLURAL = { rectangle: 'Rectangles', text: 'Text', circle: 'Circles', line: 'Lines', svg: 'SVG' };
+  ICONS = {
+    layers: [{ d: 'm12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z' }, { d: 'm22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65' }, { d: 'm22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65' }],
+    sliders: [{ d: 'M4 21v-7' }, { d: 'M4 10V3' }, { d: 'M12 21v-9' }, { d: 'M12 8V3' }, { d: 'M20 21v-5' }, { d: 'M20 12V3' }, { d: 'M1 14h6' }, { d: 'M9 8h6' }, { d: 'M17 16h6' }],
+    rectangle: [{ d: 'M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z' }],
+    text: [{ d: 'M4 7V5h16v2' }, { d: 'M9 19h6' }, { d: 'M12 5v14' }],
+    circle: [{ d: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z' }],
+    line: [{ d: 'M5 19L19 5' }],
+    code: [{ d: 'M16 18l6-6-6-6' }, { d: 'M8 6l-6 6 6 6' }],
+  };
+
+  uid() { return 'p' + Math.random().toString(36).slice(2, 8); }
+  cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  initial() {
+    const dRect = this.uid(), dDot = this.uid(), dTitle = this.uid(), dSub = this.uid(), dCard = this.uid();
+    return {
+      kind: 'card-node', ariaName: '{label}, a {kind}',
+      ix: { addChild: true, remove: true, reparent: false },
+      bounds: { x: 0, y: 0, w: 208, h: 76 },
+      defs: [
+        { id: dRect, name: 'Card background', kind: 'rectangle', x: 0, y: 0, w: 208, h: 76, radius: 14, fill: '#111a2e', stroke: '#6dd2ff' },
+        { id: dDot, name: 'Status dot', kind: 'circle', cx: 20, cy: 24, r: 5, fill: '#22d39a', stroke: '#0c3b2e' },
+        { id: dTitle, name: 'Title', kind: 'text', x: 38, y: 30, text: '{label}', align: 'left', fill: '#e8ecf7' },
+        { id: dSub, name: 'Subtitle', kind: 'text', x: 38, y: 54, text: '{meta}', align: 'left', fill: '#6b7390' },
+        { id: dCard, name: 'Card', kind: 'composite', children: [
+          { id: this.uid(), ref: dRect, x: 0, y: 0 }, { id: this.uid(), ref: dDot, x: 0, y: 0 },
+          { id: this.uid(), ref: dTitle, x: 0, y: 0 }, { id: this.uid(), ref: dSub, x: 0, y: 0 },
+        ] },
+      ],
+      root: [{ id: this.uid(), ref: dCard, x: 0, y: 0 }],
+      lib: 'node', query: '', openId: null, openComp: {}, placeOpen: false, copied: false, view: 'diagram',
+    };
+  }
+
+  num(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  defaults(kind) {
+    const b = this.state.bounds;
+    if (kind === 'rectangle') return { x: 0, y: 0, w: b.w, h: b.h, radius: 14, fill: '#111a2e', stroke: '#6dd2ff' };
+    if (kind === 'text') return { x: 18, y: Math.round(b.h / 2) + 5, text: '{label}', align: 'left', fill: '#e8ecf7' };
+    if (kind === 'circle') return { cx: 22, cy: Math.round(b.h / 2), r: 10, fill: '#6dd2ff', stroke: '#0ea5e9' };
+    if (kind === 'line') return { x1: 16, y1: b.h - 16, x2: b.w - 16, y2: b.h - 16, stroke: '#3d4a66' };
+    if (kind === 'svg') return { svg: '<rect x="0" y="0" width="' + b.w + '" height="' + b.h + '" rx="14" fill="#111a2e" stroke="#6dd2ff" stroke-width="1.5"/>\n<text x="18" y="44" fill="#e8ecf7" font-family="Inter" font-size="15" font-weight="600">{label}</text>' };
+    return {};
+  }
+
+  setKind = (e) => this.setState({ kind: e.target.value });
+  setAria = (e) => this.setState({ ariaName: e.target.value });
+  setBound(k, v) { this.setState((s) => ({ bounds: { ...s.bounds, [k]: this.num(v) } })); }
+  toggleIx(k) { this.setState((s) => ({ ix: { ...s.ix, [k]: !s.ix[k] } })); }
+
+  findDef(ref) { return (this.state.defs || []).find((d) => d.id === ref); }
+  reIdInst(inst) { return { ...inst, id: this.uid() }; }
+  reIdDef(def) { const d = { ...def, id: this.uid() }; if (d.children) d.children = d.children.map((c) => ({ ...c, id: this.uid() })); return d; }
+  swap(arr, id, dir) { const a = [...arr]; const i = a.findIndex((p) => p.id === id); const j = i + dir; if (j < 0 || j >= a.length) return arr; [a[i], a[j]] = [a[j], a[i]]; return a; }
+  insertAfter(arr, id, item) { const a = [...arr]; const i = a.findIndex((p) => p.id === id); a.splice(i + 1, 0, item); return a; }
+  defContains(defId, targetId) { if (defId === targetId) return true; const d = this.findDef(defId); if (!d || d.kind !== 'composite') return false; return (d.children || []).some((c) => this.defContains(c.ref, targetId)); }
+  wouldCycle(parentId, childRef) { return childRef === parentId || this.defContains(childRef, parentId); }
+
+  // cross-references
+  usersOf(defId) {
+    const out = [];
+    (this.state.defs || []).forEach((d) => { if (d.kind === 'composite' && (d.children || []).some((c) => c.ref === defId)) out.push({ type: 'composite', id: d.id, name: d.name }); });
+    if ((this.state.root || []).some((r) => r.ref === defId)) out.push({ type: 'node', id: '__node', name: 'Node layers' });
+    return out;
+  }
+  usageCount(defId) {
+    let n = 0;
+    (this.state.defs || []).forEach((d) => { if (d.kind === 'composite') (d.children || []).forEach((c) => { if (c.ref === defId) n++; }); });
+    (this.state.root || []).forEach((r) => { if (r.ref === defId) n++; });
+    return n;
+  }
+  isUnused(defId) { return this.usageCount(defId) === 0; }
+
+  // definitions
+  setDef(id, key, val) { this.setState((s) => ({ defs: s.defs.map((d) => d.id === id ? { ...d, [key]: val } : d) })); }
+  addPrimitiveDef(kind) { const id = this.uid(); this.setState((s) => ({ defs: [...s.defs, { id, name: 'New ' + kind, kind, ...this.defaults(kind) }], openId: id })); }
+  addComposite() { const id = this.uid(); this.setState((s) => ({ defs: [...s.defs, { id, name: 'Composite ' + (s.defs.filter((d) => d.kind === 'composite').length + 1), kind: 'composite', children: [] }], openId: id })); }
+  delDef(id) { this.setState((s) => ({ defs: s.defs.filter((d) => d.id !== id).map((d) => d.kind === 'composite' ? { ...d, children: (d.children || []).filter((c) => c.ref !== id) } : d), root: s.root.filter((r) => r.ref !== id), openId: s.openId === id ? null : s.openId })); }
+  moveDefInGroup(id, dir, isComp) {
+    this.setState((s) => {
+      const ids = s.defs.filter((d) => (d.kind === 'composite') === isComp).map((d) => d.id);
+      const gi = ids.indexOf(id), gj = gi + dir; if (gj < 0 || gj >= ids.length) return {};
+      const a = [...s.defs]; const ai = a.findIndex((d) => d.id === id), bi = a.findIndex((d) => d.id === ids[gj]);
+      [a[ai], a[bi]] = [a[bi], a[ai]]; return { defs: a };
+    });
+  }
+
+  // composite children
+  mapComp(cid, fn) { this.setState((s) => ({ defs: s.defs.map((d) => d.id !== cid ? d : { ...d, children: fn(d.children || []) }) })); }
+  addInstToComposite(cid, ref) { this.setState((s) => ({ defs: s.defs.map((d) => d.id !== cid ? d : { ...d, children: [...(d.children || []), { id: this.uid(), ref, x: 0, y: 0 }] }), openComp: { ...s.openComp, [cid]: false } })); }
+  setCompInst(cid, instId, key, val) { this.mapComp(cid, (cs) => cs.map((c) => c.id === instId ? { ...c, [key]: val } : c)); }
+  moveCompInst(cid, instId, dir) { this.mapComp(cid, (cs) => this.swap(cs, instId, dir)); }
+  delCompInst(cid, instId) { this.mapComp(cid, (cs) => cs.filter((c) => c.id !== instId)); }
+  dupCompInst(cid, instId) { this.mapComp(cid, (cs) => this.insertAfter(cs, instId, this.reIdInst(cs.find((c) => c.id === instId)))); }
+  toggleCompAdd(cid) { this.setState((s) => ({ openComp: { ...s.openComp, [cid]: !(s.openComp && s.openComp[cid]) } })); }
+
+  // root
+  placeInRoot(ref) { this.setState((s) => ({ root: [...s.root, { id: this.uid(), ref, x: 0, y: 0 }], placeOpen: false })); }
+  setRootInst(id, key, val) { this.setState((s) => ({ root: s.root.map((r) => r.id === id ? { ...r, [key]: val } : r) })); }
+  moveRootInst(id, dir) { this.setState((s) => ({ root: this.swap(s.root, id, dir) })); }
+  delRootInst(id) { this.setState((s) => ({ root: s.root.filter((r) => r.id !== id) })); }
+  dupRootInst(id) { this.setState((s) => ({ root: this.insertAfter(s.root, id, this.reIdInst(s.root.find((r) => r.id === id))) })); }
+
+  navTo(defId) { const d = this.findDef(defId); if (!d) return; this.setState({ lib: d.kind === 'composite' ? 'composites' : 'k:' + d.kind, openId: defId, query: '' }); }
+  navToNode() { this.setState({ lib: 'node', openId: null }); }
+  reset() { this.setState(this.initial()); }
+
+  alnStyle(a) { return 'padding:5px 13px;border-radius:5px;font-family:var(--font-mono);font-size:11px;border:0;cursor:pointer;text-transform:capitalize;transition:all .12s;' + (a ? 'background:var(--accent-soft);color:var(--accent);' : 'background:transparent;color:var(--ink-3);'); }
+  iconStyle(e) { return 'width:26px;height:26px;display:grid;place-items:center;background:transparent;border:1px solid var(--rule);border-radius:6px;color:var(--ink-3);cursor:pointer;font-size:13px;font-family:var(--font-mono);transition:all .12s;' + (e ? '' : 'opacity:.28;pointer-events:none;'); }
+
+  fieldsFor(def, setVal) {
+    const num = (k, l) => ({ key: k, label: l, value: def[k], isNum: true, cellStyle: '', on: (e) => setVal(k, this.num(e.target.value)) });
+    const col = (k, l) => ({ key: k, label: l, value: def[k], isColor: true, cellStyle: 'grid-column:span 2;', on: (e) => setVal(k, e.target.value) });
+    const txt = (k, l) => ({ key: k, label: l, value: def[k], isText: true, cellStyle: 'grid-column:span 4;', on: (e) => setVal(k, e.target.value) });
+    const aln = (k, l) => ({ key: k, label: l, isAlign: true, cellStyle: 'grid-column:span 4;', lStyle: this.alnStyle(def[k] === 'left'), cStyle: this.alnStyle(def[k] === 'center'), rStyle: this.alnStyle(def[k] === 'right'), setL: () => setVal(k, 'left'), setC: () => setVal(k, 'center'), setR: () => setVal(k, 'right') });
+    const area = (k, l) => ({ key: k, label: l, value: def[k], isArea: true, cellStyle: 'grid-column:span 4;', on: (e) => setVal(k, e.target.value) });
+    switch (def.kind) {
+      case 'rectangle': return [num('x', 'x'), num('y', 'y'), num('w', 'w'), num('h', 'h'), num('radius', 'radius'), col('fill', 'fill'), col('stroke', 'stroke')];
+      case 'text': return [num('x', 'x'), num('y', 'y'), txt('text', 'text value'), aln('align', 'align'), col('fill', 'fill')];
+      case 'circle': return [num('cx', 'cx'), num('cy', 'cy'), num('r', 'r'), col('fill', 'fill'), col('stroke', 'stroke')];
+      case 'line': return [num('x1', 'x1'), num('y1', 'y1'), num('x2', 'x2'), num('y2', 'y2'), col('stroke', 'stroke')];
+      case 'svg': return [area('svg', 'svg markup · {label} {kind} {meta}')];
+    }
+    return [];
+  }
+
+  instRowView(inst, ctx) {
+    const def = this.findDef(inst.ref);
+    const missing = !def, isComposite = !!def && def.kind === 'composite';
+    return {
+      id: inst.id, refName: def ? def.name : '(missing definition)',
+      kindLabel: def ? (isComposite ? 'composite · instance' : def.kind + ' · instance') : 'unresolved',
+      isComposite, isPrimitive: !!def && !isComposite,
+      dot: def ? (this.TYPEDOT[def.kind] || '#6dd2ff') : '#ff5d6c',
+      nameColor: missing ? '#ff5d6c' : 'var(--ink)',
+      border: isComposite ? 'color-mix(in oklch,var(--accent) 30%,var(--rule))' : 'var(--rule)',
+      x: inst.x || 0, y: inst.y || 0,
+      xOn: (e) => ctx.setOff('x', this.num(e.target.value)), yOn: (e) => ctx.setOff('y', this.num(e.target.value)),
+      up: ctx.up, down: ctx.down, dup: ctx.dup, del: ctx.del,
+      upStyle: this.iconStyle(ctx.canUp), downStyle: this.iconStyle(ctx.canDown),
+    };
+  }
+
+  defName(ref) { const d = this.findDef(ref); return d ? d.name : '(missing)'; }
+
+  authored() {
+    const { kind, ariaName, ix, bounds, defs, root } = this.state;
+    const defJson = (d) => { if (d.kind === 'composite') return { name: d.name, kind: 'composite', parts: (d.children || []).map((c) => ({ use: this.defName(c.ref), x: c.x, y: c.y })) }; const { id, name, kind: k, ...f } = d; return { name, kind: k, ...f }; };
+    return { kind, name: ariaName, interactions: { addChild: ix.addChild, remove: ix.remove, reparent: ix.reparent }, bounds, definitions: defs.map(defJson), layers: root.map((r) => ({ use: this.defName(r.ref), x: r.x, y: r.y })) };
+  }
+
+  tabStyle(a) { return 'display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;border:0;cursor:pointer;font-family:var(--font-mono);font-size:11px;letter-spacing:0.03em;transition:all .14s;' + (a ? 'background:var(--bg-elev);color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule-strong);' : 'background:transparent;color:var(--ink-3);'); }
+
+  highlight(obj, style) {
+    const json = JSON.stringify(obj, null, 2);
+    const re = /("(?:\\.|[^"\\])*"\s*:)|("(?:\\.|[^"\\])*")|\b(true|false|null)\b|(-?\d+\.?\d*)/g;
+    const parts = []; let last = 0, m, k = 0;
+    while ((m = re.exec(json))) { if (m.index > last) parts.push(json.slice(last, m.index)); let cls = 'j-num'; if (m[1]) cls = 'j-key'; else if (m[2]) cls = 'j-str'; else if (m[3]) cls = (m[3] === 'null' ? 'j-null' : 'j-bool'); parts.push(React.createElement('span', { key: k++, className: cls }, m[0])); last = re.lastIndex; }
+    if (last < json.length) parts.push(json.slice(last));
+    return React.createElement('pre', { className: 'xjson', style: style || { margin: 0, fontSize: '12px' } }, parts);
+  }
+
+  drawPrimitive(def, key, node, kind) {
+    const E = React.createElement;
+    if (def.kind === 'rectangle') return E('rect', { key, x: def.x, y: def.y, width: def.w, height: def.h, rx: def.radius, fill: def.fill, stroke: def.stroke, strokeWidth: 1.5 });
+    if (def.kind === 'circle') return E('circle', { key, cx: def.cx, cy: def.cy, r: def.r, fill: def.fill, stroke: def.stroke, strokeWidth: 1.5 });
+    if (def.kind === 'line') return E('line', { key, x1: def.x1, y1: def.y1, x2: def.x2, y2: def.y2, stroke: def.stroke, strokeWidth: 1.5 });
+    if (def.kind === 'text') { const anchor = def.align === 'center' ? 'middle' : def.align === 'right' ? 'end' : 'start'; const t = String(def.text || '').replace(/\{label\}/g, node.label).replace(/\{kind\}/g, kind).replace(/\{meta\}/g, node.meta || ''); return E('text', { key, x: def.x, y: def.y, fill: def.fill, textAnchor: anchor, fontFamily: 'var(--font-ui)', fontSize: 15, fontWeight: 600 }, t); }
+    if (def.kind === 'svg') { const t = String(def.svg || '').replace(/\{label\}/g, node.label).replace(/\{kind\}/g, kind).replace(/\{meta\}/g, node.meta || ''); return E('g', { key, dangerouslySetInnerHTML: { __html: t } }); }
+    return null;
+  }
+  drawInstance(inst, key, node, kind, depth) {
+    const E = React.createElement; const def = this.findDef(inst.ref);
+    if (!def || depth > 10) return null;
+    const inner = def.kind === 'composite' ? (def.children || []).map((c, k) => this.drawInstance(c, key + '_' + k, node, kind, depth + 1)) : [this.drawPrimitive(def, key + '_p', node, kind)];
+    return E('g', { key, transform: `translate(${inst.x || 0},${inst.y || 0})` }, inner);
+  }
+  drawDef(def, key, node, kind) {
+    const E = React.createElement;
+    if (def.kind === 'composite') return E('g', { key }, (def.children || []).map((c, k) => this.drawInstance(c, key + '_' + k, node, kind, 0)));
+    return this.drawPrimitive(def, key, node, kind);
+  }
+  miniPreview(def, maxH) {
+    const E = React.createElement; const b = this.state.bounds; const node = { label: 'Label', meta: 'meta' };
+    const frame = E('rect', { key: 'fr', x: 0, y: 0, width: b.w, height: b.h, fill: 'none', stroke: 'var(--rule)', strokeWidth: 1, rx: 4, strokeDasharray: '3 3' });
+    const content = this.drawDef(def, 'mp', node, this.state.kind);
+    return E('svg', { viewBox: `-10 -10 ${b.w + 20} ${b.h + 20}`, width: '100%', height: '100%', preserveAspectRatio: 'xMidYMid meet', style: { maxHeight: (maxH || 80) + 'px', overflow: 'visible' } }, [frame, content]);
+  }
+
+  buildPreview() {
+    const { bounds, root, kind } = this.state; const E = React.createElement;
+    const W = bounds.w, H = bounds.h; const nodes = this.NODES; const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+    const edges = nodes.filter((n) => n.parent).map((n, i) => {
+      const par = byId[n.parent]; const sx = par.x + W / 2, sy = par.y + H, ex = n.x + W / 2, ey = n.y; const my = (sy + ey) / 2;
+      return E('g', { key: 'e' + i }, [E('path', { key: 'p', d: `M ${sx} ${sy} C ${sx} ${my}, ${ex} ${my}, ${ex} ${ey}`, fill: 'none', stroke: 'var(--rule-strong)', strokeWidth: 1.5 }), E('circle', { key: 'a', cx: sx, cy: sy, r: 2.5, fill: 'var(--accent)', opacity: 0.5 })]);
+    });
+    const drawn = nodes.map((n) => E('g', { key: n.id, transform: `translate(${n.x},${n.y})`, style: { transition: 'transform .25s var(--ease-out)' } }, root.map((inst, j) => this.drawInstance(inst, n.id + '_' + j, n, kind, 0))));
+    return E('svg', { viewBox: '0 0 820 500', width: '100%', height: '100%', preserveAspectRatio: 'xMidYMid meet', style: { overflow: 'visible' } }, [E('g', { key: 'edges' }, edges), E('g', { key: 'nodes' }, drawn)]);
+  }
+  countInst(inst, depth) { const def = this.findDef(inst.ref); if (!def || depth > 10) return 0; if (def.kind === 'composite') return (def.children || []).reduce((n, c) => n + this.countInst(c, depth + 1), 0); return 1; }
+
+  copyJson = () => { try { navigator.clipboard.writeText(JSON.stringify(this.authored(), null, 2)); } catch (e) {} this.setState({ copied: true }); clearTimeout(this._ct); this._ct = setTimeout(() => this.setState({ copied: false }), 1400); };
+
+  refChip(nav) { return 'display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:7px 11px;font-size:12px;cursor:' + (nav ? 'pointer' : 'default') + ';transition:all .12s;background:' + (nav ? 'var(--bg-elev)' : 'var(--bg-sunken)') + ';color:' + (nav ? 'var(--ink)' : 'var(--ink-3)') + ';border:1px solid var(--rule-strong);'; }
+
+  summaryOf(def) {
+    if (def.kind === 'rectangle') return def.w + '×' + def.h + ' · r' + def.radius + ' · ' + def.fill;
+    if (def.kind === 'circle') return 'r' + def.r + ' · ' + def.fill;
+    if (def.kind === 'line') return '(' + def.x1 + ',' + def.y1 + ') → (' + def.x2 + ',' + def.y2 + ')';
+    if (def.kind === 'text') return '“' + (def.text || '') + '” · ' + (def.align || 'left');
+    if (def.kind === 'svg') return 'raw markup · ' + String(def.svg || '').length + ' chars';
+    if (def.kind === 'composite') return (def.children || []).length + (((def.children || []).length === 1) ? ' part' : ' parts');
+    return '';
+  }
+
+  buildDrawer() {
+    const def = this.findDef(this.state.openId);
+    if (!def) return null;
+    const isComposite = def.kind === 'composite';
+    const users = this.usersOf(def.id);
+    const usedIn = users.map((u) => ({ text: u.name, nav: u.type === 'composite', style: this.refChip(true), onClick: u.type === 'composite' ? () => this.navTo(u.id) : () => this.navToNode() }));
+    const count = this.usageCount(def.id);
+    const open = this.state.openComp || {};
+    return {
+      id: def.id, name: def.name || '', kind: def.kind, isComposite, isPrimitive: !isComposite,
+      kindLabel: this.KIND_LABEL[def.kind] || def.kind, iconPaths: this.ICONS[isComposite ? 'layers' : def.kind] || [],
+      nameOn: (e) => this.setDef(def.id, 'name', e.target.value),
+      preview: this.miniPreview(def, 110),
+      fields: isComposite ? [] : this.fieldsFor(def, (k, v) => this.setDef(def.id, k, v)),
+      parts: isComposite ? (def.children || []).map((c, k) => this.instRowView(c, {
+        setOff: (key, v) => this.setCompInst(def.id, c.id, key, v),
+        up: () => this.moveCompInst(def.id, c.id, -1), down: () => this.moveCompInst(def.id, c.id, 1),
+        del: () => this.delCompInst(def.id, c.id), dup: () => this.dupCompInst(def.id, c.id),
+        canUp: k > 0, canDown: k < (def.children || []).length - 1,
+      })) : [],
+      addOpen: !!open[def.id], addLabel: open[def.id] ? '× close' : '+ add part',
+      toggleAdd: () => this.toggleCompAdd(def.id),
+      partTypes: this.state.defs.filter((d) => d.id !== def.id && !this.wouldCycle(def.id, d.id)).map((d) => ({ name: d.name, dot: this.TYPEDOT[d.kind] || '#6dd2ff', on: () => this.addInstToComposite(def.id, d.id) })),
+      usedIn, usedInEmpty: usedIn.length === 0,
+      unused: count === 0, inUse: count > 0,
+      lockText: 'Used in ' + count + (count === 1 ? ' place' : ' places') + ' — remove those uses to drop it.',
+      onDrop: () => this.delDef(def.id),
+      place: () => this.placeInRoot(def.id),
+    };
+  }
+
+  mkCard(def) {
+    const isComposite = def.kind === 'composite';
+    const count = this.usageCount(def.id); const unused = count === 0;
+    return {
+      id: def.id, name: def.name, kindLabel: this.KIND_LABEL[def.kind] || def.kind,
+      iconPaths: this.ICONS[isComposite ? 'layers' : def.kind] || [],
+      iconWrap: 'flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--bg-sunken);border:1px solid var(--rule-strong);color:' + (this.TYPEDOT[def.kind] || 'var(--ink-2)') + ';',
+      preview: this.miniPreview(def, 72),
+      metaText: this.summaryOf(def),
+      unused, onTrash: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.delDef(def.id); },
+      relText: unused ? 'Unused' : ('Used in ' + count + (count === 1 ? ' place' : ' places')),
+      relTextColor: unused ? 'var(--ink-4)' : 'var(--ink-2)', relColor: unused ? 'var(--ink-4)' : 'var(--accent)',
+      onClick: () => this.setState({ openId: def.id }),
+      cardStyle: 'display:block;text-align:left;border-radius:14px;padding:14px;cursor:pointer;transition:all .14s;background:var(--bg-elev);border:1px solid var(--rule);box-shadow:var(--shadow-1);',
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const lib = s.lib;
+    const isCardLib = lib === 'composites' || lib.indexOf('k:') === 0;
+    const kindOf = lib.indexOf('k:') === 0 ? lib.slice(2) : null;
+
+    const LIBMETA = {
+      node: { label: 'Node layers', intro: 'The stack every node draws. Place definitions and reorder them to set draw order (top = front).' },
+      settings: { label: 'Board settings', intro: 'Identity, supported interactions, and the bounding box every node is drawn within.' },
+      composites: { label: 'Composites', intro: 'Reusable groups built from other definitions. Drop one into another composite or place it on the node.' },
+    };
+    const meta = kindOf ? { label: this.KIND_PLURAL[kindOf], intro: this.cap(kindOf) + ' primitives. Edit a definition once and every instance across composites and nodes updates.' } : LIBMETA[lib];
+
+    let cards = [], filtered = [], raw = [];
+    if (isCardLib) {
+      raw = s.defs.filter((d) => kindOf ? d.kind === kindOf : d.kind === 'composite');
+      const q = s.query.trim().toLowerCase();
+      filtered = q ? raw.filter((d) => (d.name + ' ' + d.kind).toLowerCase().includes(q)) : raw;
+      cards = filtered.map((d) => this.mkCard(d));
+    }
+
+    const railItem = (key, label, iconKey, count) => {
+      const on = key === lib;
+      return {
+        label, count: count, hasCount: count !== null && count !== undefined,
+        onClick: () => this.setState({ lib: key, query: '', openId: null }),
+        labelColor: on ? 'var(--ink)' : 'var(--ink-2)', weight: on ? '500' : '400', countColor: on ? 'var(--accent)' : 'var(--ink-4)',
+        iconPaths: this.ICONS[iconKey] || [],
+        indicator: 'flex:none;width:3px;height:18px;border-radius:2px;background:' + (on ? 'var(--accent)' : 'transparent') + ';' + (on ? 'box-shadow:0 0 7px var(--accent-rim);' : ''),
+        iconWrap: 'flex:none;width:25px;height:25px;border-radius:7px;display:grid;place-items:center;color:' + (on ? 'var(--accent)' : 'var(--ink-3)') + ';background:' + (on ? 'var(--accent-soft)' : 'transparent') + ';border:1px solid ' + (on ? 'var(--accent-rim)' : 'transparent') + ';',
+        style: 'display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;border:none;background:none;border-radius:9px;padding:7px 8px 7px 4px;transition:background .12s;',
+      };
+    };
+    const cnt = (k) => s.defs.filter((d) => d.kind === k).length;
+    const railSections = [
+      { title: 'Build', topGap: '0px', items: [railItem('node', 'Node layers', 'layers', s.root.length), railItem('settings', 'Board settings', 'sliders', null)] },
+      { title: 'Compose', topGap: '14px', items: [railItem('composites', 'Composites', 'layers', cnt('composite'))] },
+      { title: 'Primitives', topGap: '14px', items: this.LEAF.map((k) => railItem('k:' + k, this.KIND_PLURAL[k], k, cnt(k))) },
+    ];
+
+    const newLabel = lib === 'composites' ? 'New composite' : kindOf ? ('New ' + kindOf) : '';
+    const onNew = lib === 'composites' ? (() => this.addComposite()) : kindOf ? (() => this.addPrimitiveDef(kindOf)) : (() => {});
+
+    const root = s.root.map((inst, idx) => this.instRowView(inst, {
+      setOff: (key, v) => this.setRootInst(inst.id, key, v),
+      up: () => this.moveRootInst(inst.id, -1), down: () => this.moveRootInst(inst.id, 1),
+      del: () => this.delRootInst(inst.id), dup: () => this.dupRootInst(inst.id),
+      canUp: idx > 0, canDown: idx < s.root.length - 1,
+    }));
+    const layerCount = s.root.reduce((n, inst) => n + this.countInst(inst, 0), 0);
+    const drawer = this.buildDrawer();
+
+    return {
+      theme: this.props.theme ?? 'night',
+      gridBg: (this.props.canvasGrid ?? true) ? 'radial-gradient(circle,var(--grid-dot) 1.4px,transparent 1.6px)' : 'none',
+
+      railSections,
+      libLabel: meta.label, libLabelLower: meta.label.toLowerCase(), libIntro: meta.intro,
+      isCards: isCardLib, isNode: lib === 'node', isSettings: lib === 'settings',
+      showSearch: isCardLib, query: s.query, onSearch: (e) => this.setState({ query: e.target.value }),
+      resultCount: filtered.length + ' of ' + raw.length,
+      showNew: isCardLib, newLabel, onNew,
+      cards, isEmpty: isCardLib && filtered.length === 0,
+
+      kind: s.kind, ariaName: s.ariaName, setKind: this.setKind, setAria: this.setAria,
+      ix: [
+        { label: 'Add child', desc: 'spawn a node beneath this one', cls: s.ix.addChild ? 'on' : '', toggle: () => this.toggleIx('addChild') },
+        { label: 'Remove', desc: 'delete the node and its subtree', cls: s.ix.remove ? 'on' : '', toggle: () => this.toggleIx('remove') },
+        { label: 'Re-parent (drag)', desc: 'drag a node onto a new parent', cls: s.ix.reparent ? 'on' : '', toggle: () => this.toggleIx('reparent') },
+      ],
+      bounds: ['x', 'y', 'w', 'h'].map((k) => ({ key: k, label: k, value: s.bounds[k], on: (e) => this.setBound(k, e.target.value) })),
+
+      root, layerCount, nodeCount: this.NODES.length,
+      placeOpen: s.placeOpen, placeLabel: s.placeOpen ? '× close' : '+ place definition',
+      togglePlace: () => this.setState((st) => ({ placeOpen: !st.placeOpen })),
+      placeTypes: s.defs.map((d) => ({ name: d.name, dot: this.TYPEDOT[d.kind] || '#6dd2ff', on: () => this.placeInRoot(d.id) })),
+
+      drawerOpen: !!drawer, drawer: drawer || {}, onCloseDrawer: () => this.setState({ openId: null }),
+
+      jsonElBig: this.highlight(this.authored(), { margin: 0, fontSize: '12.5px', lineHeight: 1.7, background: 'transparent', border: 0, padding: '8px 16px' }),
+      copyJson: this.copyJson, copyLabel: s.copied ? 'copied ✓' : 'copy',
+      previewEl: this.buildPreview(), reset: () => this.reset(),
+      isDiagram: s.view === 'diagram', isCode: s.view === 'code',
+      setDiagram: () => this.setState({ view: 'diagram' }), setCode: () => this.setState({ view: 'code' }),
+      tabDiagramStyle: this.tabStyle(s.view === 'diagram'), tabCodeStyle: this.tabStyle(s.view === 'code'),
+    };
+  }
+}
+</script>
+</body>
+</html>

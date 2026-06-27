@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Substrate — Gespräch von A bis Z</title>
+  <style>
+:root {
+  --bg: #0b1020;
+  --panel: #111831;
+  --panel2: #0f172a;
+  --text: #e8eefc;
+  --muted: #aab6d3;
+  --accent: #6dd2ff;
+  --accent2: #9df2c9;
+  --border: rgba(255,255,255,.13);
+  --code: #060914;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.58;
+  background: radial-gradient(circle at 20% 0%, #14204a 0, var(--bg) 36rem);
+  color: var(--text);
+}
+main {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+section {
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 32px;
+  margin: 24px 0;
+  box-shadow: 0 20px 70px rgba(0,0,0,.23);
+}
+.cover {
+  padding: 54px 42px;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(109,210,255,.18), transparent 22rem),
+    linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.025));
+}
+.eyebrow {
+  color: var(--accent2);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: .78rem;
+  margin: 0 0 14px;
+}
+h1 {
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: .96;
+  margin: 0 0 18px;
+  letter-spacing: -0.055em;
+}
+h2 {
+  margin-top: 0;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  font-size: 1.8rem;
+}
+h3 {
+  margin-top: 1.7em;
+  color: var(--accent);
+  letter-spacing: -0.015em;
+}
+.subtitle {
+  font-size: 1.18rem;
+  max-width: 780px;
+  color: var(--muted);
+}
+.meta, .note {
+  color: var(--muted);
+}
+.note {
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px;
+  background: rgba(109,210,255,.08);
+  border-radius: 12px;
+  margin-top: 24px;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+pre {
+  white-space: pre-wrap;
+  background: var(--code);
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  border-radius: 14px;
+  overflow-x: auto;
+  color: #d7e3ff;
+}
+blockquote {
+  margin: 22px 0;
+  padding: 18px 22px;
+  border-left: 4px solid var(--accent2);
+  background: rgba(157,242,201,.075);
+  border-radius: 14px;
+  font-size: 1.08rem;
+  color: #f2fff8;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0 28px;
+  font-size: .95rem;
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  vertical-align: top;
+}
+th {
+  background: rgba(109,210,255,.13);
+  color: #ffffff;
+  text-align: left;
+}
+td { color: #dbe5fb; }
+ul, ol { color: #dbe5fb; }
+li { margin: 6px 0; }
+.footer {
+  text-align: center;
+  color: var(--muted);
+  margin-top: 40px;
+  font-size: .9rem;
+}
+@media print {
+  body { background: white; color: black; }
+  section { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+  pre { background: #f7f7f7; color: #111; }
+  a { color: #0645ad; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<section class="cover">
+  <p class="eyebrow">Substrate / Claim Ontology / Trajectory Runtime</p>
+  <h1>Substrate — Gespräch von A bis Z</h1>
+  <p class="subtitle">Eine strukturierte vollständige Fassung der Diskussion: von Kolmogorov-Smirnov über Survival Analysis bis zur Claim-zentrierten Kernarchitektur für beobachtbare Systeme.</p>
+  <p class="meta">Erstellt am 2026-06-13 · Sprache: Deutsch · Format: HTML-Dossier</p>
+  <div class="note">
+    Dieses Dokument fasst die Diskussion aus dem aktuellen Chatkontext von A bis Z zusammen und strukturiert sie als belastbares Konzeptdokument. Es ist keine Rohdatenbank aller Chat-Tokens, sondern eine vollständige redaktionelle Rekonstruktion der behandelten Gedanken, Tests, Gegenargumente und Architekturentscheidungen.
+  </div>
+</section>
+<section><h2 id="toc">Inhaltsverzeichnis</h2><ol><li><a href="#s1">Auslöser: Statistikbegriffe als Tür in den Zustandsraum</a></li><li><a href="#s2">Von State zu Belief zu Trajectory</a></li><li><a href="#s3">Claims: Ontologie der Beschreibung statt Ontologie der Realität</a></li><li><a href="#s4">Die geschlossene Minimal-Ontologie</a></li><li><a href="#s5">Design Proofs: positive Domänentests</a></li><li><a href="#s6">Negativer Test: wo Substrate nicht Primärruntime sein sollte</a></li><li><a href="#s7">Latenz, Vorberechnung und Persistenz</a></li><li><a href="#s8">Kernarchitektur: Claim-to-Trajectory Runtime</a></li><li><a href="#s9">Kompakte Schlussformel</a></li></ol></section><section><h2 id="s1">1. Auslöser: Statistikbegriffe als Tür in den Zustandsraum</h2>
+<p>Die Diskussion begann mit der Kolmogorov-Smirnov-Supremum-Statistik. Daraus entwickelte sich schrittweise eine mathematische Sicht auf Zustände, Verteilungen, Übergänge, Evidenz und Interventionen.</p>
+<h3 id="kolmogorov-smirnov-supremum-statistic">Kolmogorov-Smirnov Supremum Statistic</h3>
+<p>Kernidee: Der KS-Test misst den größten vertikalen Abstand zwischen zwei kumulativen Verteilungen.</p>
+<pre>D = sup_x |F1(x) - F2(x)|</pre>
+<p>Substrate-Lesart: KS ist ein Distanzmaß zwischen erwarteter und beobachteter Zustandsverteilung. Es beantwortet: Wie stark weicht die Realität vom Referenzmodell ab?</p>
+<h3 id="weibull">Weibull</h3>
+<p>Weibull öffnete den Blick auf Zeit-bis-Ereignis. Nicht nur: Welche Werte liegen vor? Sondern: Wann tritt ein Übergang ein?</p>
+<ul><li>β &lt; 1: frühe Ausfälle, danach sinkende Hazard.</li><li>β = 1: konstante Hazard, entspricht Exponentialverteilung.</li><li>β &gt; 1: steigende Hazard, Verschleiß, Alterung, Fortschreiten.</li></ul>
+<p>Substrate-Lesart: Weibull beschreibt die Zeit bis zur Transformation eines Zustands.</p>
+<h3 id="kaplan-meier">Kaplan-Meier</h3>
+<p>Kaplan-Meier wurde als datengetriebene Survival-Kurve eingeordnet. Der zentrale Mehrwert: Umgang mit zensierten Daten.</p>
+<pre>S(t) = P(T &gt; t)</pre>
+<p>Substrate-Lesart: Kaplan-Meier ist nicht nur Medizin. Es ist ein Werkzeug für Zeit bis zum Eintritt eines Zustandswechsels — egal ob Patient, Spieler, Agent, Projekt oder Population.</p>
+<h3 id="weitere-begriffe">Weitere Begriffe</h3>
+<p>Aus diesen Begriffen entstand eine Werkzeuglandkarte:</p>
+<table><thead><tr><th>Bereich</th><th>Begriffe</th><th>Substrate-Frage</th></tr></thead><tbody><tr><td>Survival Analysis</td><td>Kaplan-Meier, Weibull, Cox, Hazard</td><td>Wann tritt ein Übergang ein?</td></tr><tr><td>Verteilungsvergleich</td><td>KS, Wasserstein, Jensen-Shannon, KL</td><td>Wie stark weicht ein Zustand ab?</td></tr><tr><td>Unsicherheit</td><td>Bayes, Bayesian Networks, Belief State</td><td>Wie verändert Evidenz unsere Überzeugung?</td></tr><tr><td>Dynamik</td><td>Markov, HMM, Semi-Markov, State Space Models</td><td>Wie entwickelt sich ein System?</td></tr><tr><td>Kausalität</td><td>DAGs, Pearl, Do-Calculus</td><td>Was bewirkt eine Intervention?</td></tr><tr><td>Komplexität</td><td>Agent-Based Modeling, Emergenz, Fitness Landscapes</td><td>Wie entstehen globale Muster aus lokalen Regeln?</td></tr></tbody></table></section><section><h2 id="s2">2. Von State zu Belief zu Trajectory</h2>
+<p>Ein zentraler Aha-Moment war die Feststellung, dass State, Belief und Trajectory nicht nebeneinander stehen, sondern aufeinander aufbauen.</p>
+<pre>Reality
+  ↓
+Observation
+  ↓
+Claim
+  ↓
+Belief
+  ↓
+State Projection
+  ↓
+Trajectory
+  ↓
+Intervention
+  ↓
+Outcome
+  ↓
+New Claims</pre>
+<p>Zunächst schien Substrate eine State Engine zu sein. Dann wurde klar: Reale Zustände sind selten vollständig beobachtbar. Deshalb braucht es Beliefs. Danach wurde sichtbar: Menschen interessieren sich nicht nur für den aktuellen Zustand, sondern für mögliche Verläufe. Daraus entstand die Trajectory-Perspektive.</p>
+<h3 id="state-engine">State Engine</h3>
+<p>Frage: Was ist der aktuelle Zustand? Klassische Software würde Felder und Status speichern. Substrate projiziert State aus Claims.</p>
+<h3 id="belief-engine">Belief Engine</h3>
+<p>Frage: Wie plausibel ist ein Zustand unter gegebener Evidenz? Beliefs sind Bewertungen von Claims, nicht zwingend direkte Fakten.</p>
+<h3 id="trajectory-engine">Trajectory Engine</h3>
+<p>Frage: Wohin entwickelt sich ein System, wie wahrscheinlich ist dieser Verlauf, wie lange dauert er, welche Intervention verändert ihn?</p>
+<blockquote>Substrate könnte als Engine for Observable Transformations under Uncertainty verstanden werden.</blockquote></section><section><h2 id="s3">3. Claims: Ontologie der Beschreibung statt Ontologie der Realität</h2>
+<p>Die Diskussion verschob sich von der Frage, was Realität ist, zur Frage, wie man Beschreibungen von Realität modelliert. Der entscheidende Satz war:</p>
+<blockquote>Wir wollen keine Ontologie der Realität, sondern eine Ontologie ihrer Beschreibung.</blockquote>
+<p>Damit wurden viele philosophische Gegenargumente entschärft. Substrate behauptet nicht: Die Welt besteht aus Claims. Substrate behauptet: Alles explizit Repräsentierte wird als Claim modelliert.</p>
+<h3 id="claim-als-sprachliches-primitive">Claim als sprachliches Primitive</h3>
+<p>Ein Claim ist eine explizite Aussage über referenzierbare Dinge. Er kann beobachtet, gemessen, inferiert, formal bewiesen, normativ gesetzt, angenommen, committed oder performativ sein.</p>
+<table><thead><tr><th>Claim-Modus</th><th>Bedeutung</th><th>Beispiel</th></tr></thead><tbody><tr><td>observed</td><td>direkt beobachtet</td><td>Trainer beobachtet Dribbling-Level.</td></tr><tr><td>measured</td><td>durch Messung erzeugt</td><td>Laborwert, CTR, Boden-pH.</td></tr><tr><td>inferred</td><td>aus anderen Claims abgeleitet</td><td>Risiko, Diagnose, Attribution.</td></tr><tr><td>predicted</td><td>zukünftige Aussage</td><td>wahrscheinlicher Outcome.</td></tr><tr><td>formal</td><td>innerhalb eines formalen Systems bewiesen</td><td>2 + 2 = 4.</td></tr><tr><td>normative</td><td>Regel, Ziel, Soll</td><td>Guideline empfiehlt Therapie.</td></tr><tr><td>performative</td><td>Handlung, Intervention</td><td>Training durchgeführt, Medikament verabreicht.</td></tr><tr><td>assumed</td><td>Annahme, Szenario</td><td>What-if: Budget steigt um 20 %.</td></tr><tr><td>committed</td><td>Plan, Zusage, Entscheidung</td><td>Therapieoption gewählt.</td></tr></tbody></table>
+<h3 id="mathematik-als-claim">Mathematik als Claim</h3>
+<p>Das Gegenargument, Mathematik sei kein Claim, wurde geschwächt: Mathematik kann als formaler Claim abgebildet werden. Der Wahrheitsmodus ist dann nicht empirische Konfidenz, sondern &#x27;bewiesen innerhalb eines formalen Systems&#x27;.</p>
+<pre>claim:
+  mode: formal
+  relation: equals
+  arguments:
+    - add(2, 2)
+    - 4
+  proof:
+    system: standard_arithmetic
+    status: proven
+  epistemics:
+    confidence: 1.0</pre>
+<p>Damit ist Claim kein metaphysisches Dogma, sondern ein universeller Container für explizite Beschreibungen.</p></section><section><h2 id="s4">4. Die geschlossene Minimal-Ontologie</h2>
+<p>Die vorgeschlagene Minimal-Ontologie besteht aus nur drei expliziten Primitiven:</p>
+<pre>Term
+Claim
+Context</pre>
+<h3 id="term">Term</h3>
+<p>Ein Term ist alles, worauf ein Claim referenzieren kann: Spieler, Patient, Kampagne, Agent, Fähigkeit, Modell, Claim, Relation, Zeit, Kontext. Ein Term behauptet noch nichts.</p>
+<h3 id="claim">Claim</h3>
+<p>Ein Claim ist eine Aussage über Terms. Claims sind selbst Terms, damit Claims über Claims möglich sind.</p>
+<h3 id="context">Context</h3>
+<p>Ein Context bestimmt Gültigkeit, Scope, Zeit, Domäne, Modellversion, Szenario, Realität oder synthetischen Fork. Kein Claim ist absolut; jeder Claim gilt in einem Kontext.</p>
+<h3 id="axiome">Axiome</h3>
+<table><thead><tr><th>Axiom</th><th>Formulierung</th><th>Konsequenz</th></tr></thead><tbody><tr><td>1</td><td>Alles Repräsentierte ist Term oder Claim.</td><td>Die Ontologie bleibt klein.</td></tr><tr><td>2</td><td>Claim ist selbst ein Term.</td><td>Meta-Claims, Beliefs, Evidence und Revision werden möglich.</td></tr><tr><td>3</td><td>Jeder Claim hat Context.</td><td>Keine scheinbar absoluten Aussagen.</td></tr><tr><td>4</td><td>Claims werden nicht überschrieben, sondern revidiert.</td><td>Historie, Audit und Nachvollziehbarkeit.</td></tr><tr><td>5</td><td>Widersprüche sind speicherbar.</td><td>Unsicherheit und konkurrierende Beobachtungen sind erlaubt.</td></tr><tr><td>6</td><td>State ist Projektion.</td><td>State ist kein Primitive.</td></tr><tr><td>7</td><td>Trajectory ist geordnete Projektion.</td><td>Verlauf entsteht aus Claims über Zeit.</td></tr><tr><td>8</td><td>Belief ist Claim über Claim.</td><td>Unsicherheit ist first-class, aber nicht primitives Sonderobjekt.</td></tr><tr><td>9</td><td>Evidence ist Relation zwischen Claims.</td><td>supports/contradicts statt Sondertyp.</td></tr><tr><td>10</td><td>Intervention ist performativer Claim.</td><td>Handlung wird beschreibbar und auditierbar.</td></tr></tbody></table>
+<h3 id="abgeleitete-konzepte">Abgeleitete Konzepte</h3>
+<table><thead><tr><th>Konzept</th><th>Ableitung</th></tr></thead><tbody><tr><td>Entity</td><td>stabiler Term mit Claims</td></tr><tr><td>Property</td><td>Claim mit Eigenschaftsrelation</td></tr><tr><td>State</td><td>konsistente Menge aktiver Claims in Context und Zeit</td></tr><tr><td>Belief</td><td>Claim über Plausibilität eines Claims oder einer Distribution</td></tr><tr><td>Evidence</td><td>Claim, der anderen Claim stützt oder widerspricht</td></tr><tr><td>Trajectory</td><td>zeitlich geordnete Folge von Claims oder State-Projektionen</td></tr><tr><td>Intervention</td><td>performativer Claim mit Transformationsabsicht</td></tr><tr><td>Outcome</td><td>späterer Claim, oft im Verhältnis zu Intervention oder Ziel</td></tr><tr><td>Rule</td><td>normativer Claim über erlaubte oder notwendige Claims</td></tr><tr><td>Model</td><td>Term + Claims über Input, Output, Gültigkeit und Provenance</td></tr></tbody></table>
+<h3 id="kompakte-ontologieformel">Kompakte Ontologieformel</h3>
+<blockquote>Substrate beschreibt Realität nicht direkt, sondern verwaltet kontextualisierte Claims über Terms. States, Beliefs, Evidences, Trajectories, Interventions und Outcomes sind abgeleitete Sichten auf Claims.</blockquote></section><section><h2 id="s5">5. Design Proofs: positive Domänentests</h2>
+<p>Die Ontologie wurde gegen mehrere Domänen getestet. Der Stil war bewusst kurz: Ergebnis vorweg, Mapping, Härtetest.</p>
+<table><thead><tr><th>Domäne</th><th>Ergebnis</th><th>Kernsatz</th></tr></thead><tbody><tr><td>Fussball-Coaching</td><td>Eine Fussball-App lässt sich über Terms für Spieler, Teams, Skills und Übungen sowie Claims für Beobachtungen, Ziele, Interventionen und Outcomes modellieren. Progress ist eine Trajectory-Projektion.</td><td>Die App muss nicht claim-zentrisch aussehen; sie muss nur claim-zentrisch erklärbar sein.</td></tr><tr><td>Marketing-Kampagnen</td><td>Marketing besteht natürlicherweise aus Hypothesen, Messages, Zielgruppen, Touchpoints, Messungen, Attribution und ROI-Claims.</td><td>Marketing ist besonders passend, weil Attribution fast immer unsicher ist.</td></tr><tr><td>Case Management</td><td>Ein Case ist ein kontextueller Container für Claims über Person, Situation, Bedarf, Risiken, Maßnahmen, Fristen und Outcomes.</td><td>Case Management ist Claim-Orchestration unter Verantwortung.</td></tr><tr><td>Behandlungspfade</td><td>Ein Behandlungspfad ist eine normative Trajectory aus Claims; die reale Behandlung ist eine beobachtete Trajectory aus Claims.</td><td>Klinische Entscheidungsunterstützung entsteht durch Vergleich beider unter Evidenz, Unsicherheit und Kontext.</td></tr><tr><td>Landwirtschaftliche Systeme</td><td>Landwirtschaftliche Systeme sind verschachtelte räumlich-zeitliche Claim-Trajectories über Boden, Pflanzen, Tiere, Wetter, Interventionen und Outcomes.</td><td>Sie testen Raum, Zeit, Biologie, verzögerte Wirkung und Multi-Faktor-Kausalität besonders hart.</td></tr><tr><td>AI Agent Governance Platform</td><td>Agent Governance modelliert normative Claims über erlaubtes Verhalten, performative Claims über Aktionen, measured Claims über Tool Calls und inferred Claims über Compliance, Risiko und Vertrauen.</td><td>Agent Governance ist Claim-Orchestration über autonome Handlungsträger.</td></tr><tr><td>Synthetic Reality Platform</td><td>Synthetische Realität ist ein geforkter Context, in dem Claims angenommen, generiert, simuliert oder vorhergesagt werden.</td><td>Synthetic Reality ist Claim-Forking unter expliziter Realitätsgrenze.</td></tr></tbody></table>
+<h3 id="positive-test-erkenntnis">Positive Test-Erkenntnis</h3>
+<p>Keiner der positiven Tests zwang dazu, neue Ontologie-Primitive einzuführen. Die Domänen brauchten nur unterschiedliche Relationen, Contexts, Modi, Projections und Modelle. Das ist ein starkes Indiz für gute Einfachheit.</p></section><section><h2 id="s6">6. Negativer Test: wo Substrate nicht Primärruntime sein sollte</h2>
+<p>Der negative Test war entscheidend, um die Grenzen der Idee zu bestimmen. Der echte negative Test ist nicht: Gibt es etwas, das man nicht als Claim beschreiben kann? Fast alles lässt sich irgendwie beschreiben. Der echte Test lautet: Wo ist Claim-Zentrierung als Primärmodell schlechter als ein spezialisiertes Modell?</p>
+<h3 id="hard-real-time-numerische-inner-loops">Hard Real-Time / numerische Inner Loops</h3>
+<p>Beispiele: Drohnenstabilisierung, ABS, Motorsteuerung, Audio-DSP, Robotik-Servo-Loop, Rendering Pipelines, Hochfrequenzhandel.</p>
+<table><thead><tr><th>Aspekt</th><th>Warum Substrate hier verliert</th></tr></thead><tbody><tr><td>Semantischer Overhead</td><td>Ein Gyroskopwert soll im Inner Loop ein Float sein, kein Claim mit Context und Provenance.</td></tr><tr><td>Latenz</td><td>Bounded worst-case execution time ist wichtiger als Ausdruckskraft.</td></tr><tr><td>State</td><td>Regler brauchen numerische Zustandsvektoren, keine projizierten Claims.</td></tr><tr><td>Revision</td><td>Revidierbarkeit ist für Audit wichtig, aber nicht für den Mikrosekunden-Zyklus.</td></tr><tr><td>Context</td><td>1000 Messungen pro Sekunde lassen Context als Primärmodell explodieren.</td></tr></tbody></table>
+<h3 id="saubere-grenze">Saubere Grenze</h3>
+<blockquote>Substrate kann harte Echtzeitsysteme beschreiben, auditieren, simulieren und governancen — aber es sollte sie nicht claim-nativ primär steuern.</blockquote>
+<p>Damit wurde Substrate nicht geschwächt, sondern präzisiert: Es ist keine Low-Level-Ausführungsmaschine, sondern eine Beschreibungs-, Bewertungs-, Entscheidungs- und Governance-Schicht für beobachtbare Systeme.</p></section><section><h2 id="s7">7. Latenz, Vorberechnung und Persistenz</h2>
+<p>Die technische Grenze ist nicht, ob Substrate etwas beschreiben kann, sondern ob es in der benötigten Zeit sinnvoll liefern kann. Daraus entstand eine Latenz-Klassifikation.</p>
+<table><thead><tr><th>Klasse</th><th>Zeitbereich</th><th>Substrate-Eignung</th><th>Beispiele</th></tr></thead><tbody><tr><td>Harte Echtzeit</td><td>µs bis wenige ms</td><td>Nein als Primärruntime</td><td>ABS, Drohne, DSP, Motorsteuerung</td></tr><tr><td>Weiche Echtzeit</td><td>50–500 ms</td><td>Vielleicht mit Read Models</td><td>Policy Checks, Validierungen, UI-Zustände</td></tr><tr><td>Menschliche Interaktion</td><td>0.5–5 s</td><td>Ja, Sweet Spot</td><td>Profile, Pfadoptionen, Fallstatus, Dashboards</td></tr><tr><td>Analyse / Lernen / Simulation</td><td>Sekunden bis Minuten</td><td>Ja</td><td>Survival Analysis, Drift, Outcome-Analyse, Synthetic Reality</td></tr></tbody></table>
+<h3 id="behandlungspfad-beispiel">Behandlungspfad-Beispiel</h3>
+<p>Ein besonders wichtiger Punkt: Wenn ein bestbegründeter Behandlungspfad-Vorschlag für eine krebskranke Person 10 Minuten dauert, ist das bei hohem Mehrwert akzeptabel. Entscheidend ist, dass das System nicht &#x27;den idealen Pfad&#x27; behauptet, sondern einen nachvollziehbaren Vorschlag unter Claims, Evidenz, Guidelines, Patientenkontext, Präferenzen und Unsicherheit erzeugt.</p>
+<h3 id="vorberechnung">Vorberechnung</h3>
+<p>Nicht alles muss live berechnet werden. Vorberechenbar sind z. B. Guidelines, Behandlungspfad-Templates, Kontraindikationsregeln, Risikomodelle, Segmentmodelle, Agent Policies, Fruchtfolgemodelle, Skill-Modelle und Evidenzgrade.</p>
+<h3 id="persistenz">Persistenz</h3>
+<p>Ergebnisse sind selbst wieder Claims oder Claim-Bündel: Empfehlungsversionen, Pfadvarianten, Risikobewertungen, Begründungen, verworfene Alternativen, Modellversionen und Evidenzprovenance.</p>
+<h3 id="inkrementelle-revision">Inkrementelle Revision</h3>
+<pre>new Claim
+  → impacted projections erkennen
+  → relevante Pfadabschnitte neu berechnen
+  → neue Ergebnisversion persistieren
+  → alte Version auditierbar behalten</pre></section><section><h2 id="s8">8. Kernarchitektur: Claim-to-Trajectory Runtime</h2>
+<p>Die Behandlungspfad-Logik wurde als allgemeine Kernarchitektur erkannt. Das Muster ist nicht medizinisch, sondern universell.</p>
+<pre>Claims sammeln
+  → Context bilden
+  → State projizieren
+  → Belief berechnen
+  → Optionen erzeugen
+  → Trajectories simulieren
+  → Intervention empfehlen
+  → Outcome beobachten
+  → Empfehlung revidieren
+  → Version persistieren</pre>
+<h3 id="runtime-schichten">Runtime-Schichten</h3>
+<table><thead><tr><th>Schicht</th><th>Funktion</th></tr></thead><tbody><tr><td>Claim Store</td><td>versioniertes Rohwissen, inklusive Widersprüchen und Historie</td></tr><tr><td>Context Engine</td><td>trennt Domänen, Zeiten, Szenarien, Realitäten, Versionen</td></tr><tr><td>Projection Engine</td><td>erzeugt lesbare States, Views, Dashboards und Read Models</td></tr><tr><td>Belief Engine</td><td>bewertet Evidenz, Unsicherheit, Plausibilität und Confidence</td></tr><tr><td>Trajectory Engine</td><td>rekonstruiert und simuliert Verläufe</td></tr><tr><td>Intervention Engine</td><td>erzeugt Handlungsoptionen</td></tr><tr><td>Evaluation Engine</td><td>vergleicht Interventionen mit Outcomes</td></tr><tr><td>Revision Engine</td><td>invalidiert, aktualisiert und versioniert Ergebnisse</td></tr><tr><td>Governance Engine</td><td>prüft Regeln, Freigaben, Verantwortung, Audit und Policy</td></tr></tbody></table>
+<p>Wichtig: Diese Schichten sind Architekturmechanik, keine neuen Ontologie-Primitive. Die Ontologie bleibt Term, Claim, Context.</p>
+<h3 id="drei-laufzeitpfade">Drei Laufzeitpfade</h3>
+<table><thead><tr><th>Pfad</th><th>Zweck</th><th>Technisches Muster</th></tr></thead><tbody><tr><td>Hot Path</td><td>schnelle Reads, UI, einfache Policy Checks</td><td>vorprojizierte Views / CQRS Read Models</td></tr><tr><td>Semantic Path</td><td>Claim-Verarbeitung, Evidence, Belief, Revision</td><td>Claim Graph + Projection Updates</td></tr><tr><td>Analytical Path</td><td>Survival Analysis, Simulation, Drift, Modellvergleich</td><td>Batch / Async / Persisted Results</td></tr></tbody></table>
+<h3 id="architektursatz">Architektursatz</h3>
+<blockquote>Substrate erfindet Ergebnisse nicht live aus dem Nichts. Es kombiniert vorberechnete Wissensstrukturen mit fallbezogenen Claims, erzeugt daraus begründete Projektionen, Entscheidungen und Trajectories, persistiert sie versioniert und revidiert sie bei neuer Evidenz.</blockquote></section><section><h2 id="s9">9. Kompakte Schlussformel</h2>
+<p>Die Diskussion verdichtete sich zu einer klaren Positionierung.</p>
+<blockquote>Substrate ist die Runtime für revidierbare Beschreibungen beobachtbarer Systeme — nicht die Runtime der Realität selbst.</blockquote>
+<p>Oder produktnäher:</p>
+<blockquote>Substrate ist eine Claim-to-Trajectory Runtime, die kontextualisierte Claims sammelt, bewertet, projiziert, simuliert, versioniert und für Entscheidungen, Interventionen, Outcomes und Governance nutzbar macht.</blockquote>
+<h3 id="warum-das-gute-einfachheit-ist">Warum das gute Einfachheit ist</h3>
+<ul><li>Die Ontologie ist extrem klein: Term, Claim, Context.</li><li>Claims sind rekursiv: Claim ist selbst ein Term.</li><li>State, Belief, Evidence, Trajectory, Intervention und Outcome entstehen als Projektionen oder Relationen.</li><li>Mehrere Domänen bestehen den Design-Test ohne neue Primitive.</li><li>Der negative Test zeigt eine klare Grenze: keine Hard-Real-Time-Primärruntime.</li><li>Die Runtime kann mit Vorberechnung, Persistenz und Projektionen praxisfähig werden.</li><li>Die Philosophie bleibt sauber: keine Ontologie der Realität, sondern eine Ontologie ihrer Beschreibung.</li></ul>
+<h3 id="nächster-sinnvoller-schritt">Nächster sinnvoller Schritt</h3>
+<p>Der nächste Schritt wäre ein formales Substrate Architecture Dossier mit drei Teilen: Ontology Spec, Runtime Architecture und ein vollständig durchmodellierter erster Vertical Slice, etwa AI Agent Governance oder Fussball-Coaching. Code ist dafür noch nicht nötig; ein belastbares Design reicht als nächster Proof.</p></section><section><h2 id="appendix">Anhang: Gesprächsverlauf als Themenkette</h2>
+<p>Die folgende Kette rekonstruiert den Gesprächsverlauf chronologisch in kompakter Form.</p>
+<table><thead><tr><th>Station</th><th>Inhalt</th></tr></thead><tbody><tr><td>Kolmogorov-Smirnov</td><td>Was ist die Supremum Statistic? Antwort: größter Abstand zwischen Verteilungen, geeignet für Drift und Zustandsabweichung.</td></tr><tr><td>Weibull</td><td>Zeit bis Ereignis, Hazard-Form, Übergänge zwischen Zuständen.</td></tr><tr><td>Kaplan-Meier</td><td>Survival-Kurve aus Daten, zensierte Daten, Zeit bis Zustandswechsel.</td></tr><tr><td>Begriffsfeld</td><td>Bayes, Markov, HMM, Cox, Wasserstein, Pearl, State Space, Agent-Based Modeling.</td></tr><tr><td>Kombinationen</td><td>Bayes + Survival, HMM + Evidence, Intervention + Markov, Drift + Kausalität, Fitness Landscapes.</td></tr><tr><td>Meta-Kombinationen</td><td>Belief-State Engine, Trajectory Engine, probabilistic causal trajectory engine.</td></tr><tr><td>Claim-Wende</td><td>Alles explizit Repräsentierte wird als Claim modelliert; nicht Realität selbst, sondern Beschreibung von Realität.</td></tr><tr><td>Widerlegung</td><td>Selbstreferenz, Ontologie vs. Epistemologie, Mathematik, Determinismus, Infinite Regress, Pragmatik.</td></tr><tr><td>Präzisierung</td><td>Alles explizit repräsentierte Wissen über teilweise beobachtbare Systeme kann als revidierbarer Claim modelliert werden.</td></tr><tr><td>Mathematik</td><td>Formale Claims mit status proven und confidence 1.0; damit Gegenargument entschärft.</td></tr><tr><td>Ontologie</td><td>Term, Claim, Context; Claim ist Term; State/Belief/Trajectory/Evidence/Intervention sind abgeleitet.</td></tr><tr><td>Gute Einfachheit</td><td>Kleine Primitive, hohe Ausdruckskraft, keine versteckten Sonderfälle, Projektionsebene als wichtigster Praxisteil.</td></tr><tr><td>Design Proofs</td><td>Fussball, Marketing, Case Management, Behandlungspfade, Landwirtschaft, Agent Governance, Synthetic Reality.</td></tr><tr><td>Negativer Test</td><td>Hard Real-Time und numerische Inner Loops sind keine gute Substrate-Primärruntime.</td></tr><tr><td>Latenz</td><td>Sweet Spot bei menschlicher Interaktion, Analyse, Simulation; 10 Minuten für hochwertige Pfadvorschläge akzeptabel.</td></tr><tr><td>Kernarchitektur</td><td>Claims + vorberechnete Wissensstrukturen + fallbezogene Projection + Persistenz + Revision.</td></tr></tbody></table></section>
+<div class="footer">Substrate Discussion Dossier · 2026-06-13</div>
+</main>
+</body>
+</html>

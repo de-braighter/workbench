@@ -1,0 +1,240 @@
+/* =============================================================
+   de Braighter — Design Foundations
+   Tokens: color, type, spacing, radius, shadow, glass.
+   Three skins ship today: exercir (cyan), strategir (violet),
+   operir (emerald). Switch by setting [data-skin] on <html>.
+   ============================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* -------------------------------------------------------------
+   1. Base palette — neutral, skin-agnostic.
+   `bg-0` is the deepest void; `bg-3` is a raised glass panel.
+   `fg-1` is primary text; `fg-3` is whisper-quiet metadata.
+   ------------------------------------------------------------- */
+:root {
+  /* Surfaces — near-black with a hint of cool blue */
+  --bg-0: #050608;            /* page void */
+  --bg-1: #0a0d14;            /* app frame */
+  --bg-2: #0f1320;            /* card */
+  --bg-3: #161b2c;            /* raised / hover */
+  --bg-inset: #04050a;        /* sunken (input, terminal) */
+
+  /* Hairlines — translucent so they layer on glass */
+  --line-1: rgba(148, 163, 210, 0.08);   /* default border */
+  --line-2: rgba(148, 163, 210, 0.14);   /* hover / focus border */
+  --line-3: rgba(148, 163, 210, 0.22);   /* divider */
+
+  /* Foreground */
+  --fg-1: #e8ecf7;            /* primary */
+  --fg-2: #a4adc8;            /* secondary */
+  --fg-3: #6b7390;            /* tertiary / metadata */
+  --fg-4: #3d4360;            /* disabled / placeholder */
+  --fg-on-glow: #04060d;      /* text on filled accent */
+
+  /* Status — semantic, skin-independent */
+  --ok:    #22d39a;
+  --ok-bg: rgba(34, 211, 154, 0.12);
+  --warn:    #f5b544;
+  --warn-bg: rgba(245, 181, 68, 0.12);
+  --err:     #ff5d6c;
+  --err-bg:  rgba(255, 93, 108, 0.12);
+  --info:    #6dd2ff;
+  --info-bg: rgba(109, 210, 255, 0.12);
+
+  /* Default skin = exercir (cyan / electric blue) */
+  --accent:        #6dd2ff;
+  --accent-strong: #38bdf8;
+  --accent-deep:   #0ea5e9;
+  --accent-soft:   rgba(109, 210, 255, 0.16);
+  --accent-rim:    rgba(109, 210, 255, 0.45);
+  --glow:          0 0 24px rgba(109, 210, 255, 0.45),
+                   0 0 80px rgba(56, 189, 248, 0.18);
+  --glow-soft:     0 0 12px rgba(109, 210, 255, 0.30);
+
+  /* Type families */
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale (rem-based, but with px fallbacks for slides) */
+  --fs-overline: 0.6875rem;   /* 11px — labels, tags */
+  --fs-meta:     0.75rem;     /* 12px — timestamps */
+  --fs-body-sm:  0.8125rem;   /* 13px — table rows, secondary */
+  --fs-body:     0.9375rem;   /* 15px — default body */
+  --fs-body-lg:  1.0625rem;   /* 17px — lead paragraph */
+  --fs-h4:       1.25rem;     /* 20px */
+  --fs-h3:       1.5rem;      /* 24px */
+  --fs-h2:       2rem;        /* 32px */
+  --fs-h1:       2.75rem;     /* 44px */
+  --fs-display:  4rem;        /* 64px — hero */
+
+  --lh-tight: 1.12;
+  --lh-snug:  1.3;
+  --lh-body:  1.55;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-loose:  0.08em;
+  --tracking-caps:   0.14em;
+
+  /* Spacing — 4px base. Use these, not raw px. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-20: 80px;
+
+  /* Radii — pill-and-square, no in-between */
+  --r-1: 4px;     /* tight chips */
+  --r-2: 8px;     /* inputs, small cards */
+  --r-3: 12px;    /* default card */
+  --r-4: 16px;    /* feature card */
+  --r-5: 24px;    /* hero panel */
+  --r-pill: 999px;
+
+  /* Shadows — outer (depth) + inner (glass rim) */
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-2: 0 4px 16px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+  --shadow-3: 0 12px 40px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.05) inset;
+  --shadow-4: 0 24px 80px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.06) inset;
+  --rim:      inset 0 1px 0 rgba(255,255,255,0.06),
+              inset 0 0 0 1px rgba(148,163,210,0.08);
+
+  /* Glass — the signature surface. Composed via background +
+     backdrop-filter + rim shadow. Use --glass-bg on background. */
+  --glass-bg:  linear-gradient(180deg,
+                 rgba(22, 27, 44, 0.72) 0%,
+                 rgba(15, 19, 32, 0.62) 100%);
+  --glass-blur: saturate(140%) blur(18px);
+
+  /* Motion */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 520ms;
+}
+
+/* -------------------------------------------------------------
+   2. Skin overrides — only the accent layer changes.
+   ------------------------------------------------------------- */
+[data-skin="exercir"] {
+  --accent:        #6dd2ff;
+  --accent-strong: #38bdf8;
+  --accent-deep:   #0ea5e9;
+  --accent-soft:   rgba(109, 210, 255, 0.16);
+  --accent-rim:    rgba(109, 210, 255, 0.45);
+  --glow:          0 0 24px rgba(109, 210, 255, 0.45),
+                   0 0 80px rgba(56, 189, 248, 0.18);
+  --glow-soft:     0 0 12px rgba(109, 210, 255, 0.30);
+}
+[data-skin="strategir"] {
+  --accent:        #c9a9ff;
+  --accent-strong: #a78bfa;
+  --accent-deep:   #7c3aed;
+  --accent-soft:   rgba(201, 169, 255, 0.16);
+  --accent-rim:    rgba(201, 169, 255, 0.45);
+  --glow:          0 0 24px rgba(201, 169, 255, 0.45),
+                   0 0 80px rgba(167, 139, 250, 0.20);
+  --glow-soft:     0 0 12px rgba(201, 169, 255, 0.30);
+}
+[data-skin="operir"] {
+  --accent:        #6df0b3;
+  --accent-strong: #34d399;
+  --accent-deep:   #10b981;
+  --accent-soft:   rgba(109, 240, 179, 0.16);
+  --accent-rim:    rgba(109, 240, 179, 0.45);
+  --glow:          0 0 24px rgba(109, 240, 179, 0.45),
+                   0 0 80px rgba(52, 211, 153, 0.18);
+  --glow-soft:     0 0 12px rgba(109, 240, 179, 0.30);
+}
+
+/* -------------------------------------------------------------
+   3. Element defaults — semantic mapping.
+   ------------------------------------------------------------- */
+html, body {
+  background: var(--bg-0);
+  color: var(--fg-1);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-tight);
+  color: var(--fg-1);
+  margin: 0;
+}
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); font-weight: 500; }
+h4 { font-size: var(--fs-h4); font-weight: 500; }
+
+p { margin: 0; }
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  font-feature-settings: "ss02", "cv01";
+}
+
+/* The signature: an "overline" caps label used everywhere
+   in the product (panel titles, KPI labels, sidebar groups). */
+.overline {
+  font-family: var(--font-mono);
+  font-size: var(--fs-overline);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-3);
+  font-weight: 500;
+}
+
+/* Glass panel — the foundational surface of the system. */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-3);
+  box-shadow: var(--shadow-2), var(--rim);
+}
+
+/* The ambient halo behind hero glass panels. */
+.halo::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10%;
+  background: radial-gradient(ellipse at 50% 0%, var(--accent-soft), transparent 60%);
+  filter: blur(40px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Selection */
+::selection { background: var(--accent-soft); color: var(--fg-1); }
+
+/* Scrollbar — slim, glass-friendly */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--line-3); background-clip: padding-box; }

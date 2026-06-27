@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/de-braighter-design-system-019e0d28-4632-7ef5-a329-d1ef4778a51c/colors_and_type.css">
+</helmet>
+<div style="background:var(--bg-elev);border:1px solid {{ i.border }};border-radius:11px;padding:11px 12px;box-shadow:var(--shadow-1);min-width:0;width:100%;box-sizing:border-box;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <div style="display:flex;align-items:center;gap:9px;min-width:0;">
+      <sc-if value="{{ i.isComposite }}" hint-placeholder-val="{{ true }}">
+        <span style="width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:7px;background:var(--accent-soft);border:1px solid color-mix(in oklch,var(--accent) 40%,transparent);color:var(--accent);">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M8 1.5 L14.5 5 L8 8.5 L1.5 5 Z"></path><path d="M1.5 8 L8 11.5 L14.5 8" opacity="0.55"></path><path d="M1.5 11 L8 14.5 L14.5 11" opacity="0.3"></path></svg>
+        </span>
+      </sc-if>
+      <sc-if value="{{ i.isPrimitive }}" hint-placeholder-val="{{ false }}">
+        <span style="width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:7px;background:var(--bg-sunken);border:1px solid var(--rule);">
+          <span style="width:9px;height:9px;border-radius:50%;background:{{ i.dot }};box-shadow:0 0 7px {{ i.dot }};"></span>
+        </span>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+        <span style="font-family:var(--font-display);font-size:13.5px;font-weight:600;letter-spacing:-0.01em;color:{{ i.nameColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ i.refName }}</span>
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-4);">{{ i.kindLabel }}</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;flex:none;">
+      <button onClick="{{ i.up }}" style="{{ i.upStyle }}" style-hover="background:var(--bg-elev);color:var(--ink);border-color:var(--rule-strong);">↑</button>
+      <button onClick="{{ i.down }}" style="{{ i.downStyle }}" style-hover="background:var(--bg-elev);color:var(--ink);border-color:var(--rule-strong);">↓</button>
+      <button onClick="{{ i.dup }}" style="width:26px;height:26px;display:grid;place-items:center;background:transparent;border:1px solid var(--rule);border-radius:6px;color:var(--ink-3);cursor:pointer;transition:all .12s;" style-hover="background:var(--accent-soft);color:var(--accent);border-color:color-mix(in oklch,var(--accent) 45%,transparent);">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect><path d="M3.5 10.5 H2.5 V2.5 H10.5 V3.5"></path></svg>
+      </button>
+      <button onClick="{{ i.del }}" style="width:26px;height:26px;display:grid;place-items:center;background:transparent;border:1px solid var(--rule);border-radius:6px;color:var(--ink-3);cursor:pointer;font-size:12px;transition:all .12s;" style-hover="background:var(--color-risk-soft);color:var(--color-risk);border-color:color-mix(in oklch,var(--color-risk) 45%,transparent);">✕</button>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:9px;margin-top:9px;padding-top:9px;border-top:1px solid var(--rule);">
+    <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-4);">offset</span>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-4);">x</span>
+      <input type="number" value="{{ i.x }}" onInput="{{ i.xOn }}" style="width:52px;height:28px;background:var(--bg-sunken);border:1px solid var(--rule);border-radius:6px;color:var(--ink);font-family:var(--font-mono);font-size:11px;padding:0 6px;text-align:center;outline:none;transition:all .14s;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-4);">y</span>
+      <input type="number" value="{{ i.y }}" onInput="{{ i.yOn }}" style="width:52px;height:28px;background:var(--bg-sunken);border:1px solid var(--rule);border-radius:6px;color:var(--ink);font-family:var(--font-mono);font-size:11px;padding:0 6px;text-align:center;outline:none;transition:all .14s;" style-focus="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);">
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 360, &quot;height&quot;: 90 },
+  &quot;i&quot;: { &quot;editor&quot;: null, &quot;tsType&quot;: &quot;object&quot; }
+}"></script>
+</body>
+</html>

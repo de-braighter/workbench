@@ -1,0 +1,100 @@
+/* =============================================================
+   de Braighter — Board Editor skins (handoff)
+
+   Theming model: set [data-theme="…"] on the root element (or any
+   ancestor of the UI). Base tokens (--bg, --ink, --rule, --accent,
+   --glass-*, …) are defined ONLY inside each [data-theme] block —
+   there is NO :root fallback, so a theme MUST be set or the UI
+   renders unstyled. Theme-agnostic scale (--font-*, --t-*, --s-*,
+   --r-*, --color-*/--sem-* status, motion, shadows) lives at :root
+   in the base design system (colors_and_type.css) and is unchanged.
+
+   This file contains ONLY the three skins the Board Editor uses and
+   the editor-chrome tokens added to each. Merge into, or load after,
+   the base colors_and_type.css.
+   ============================================================= */
+
+/* -------------------------------------------------------------
+   night — dark control surface (default). Cyan accent.
+   The base system already defines night's color tokens; these are
+   the ADDITIONAL editor-chrome tokens this app relies on.
+   ------------------------------------------------------------- */
+[data-theme="night"] {
+  --glass-bg:     linear-gradient(180deg, rgba(22,27,44,0.72), rgba(15,19,32,0.62));
+  --glass-blur:   saturate(140%) blur(18px);
+  --rail-bg:      linear-gradient(180deg, rgba(10,13,20,0.5), rgba(5,6,8,0.2));
+  --scrim:        rgba(3,4,6,0.5);          /* modal/drawer backdrop */
+  --glass-shadow: -22px 0 56px rgba(0,0,0,0.5);
+  --grid-dot:     rgba(148,163,210,0.22);    /* preview canvas dot grid */
+  --accent-on:    #04060d;                   /* text on an accent fill */
+  --code-str:     #6df0b3;                   /* JSON string token */
+  --code-num:     #f5b544;                   /* JSON number token */
+}
+
+/* -------------------------------------------------------------
+   ivory — bright, elegant, professional. Warm paper, refined indigo.
+   ------------------------------------------------------------- */
+[data-theme="ivory"] {
+  --bg:         #f4f1ea;   /* page */
+  --bg-elev:    #fffdf8;   /* raised / card */
+  --bg-sunken:  #ebe6da;   /* sunken / input */
+  --paper:      #fffdf8;   /* card */
+
+  --ink:    #211e18;       /* primary text */
+  --ink-2:  #565147;       /* body */
+  --ink-3:  #8a8273;       /* meta */
+  --ink-4:  #b8af9d;       /* faint / placeholder */
+
+  --rule:        rgba(33, 30, 24, 0.10);  /* hairline border */
+  --rule-strong: rgba(33, 30, 24, 0.16);  /* divider / hover border */
+
+  --accent:      #4b45c9;                  /* refined indigo */
+  --accent-2:    #38329f;                  /* deeper accent */
+  --accent-soft: rgba(75, 69, 201, 0.10);  /* focus halo / soft fill */
+  --accent-rim:  rgba(75, 69, 201, 0.36);  /* focus / active border */
+  --line:        rgba(75, 69, 201, 0.26);  /* accent-tinted line */
+
+  --glass-bg:     linear-gradient(180deg, rgba(255,253,248,0.86), rgba(244,241,234,0.74));
+  --glass-blur:   saturate(115%) blur(16px);
+  --rail-bg:      linear-gradient(180deg, rgba(255,253,248,0.7), rgba(235,230,218,0.3));
+  --scrim:        rgba(40,36,29,0.26);
+  --glass-shadow: -22px 0 56px rgba(40,36,29,0.16);
+  --grid-dot:     rgba(33,30,24,0.10);
+  --accent-on:    #ffffff;
+  --code-str:     #0c7a63;
+  --code-num:     #9a5b00;
+}
+
+/* -------------------------------------------------------------
+   clinical — medical / scientific. Cool paper, clean clinical blue.
+   ------------------------------------------------------------- */
+[data-theme="clinical"] {
+  --bg:         #eef2f6;
+  --bg-elev:    #ffffff;
+  --bg-sunken:  #e2e8ee;
+  --paper:      #ffffff;
+
+  --ink:    #142029;
+  --ink-2:  #44525f;
+  --ink-3:  #76838f;   /* meta */
+  --ink-4:  #a7b3bd;   /* faint */
+
+  --rule:        rgba(20, 32, 41, 0.10);
+  --rule-strong: rgba(20, 32, 41, 0.16);
+
+  --accent:      #1f74cf;                   /* clinical blue */
+  --accent-2:    #155aa6;
+  --accent-soft: rgba(31, 116, 207, 0.10);
+  --accent-rim:  rgba(31, 116, 207, 0.36);
+  --line:        rgba(31, 116, 207, 0.26);
+
+  --glass-bg:     linear-gradient(180deg, rgba(255,255,255,0.88), rgba(238,242,246,0.76));
+  --glass-blur:   saturate(120%) blur(16px);
+  --rail-bg:      linear-gradient(180deg, rgba(255,255,255,0.7), rgba(226,232,238,0.3));
+  --scrim:        rgba(18,28,38,0.28);
+  --glass-shadow: -22px 0 56px rgba(18,28,38,0.16);
+  --grid-dot:     rgba(20,32,41,0.10);
+  --accent-on:    #ffffff;
+  --code-str:     #0c7a63;
+  --code-num:     #9a5b00;
+}
