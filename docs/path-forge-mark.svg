@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Path Forge Mark</title>
+  <desc id="desc">A branching path flowing into a foundry mold, with a gradient AI spark endpoint.</desc>
+  <defs>
+    <linearGradient id="ai-spark-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06B6D4" />
+      <stop offset="52%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+    <style>
+      :root {
+        --path: #14B8A6;
+        --mold: #111318;
+      }
+    </style>
+  </defs>
+
+  <g fill="none" fill-rule="evenodd">
+    <path
+      fill="var(--mold)"
+      d="M289 626 360 554c7-7 16-11 26-11h78v31h-57l-59 60h80v34h-73c-9 0-16 7-16 16v101c0 29 24 53 53 53h237c29 0 53-24 53-53V684c0-9-7-16-16-16h-73v-34h80l-59-60h-57v-31h78c10 0 19 4 26 11l71 72c8 8 12 18 12 29v151c0 41-33 74-74 74H350c-41 0-74-33-74-74V655c0-11 5-21 13-29Z"
+    />
+
+    <path
+      stroke="var(--path)"
+      stroke-width="58"
+      stroke-linecap="butt"
+      stroke-linejoin="round"
+      d="M510 639V462L330 282"
+    />
+    <path
+      stroke="var(--path)"
+      stroke-width="58"
+      stroke-linecap="butt"
+      stroke-linejoin="round"
+      d="M510 462V215"
+    />
+    <path
+      stroke="var(--path)"
+      stroke-width="58"
+      stroke-linecap="butt"
+      stroke-linejoin="round"
+      d="M510 462 681 291"
+    />
+    <path
+      fill="var(--path)"
+      d="M510 615c28 0 51 23 51 51 0 18-9 34-23 43-13 9-21 23-24 39l-4 25-4-25c-3-16-11-30-24-39-14-9-23-25-23-43 0-28 23-51 51-51Z"
+    />
+    <circle cx="305" cy="257" r="61" fill="var(--path)" />
+    <circle cx="510" cy="196" r="61" fill="var(--path)" />
+
+    <path
+      fill="url(#ai-spark-gradient)"
+      d="M727 162c10 49 32 71 81 81 6 1 10 6 10 12s-4 11-10 12c-49 10-71 32-81 81-1 6-6 10-12 10s-11-4-12-10c-10-49-32-71-81-81-6-1-10-6-10-12s4-11 10-12c49-10 71-32 81-81 1-6 6-10 12-10s11 4 12 10Z"
+    />
+  </g>
+</svg>
