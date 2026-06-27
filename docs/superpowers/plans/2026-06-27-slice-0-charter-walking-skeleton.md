@@ -333,6 +333,14 @@ describe('scope inheritance (narrow-only, fail-closed)', () => {
     expect(validateInheritance(c(['src/']), c(['src/'])).ok).toBe(true);
   });
 
+  it('REJECTS a sibling sharing a name prefix without a path boundary (no trailing slash)', () => {
+    expect(validateInheritance(c(['src/a']), c(['src/abc'])).ok).toBe(false);
+  });
+
+  it('accepts a genuine sub-path of a non-trailing-slash parent at the segment boundary', () => {
+    expect(validateInheritance(c(['src/a']), c(['src/a/b'])).ok).toBe(true);
+  });
+
   it('REJECTS a child that widens beyond the parent (the fail-closed bite)', () => {
     const r = validateInheritance(c(['src/charter/']), c(['src/']));
     expect(r.ok).toBe(false);
@@ -372,11 +380,13 @@ export interface InheritanceViolation {
   reason: string;
 }
 
-/** A child path prefix is permitted iff it equals or sits under some parent prefix. */
+/** A child path prefix is permitted iff it equals or sits under some parent prefix (segment-boundary-safe). */
 function isCoveredBy(childPrefix: string, parentPrefixes: readonly string[]): boolean {
-  return parentPrefixes.some(
-    (p) => childPrefix === p || childPrefix.startsWith(p),
-  );
+  return parentPrefixes.some((p) => {
+    if (childPrefix === p) return true;
+    const boundary = p.endsWith('/') ? p : `${p}/`;
+    return childPrefix.startsWith(boundary);
+  });
 }
 
 export function validateInheritance(
@@ -406,9 +416,7 @@ export function effectiveScope(
   let acc = [...chain[0].scope.allowedPathPrefixes];
   for (let i = 1; i < chain.length; i++) {
     const childPrefixes = chain[i].scope.allowedPathPrefixes;
-    acc = childPrefixes.filter((cp) =>
-      acc.some((ap) => cp === ap || cp.startsWith(ap)),
-    );
+    acc = childPrefixes.filter((cp) => isCoveredBy(cp, acc));
   }
   return { allowedPathPrefixes: acc };
 }
@@ -509,9 +517,9 @@ describe('uniform lifecycle pass', () => {
     ]);
   });
 
-  it('REJECTS when the child violates parent scope (fail-closed)', () => {
-    const widening = { ...parentContract, scope: { allowedPathPrefixes: ['src/charter/'] } };
-    const r = runLifecyclePass(node(), ctx({ parent: widening }));
+  it('REJECTS when the child widens beyond the parent scope (fail-closed)', () => {
+    const narrowParent = { ...parentContract, scope: { allowedPathPrefixes: ['src/charter/sub/'] } };
+    const r = runLifecyclePass(node(), ctx({ parent: narrowParent }));
     expect(r.resolution).toBe('rejected');
     expect(r.events).toEqual([]);
   });
