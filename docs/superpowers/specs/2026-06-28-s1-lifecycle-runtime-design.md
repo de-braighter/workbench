@@ -6,7 +6,7 @@
 - **Scope:** `layers/charter-runtime` only — zero kernel change
 - **Precondition:** Slice 0 merged (`charter-runtime#1`, `substrate#202`, `specs#375`/ADR-283 ratified)
 - **Supersedes:** nothing (extends Slice 0)
-- **Produces:** ADR-284 (lifecycle protocol rationale, to be authored alongside implementation)
+- **Produces:** ADR-285 (lifecycle protocol rationale, to be authored alongside implementation)
 
 ## 1. Purpose
 
@@ -156,7 +156,7 @@ const openGate = (n: NodeLifecycleState): GateState | undefined =>
 
 ## 4. `CharterEventLog` port (`event-log.port.ts`)
 
-Charter lifecycle events are layer concerns, not kernel domain events (ADR-284 D3). The port is defined in `charter-runtime`; adapters are consumer territory.
+Charter lifecycle events are layer concerns, not kernel domain events (ADR-285 D3). The port is defined in `charter-runtime`; adapters are consumer territory.
 
 ```typescript
 export interface CharterEventLog {
@@ -185,7 +185,7 @@ export class InMemoryCharterEventLog implements CharterEventLog {
 
 `treeRootId` is passed explicitly on `append` so the store can bucket by tree without scanning node membership. `conductCharterStep` knows `treeRootId` at the call site and passes it through. File/DB adapters are consumer territory (the foundry plugs in its file adapter in S3).
 
-No store lock at the charter-runtime layer (ADR-284 D8). Concurrency safety is the consumer's responsibility.
+No store lock at the charter-runtime layer (ADR-285 D8). Concurrency safety is the consumer's responsibility.
 
 ## 5. `charterFrontier` algorithm (`frontier.ts`)
 
@@ -387,7 +387,7 @@ function danglingOwnClaim(state: CharterLifecycleState): string | undefined {
 
 Recovery (step 6): if a dangling own-claim is found, append `NodeReleased.v1(resolution: 'done')` for that claim, re-derive frontier, return `{ status: 'advanced' }`. Idempotent: if two conductors race to recover, the second sees a resolved node and skips.
 
-**No store lock at this layer** — lock-free by design (ADR-284 D8). The in-memory adapter is single-threaded. The foundry brings `withStoreLock` in S3.
+**No store lock at this layer** — lock-free by design (ADR-285 D8). The in-memory adapter is single-threaded. The foundry brings `withStoreLock` in S3.
 
 ## 8. Acids (load-bearing property tests)
 
@@ -405,11 +405,11 @@ Nine acid tests in `acids.spec.ts`. Each targets one non-negotiable guarantee.
 | 8 | Crash-recovery (dangling own-claim completes) | Manually-appended dangling own-claim → recovery appends release → next call advances |
 | 9 | Kernel-Untouched boundary acid (extended) | No charter vocab in `lifecycle-events.ts` types bleeds into `plan-tree-schemas.ts` or `plan-tree-store.port.ts` |
 
-## 9. ADR-284 — scope summary
+## 9. ADR-285 — scope summary
 
 To be authored alongside the implementation (charter-checker required this before consumer domains can use S1).
 
-**Title:** "ADR-284: The uniform charter lifecycle protocol — 8 stages, port-backed event log, hierarchical frontier"
+**Title:** "ADR-285: The uniform charter lifecycle protocol — 8 stages, port-backed event log, hierarchical frontier"
 
 **Decisions covered:**
 
