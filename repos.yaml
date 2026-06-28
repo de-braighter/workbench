@@ -13,6 +13,7 @@ repos:
     - specs           # knowledge layer — ADRs, concepts, handbook (no app code)
     - platform        # infra-as-code + shared dev-Docker docs
     - foundation      # shared foundation libraries
+    - foundry-core    # Foundry SDK — manifest protocol + skins (@de-braighter/foundry-core)
   domains:
     - exercir         # team sports (live pack-football work)
     - conservation
