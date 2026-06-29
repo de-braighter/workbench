@@ -14,6 +14,7 @@ repos:
     - platform        # infra-as-code + shared dev-Docker docs
     - foundation      # shared foundation libraries
     - foundry-core    # Foundry SDK — manifest protocol + skins (@de-braighter/foundry-core)
+    - charter-runtime # charter-runtime program — consumed by foundry-core (link:../charter-runtime)
   domains:
     - exercir         # team sports (live pack-football work)
     - conservation
