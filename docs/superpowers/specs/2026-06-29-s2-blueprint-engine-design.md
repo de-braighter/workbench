@@ -138,7 +138,7 @@ export function generate(
 ): PlanTree
 ```
 
-Pure, synchronous (modulo `newId` calls). Does **not** call `compile` first — callers that care validate ahead of time; `generate` trusts a valid blueprint (same discipline as `writeCharter` trusting the caller).
+Pure, synchronous (modulo `newId` calls). Does **not** call `compile` first — callers that care validate ahead of time; `generate` trusts a valid blueprint (same discipline as `writeCharter` trusting the caller). Passing an invalid blueprint (e.g. one with multiple roots or orphan refs) produces a malformed PlanTree without error — callers must `compile` first if correctness is required.
 
 Steps:
 1. Build an ID map: call `opts.newId()` once per blueprint node → `Map<blueprintNodeId, freshUUID>`.
