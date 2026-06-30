@@ -10,11 +10,12 @@ repos:
   layers:
     - substrate       # kernel — @de-braighter/substrate-{contracts,runtime}
     - design-system   # bricks / eyecatchers + design tokens
-    - specs           # knowledge layer — ADRs, concepts, handbook (no app code)
+    - specs           # spec catalogue — ADRs, concepts, handbook (no app code)
     - platform        # infra-as-code + shared dev-Docker docs
     - foundation      # shared foundation libraries
     - foundry-core    # Foundry SDK — manifest protocol + skins (@de-braighter/foundry-core)
     - charter-runtime # charter-runtime program — consumed by foundry-core (link:../charter-runtime)
+    - knowledge       # Knowledge layer — artifact graph, retrieval, citations (@de-braighter/knowledge)
   domains:
     - exercir         # team sports (live pack-football work)
     - conservation
