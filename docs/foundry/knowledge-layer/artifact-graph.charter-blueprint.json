@@ -1,0 +1,891 @@
+{
+  "id": "10000000-0000-4000-8000-000000000001",
+  "name": "knowledge-layer/artifact-graph",
+  "createdAt": "2026-06-30T00:00:00.000Z",
+  "nodes": [
+    {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "parentId": null,
+      "role": "product",
+      "contract": {
+        "role": "product",
+        "mission": {
+          "objective": "Build Knowledge Slice 0 as a substrate-compatible artifact graph.",
+          "outcome": "The cluster has a read-only knowledge layer that inventories artifacts, derives citations, classifies stale snapshots, and prepares context navigation without kernel changes."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer",
+            "docs/superpowers/specs",
+            "layers/knowledge",
+            "layers/charter-runtime",
+            "repos.yaml",
+            "knowledge.config.yaml"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [],
+      "label": "Knowledge Layer Artifact Graph"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000010",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Prepare the layer and lock the execution boundary.",
+          "outcome": "The knowledge-layer work has a canonical plan, a repo/workspace target, and explicit zero-kernel-change gates."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer",
+            "docs/superpowers/specs",
+            "layers/knowledge",
+            "repos.yaml",
+            "knowledge.config.yaml"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [],
+      "label": "E0 - Foundation and boundary"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000011",
+      "parentId": "10000000-0000-4000-8000-000000000010",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Author the dedicated Knowledge Slice 0 design.",
+          "outcome": "A concise artifact-graph design records scope, non-goals, contracts, scanner behavior, diagnostics, and quality gates."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [],
+      "label": "E0.1 - Write artifact-graph slice design"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000012",
+      "parentId": "10000000-0000-4000-8000-000000000010",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Reconcile the existing Knowledge basis and scaffold the layer workspace only when no active implementation owns it.",
+          "outcome": "The Slice 0 work is aligned with the existing knowledge-pack design and charter-runtime S2 blueprint engine; layers/knowledge is scaffolded as a plain TypeScript pnpm workspace when absent."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer",
+            "docs/superpowers/specs",
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000011"
+      ],
+      "label": "E0.2 - Reconcile and scaffold Knowledge layer"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000013",
+      "parentId": "10000000-0000-4000-8000-000000000010",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Register the knowledge layer in the cluster manifest.",
+          "outcome": "repos.yaml and workbench metadata know about layers/knowledge without implying any substrate kernel dependency."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "repos.yaml",
+            "docs/foundry/knowledge-layer"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000012"
+      ],
+      "label": "E0.3 - Register layer in workbench"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000014",
+      "parentId": "10000000-0000-4000-8000-000000000010",
+      "role": "gate",
+      "contract": {
+        "role": "gate",
+        "mission": {
+          "objective": "Confirm the Kernel-Untouched Invariant.",
+          "outcome": "No substrate production file is changed, and knowledge vocabulary remains outside layers/substrate production code."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer",
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 3,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000012",
+        "10000000-0000-4000-8000-000000000013"
+      ],
+      "label": "G0 - Zero kernel change"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000020",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Define substrate-free knowledge contracts.",
+          "outcome": "Artifact identity, taxonomy, snapshots, edges, diagnostics, and scan manifests are typed without importing substrate."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000014"
+      ],
+      "label": "E1 - Knowledge contracts"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000021",
+      "parentId": "10000000-0000-4000-8000-000000000020",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Model artifact identity and taxonomy.",
+          "outcome": "knowledge-contracts exposes artifact_id, canonicalArtifactId, artifact bands, artifact kinds, config_class, and evidence_class."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [],
+      "label": "E1.1 - Artifact identity and taxonomy"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000022",
+      "parentId": "10000000-0000-4000-8000-000000000020",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Model artifact snapshots and staleness states.",
+          "outcome": "knowledge-contracts exposes snapshot refs with contentHash and expectedStatus plus clean, content-drift, status-drift, missing, and unregistered states."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000021"
+      ],
+      "label": "E1.2 - Snapshot and staleness contracts"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000023",
+      "parentId": "10000000-0000-4000-8000-000000000020",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Model citation edges and diagnostics.",
+          "outcome": "knowledge-contracts exposes declared, discovered, and snapshot edge types plus Slice-0 diagnostics and severity."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000021"
+      ],
+      "label": "E1.3 - Edges and diagnostics contracts"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000024",
+      "parentId": "10000000-0000-4000-8000-000000000020",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Model scan snapshot manifests.",
+          "outcome": "knowledge-contracts exposes scan metadata, artifact rows, edge rows, diagnostics, active config hash, and report projection inputs."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 3,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000022",
+        "10000000-0000-4000-8000-000000000023"
+      ],
+      "label": "E1.4 - Snapshot manifest contract"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000030",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Build the read-only scanner runtime.",
+          "outcome": "knowledge-runtime can discover source artifacts, parse metadata, hash content, classify configs, and detect sensitive content without writing by default."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000020"
+      ],
+      "label": "E2 - Read-only scanner runtime"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000031",
+      "parentId": "10000000-0000-4000-8000-000000000030",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Implement scan profiles and file discovery.",
+          "outcome": "Repo-local scans use curated workbench, specs, default, and all-md profiles with stable include/exclude behavior."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000024"
+      ],
+      "label": "E2.1 - Scan profiles and discovery"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000032",
+      "parentId": "10000000-0000-4000-8000-000000000030",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Parse managed frontmatter and classify structured config.",
+          "outcome": "Markdown frontmatter, YAML, JSON, package metadata, CI configs, and tool configs become normalized artifact rows."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000031"
+      ],
+      "label": "E2.2 - Metadata parsing and config classification"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000033",
+      "parentId": "10000000-0000-4000-8000-000000000030",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Compute content hashes and artifact identity.",
+          "outcome": "Scanner emits stable contentHash, repo-local artifact_id handling, canonicalArtifactId, sizes, paths, and unregistered markers."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000032"
+      ],
+      "label": "E2.3 - Hashes and canonical IDs"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000034",
+      "parentId": "10000000-0000-4000-8000-000000000030",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Implement sensitive-path excludes and secret-pattern redaction.",
+          "outcome": "Sensitive paths are skipped, suspicious content emits fail-level diagnostics, and reports never contain secret values."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 3,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000031"
+      ],
+      "label": "E2.4 - Secret safety and redaction"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000035",
+      "parentId": "10000000-0000-4000-8000-000000000030",
+      "role": "gate",
+      "contract": {
+        "role": "gate",
+        "mission": {
+          "objective": "Confirm scanner read-only and secret-safe behavior.",
+          "outcome": "The default scan writes nothing, does not leak content, and fails on sensitive findings with redacted diagnostics."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 4,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000033",
+        "10000000-0000-4000-8000-000000000034"
+      ],
+      "label": "G1 - Read-only and secret-safe scanner"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000040",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Derive the artifact citation graph.",
+          "outcome": "Knowledge can report declared, discovered, and snapshot citation edges plus missing targets and registration candidates."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 3,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000035"
+      ],
+      "label": "E3 - Citation graph"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000041",
+      "parentId": "10000000-0000-4000-8000-000000000040",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Extract Markdown discovered edges.",
+          "outcome": "Markdown links produce discovered edges and missing target diagnostics without requiring all historical docs to be registered."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000033"
+      ],
+      "label": "E3.1 - Markdown discovered edges"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000042",
+      "parentId": "10000000-0000-4000-8000-000000000040",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Extract frontmatter declared edges.",
+          "outcome": "Managed artifacts can declare semantic refs that become strong citation edges."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000032"
+      ],
+      "label": "E3.2 - Frontmatter declared edges"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000043",
+      "parentId": "10000000-0000-4000-8000-000000000040",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Rank registration candidates.",
+          "outcome": "Unregistered artifacts are ranked by graph importance so the first frontmatter migration is guided by actual references."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000041",
+        "10000000-0000-4000-8000-000000000042"
+      ],
+      "label": "E3.3 - Registration candidates"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000050",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Derive stale snapshot diagnostics.",
+          "outcome": "Knowledge can classify clean, content-drift, status-drift, missing, and unregistered artifact snapshots."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge",
+            "layers/charter-runtime"
+          ]
+        }
+      },
+      "ordinal": 4,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000035"
+      ],
+      "label": "E4 - Stale snapshot detection"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000051",
+      "parentId": "10000000-0000-4000-8000-000000000050",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Resolve artifact snapshots against current artifacts.",
+          "outcome": "A snapshot ref with canonicalArtifactId, contentHash, and expectedStatus can be compared to the current scan manifest."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000022",
+        "10000000-0000-4000-8000-000000000033"
+      ],
+      "label": "E4.1 - Snapshot resolver"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000052",
+      "parentId": "10000000-0000-4000-8000-000000000050",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Classify stale snapshot diagnostics.",
+          "outcome": "Resolver output is classified into clean, content-drift, status-drift, missing, and unregistered diagnostics."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000051"
+      ],
+      "label": "E4.2 - Staleness classifier"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000053",
+      "parentId": "10000000-0000-4000-8000-000000000050",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Expose artifact snapshot types to charter-runtime without reversing dependencies.",
+          "outcome": "charter-runtime can consume knowledge-contracts snapshot types while substrate remains independent of both layers."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/charter-runtime",
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000051"
+      ],
+      "label": "E4.3 - Charter snapshot type integration"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000060",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Build the CLI, snapshot output, and reports.",
+          "outcome": "Knowledge emits JSON to stdout by default and writes deterministic reports only with explicit --out."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 5,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000040",
+        "10000000-0000-4000-8000-000000000050"
+      ],
+      "label": "E5 - CLI and reports"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000061",
+      "parentId": "10000000-0000-4000-8000-000000000060",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Implement repo-local CLI JSON output.",
+          "outcome": "knowledge scan --root <repo> emits a valid snapshot manifest to stdout and writes nothing by default."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000043",
+        "10000000-0000-4000-8000-000000000052"
+      ],
+      "label": "E5.1 - CLI JSON stdout"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000062",
+      "parentId": "10000000-0000-4000-8000-000000000060",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Implement deterministic report projections.",
+          "outcome": "--out writes artifacts.json, citation-graph.json, stale-report.md, and registration-candidates.md from the snapshot manifest."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000061"
+      ],
+      "label": "E5.2 - Deterministic reports"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000063",
+      "parentId": "10000000-0000-4000-8000-000000000060",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Implement snapshot diff for learning signals.",
+          "outcome": "Two snapshot manifests can be diffed to derive artifact-change signals without traversing Git history."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000061"
+      ],
+      "label": "E5.3 - Snapshot diff"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000064",
+      "parentId": "10000000-0000-4000-8000-000000000060",
+      "role": "gate",
+      "contract": {
+        "role": "gate",
+        "mission": {
+          "objective": "Confirm report determinism and no-source-of-truth drift.",
+          "outcome": "Reports are reproducible projections and are not treated as authoritative state."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 3,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000062",
+        "10000000-0000-4000-8000-000000000063"
+      ],
+      "label": "G2 - Report projection gate"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000070",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Support cluster scanning and configuration.",
+          "outcome": "Knowledge can scan the workbench cluster through repos.yaml and resolve knowledge.config.yaml without losing repo-local operation."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge",
+            "repos.yaml",
+            "knowledge.config.yaml"
+          ]
+        }
+      },
+      "ordinal": 6,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000060"
+      ],
+      "label": "E6 - Cluster scan and config"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000071",
+      "parentId": "10000000-0000-4000-8000-000000000070",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Implement cluster scan over repos.yaml.",
+          "outcome": "knowledge scan-cluster --workbench <root> scans workbench plus sibling repos and normalizes repo-qualified artifact IDs."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge",
+            "repos.yaml"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000061"
+      ],
+      "label": "E6.1 - Cluster scan via repos.yaml"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000072",
+      "parentId": "10000000-0000-4000-8000-000000000070",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Implement knowledge.config.yaml resolution.",
+          "outcome": "CLI flags, nearest config, workbench config, and built-in defaults resolve in order, and active config hash is captured."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge",
+            "knowledge.config.yaml"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000061"
+      ],
+      "label": "E6.2 - Knowledge config resolution"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000073",
+      "parentId": "10000000-0000-4000-8000-000000000070",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Classify knowledge.config.yaml as an artifact.",
+          "outcome": "knowledge.config.yaml appears as artifact_kind=config and config_class=knowledge, while also contributing its hash to scan metadata."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "layers/knowledge",
+            "knowledge.config.yaml"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000072"
+      ],
+      "label": "E6.3 - Config as knowledge artifact"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000080",
+      "parentId": "10000000-0000-4000-8000-000000000001",
+      "role": "epic",
+      "contract": {
+        "role": "epic",
+        "mission": {
+          "objective": "Dogfood the artifact graph on the de-braighter cluster.",
+          "outcome": "The workbench cluster can be scanned, reviewed, and improved through registration candidates without mutating source truth."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer",
+            "docs/superpowers/specs",
+            "layers/knowledge",
+            "knowledge.config.yaml"
+          ]
+        }
+      },
+      "ordinal": 7,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000070"
+      ],
+      "label": "E7 - Dogfood and handoff"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000081",
+      "parentId": "10000000-0000-4000-8000-000000000080",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Run the cluster scan on workbench and siblings.",
+          "outcome": "The first snapshot manifest and reports identify artifacts, citations, stale snapshots, and registration candidates."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer"
+          ]
+        }
+      },
+      "ordinal": 0,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000071",
+        "10000000-0000-4000-8000-000000000073"
+      ],
+      "label": "E7.1 - First cluster snapshot"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000082",
+      "parentId": "10000000-0000-4000-8000-000000000080",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Register the first high-value artifacts.",
+          "outcome": "Top registration candidates receive managed frontmatter without changing their substantive content."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/superpowers/specs",
+            "docs/foundry/knowledge-layer"
+          ]
+        }
+      },
+      "ordinal": 1,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000081"
+      ],
+      "label": "E7.2 - First registration pass"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000083",
+      "parentId": "10000000-0000-4000-8000-000000000080",
+      "role": "task",
+      "contract": {
+        "role": "task",
+        "mission": {
+          "objective": "Prepare the Foundry ingestion handoff.",
+          "outcome": "The blueprint, report projection, and dependency map are ready to queue into Foundry as claimable work."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer"
+          ]
+        }
+      },
+      "ordinal": 2,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000082"
+      ],
+      "label": "E7.3 - Foundry ingestion handoff"
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000084",
+      "parentId": "10000000-0000-4000-8000-000000000080",
+      "role": "gate",
+      "contract": {
+        "role": "gate",
+        "mission": {
+          "objective": "Confirm artifact-graph Slice 0 is ready to operate.",
+          "outcome": "ci:local, markdownlint, zero-kernel-change, read-only default, secret safety, and report determinism all pass."
+        },
+        "scope": {
+          "allowedPathPrefixes": [
+            "docs/foundry/knowledge-layer",
+            "layers/knowledge"
+          ]
+        }
+      },
+      "ordinal": 3,
+      "dependsOn": [
+        "10000000-0000-4000-8000-000000000083"
+      ],
+      "label": "G3 - Ready to operate"
+    }
+  ]
+}
