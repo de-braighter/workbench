@@ -16,12 +16,14 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 The substrate is **internal infrastructure**, and its defining strength is **simplicity**: model the kernel **as simple as possible but as complex as required**. This is the *major principle every session must apply* — ratified in **[ADR-176](layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md)**. When in doubt, the kernel does *less*; complexity belongs in packs.
 
 **The kernel is exactly four concerns** (north-star §20 P3; [ADR-127](layers/specs/adr/adr-127-kernel-substrate-v1.md)):
+
 1. **Recurse the plan** — a strictly single-parent tree of intervention nodes carrying typed effect declarations.
 2. **Flat the observation** — an append-only event log of what happened.
 3. **Inference** — plan + observations → posteriors (the digital twin).
 4. **Reproducibility** — versioned catalogs, run manifests, event-sourcing.
 
 **Inclusion test — before adding anything to the kernel, both must hold:** (a) it is one of the four concerns, **and** (b) it is needed by **≥2 packs** as shared infrastructure the kernel must validate/query/version. Both yes → kernel. Otherwise → pack territory (typed pack lib + `metadata` JSONB). Supporting rules:
+
 - **`metadata` JSONB is the deliberate simplicity boundary**, not a leak — the untyped per-pack extension space that keeps the typed core small.
 - **Promotion rule** — promote a `metadata` shape into the typed core *only* on demonstrated multi-pack need; demand-driven, never speculative.
 - **Store generators, derive graphs** — relationships derivable from tree + declarations (the causal DAG, comorbidity conflicts) are *views/materialized queries*, never stored state. Cross-links, if ever needed, are a separate `PlanNodeId` relation, **never** multi-parent.
@@ -32,7 +34,7 @@ The substrate is **internal infrastructure**, and its defining strength is **sim
 
 ## Layout
 
-```
+```text
 de-braighter/                     ← this repo (de-braighter/workbench)
 ├── .Codex/
 │   ├── agents/                   ← 23 canonical agent definitions
@@ -59,6 +61,7 @@ de-braighter/                     ← this repo (de-braighter/workbench)
 ## Cluster state (migration complete 2026-05-25)
 
 All layers and domains are migrated into the cluster, re-scoped `@de-braighter/*`, building green on `main`:
+
 - **Layers:** `substrate` (kernel — `@de-braighter/substrate-{contracts,runtime}`), `design-system`, `specs`, `platform`, `foundation` (shared packages — `@de-braighter/{std,lint-kit,test-kit}`).
 - **Domains:** `exercir` (team sports — the live pack-football work), `conservation`.
 
@@ -85,6 +88,18 @@ The old prototype directories under `D:/development/projects/braighter/` and `/e
   - **The ritual** (from `domains/devloop`): after a verifier wave, `npm run dev -- drain <repo#pr>` (PR-scopes the verdicts so `findings`/`qa.score` score); after merge, `… backfill` then `… reconcile` (parses the body lines + observes effects); per the retro cadence, `… retro '{…}'` for notable PRs. See `policies/git.md`. **Findings (PR-first):** open the PR *before* the verifier wave; after the wave, write its findings to a temp JSON (`[{verifier, severity, path?, line?, text}]`) and run `… post-findings <repo#pr> findings.json` **before merge** — an inline comment is enough to make the PR harvestable, so the post-merge `… reviews` harvest then records them per-verifier as `FindingRecorded` events, and `… resolve-findings` marks which got addressed (fix-commit linkage) → per-verifier **precision** in `… findings <repo>`. Idempotent (`verifier|path|line`), so a re-run is safe. The `npm run ritual:post-merge` script runs `reviews` + `resolve-findings` automatically.
 - **Auto-mode default** — make mechanical calls without asking; escalate only on architectural / scope / convention-contradiction / visible-to-others decisions.
 - **Substrate hygiene without substrate ambition** — primitives are substrate-shape; don't market the substrate externally.
+
+## Knowledge session memory
+
+The local Knowledge MCP is the durable cross-session memory for this cluster.
+When the `mcp__knowledge__...` tools are available, every new session should use them deliberately:
+
+- After reading `AGENTS.md` and before choosing work, call `mcp__knowledge__knowledge_status`.
+- Build a focused startup context with `mcp__knowledge__knowledge_context_pack`. Include the current user request, repo or work item, and stable keywords such as `foundry`, `github auth`, `pr workflow`, `knowledge`, or the domain name.
+- Treat Knowledge output as advisory memory, not source of truth. Verify facts against Git, Foundry, GitHub, and files before acting.
+- When a session creates durable decisions, PRs, Foundry transitions, operational gotchas, or next-step handoff material, append a concise capsule with `mcp__knowledge__knowledge_ingest_session`.
+- Never store secrets, raw tokens, credentials, private keys, PHI, or large logs. Store procedures and references instead.
+- If the Knowledge MCP is unavailable, continue with the normal repo and Foundry checks and mention the missing memory tool in the handoff.
 
 ## Naming
 
