@@ -62,6 +62,10 @@ names the evidence bundle and the rules a future ingestion/sync path must obey.
 
 ## Dependency Map
 
+This map mirrors the canonical blueprint dependency graph for ingestion. G2 is
+not an additional dependency edge into G3; its report-determinism result is
+listed later as G3 readiness evidence.
+
 ```mermaid
 flowchart TD
     E6_1["E6.1\nCluster scan via repos.yaml"]
@@ -69,14 +73,12 @@ flowchart TD
     E7_1["E7.1\nFirst cluster snapshot"]
     E7_2["E7.2\nFirst registration pass"]
     E7_3["E7.3\nFoundry ingestion handoff"]
-    G2["G2\nReport projection gate"]
     G3["G3\nReady to operate"]
 
     E6_1 --> E7_1
     E6_3 --> E7_1
     E7_1 --> E7_2
     E7_2 --> E7_3
-    G2 --> G3
     E7_3 --> G3
 ```
 
