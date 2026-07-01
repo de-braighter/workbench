@@ -22,6 +22,18 @@
         "domains/foundry/node_modules/tsx/dist/cli.mjs",
         "domains/foundry/src/mcp/server.ts"
       ]
+    },
+    "knowledge": {
+      "command": "node",
+      "args": [
+        "layers/knowledge/node_modules/tsx/dist/cli.mjs",
+        "layers/knowledge/src/mcp/server.ts"
+      ],
+      "env": {
+        "KNOWLEDGE_MEMORY_STORE": "postgres",
+        "KNOWLEDGE_DATABASE_URL": "${KNOWLEDGE_DATABASE_URL}",
+        "KNOWLEDGE_TENANT_PACK_ID": "${KNOWLEDGE_TENANT_PACK_ID}"
+      }
     }
   }
 }
