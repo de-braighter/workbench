@@ -120,7 +120,7 @@ G3 may pass when all rows are green on the current mainline:
 
 | Check | Evidence Source | Status |
 |---|---|---|
-| Knowledge `ci:local` | [knowledge#68](https://github.com/de-braighter/knowledge/pull/68) verifier wave and post-merge ritual at `df22c7512399d876c5cf1b9f470651a38a812d28`. | Green. |
+| Knowledge `ci:local` | [knowledge#68](https://github.com/de-braighter/knowledge/pull/68) verifier-wave comment at `c8e5136e7dcc8069980c1a64b7182a19cfb89a5b`; merged main is `df22c7512399d876c5cf1b9f470651a38a812d28`. | Green. |
 | Markdown quality for Foundry handoff docs | `npx markdownlint-cli "docs/foundry/knowledge-layer/**/*.md"` in the G3 Workbench worktree. | Green. |
 | Zero kernel change | `git diff --name-only origin/main...HEAD` has no `layers/substrate/**` path, plus charter-checker review. | Green for the intended G3 docs-only diff. |
 | Read-only default | E7.1/E6 runtime evidence and `cli.spec.ts`: scans write JSON to stdout unless `--out` is explicit. | Green. |

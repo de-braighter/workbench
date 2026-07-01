@@ -38,7 +38,7 @@ projections.
 
 | Check | Evidence | Verdict |
 |---|---|---|
-| Knowledge `ci:local` | [de-braighter/knowledge#68](https://github.com/de-braighter/knowledge/pull/68) verifier wave and post-merge ritual. Root tests: 263 passed / 4 skipped; contracts: 33 passed; runtime: 108 passed. | Green |
+| Knowledge `ci:local` | [de-braighter/knowledge#68](https://github.com/de-braighter/knowledge/pull/68) verifier-wave comment at `c8e5136e7dcc8069980c1a64b7182a19cfb89a5b`. Root tests: 263 passed / 4 skipped; contracts: 33 passed; runtime: 108 passed. | Green |
 | Markdown quality | G3 runs `npx markdownlint-cli "docs/foundry/knowledge-layer/**/*.md"` in the Workbench G3 worktree. | Green. |
 | Zero kernel change | G3 diff is confined to `docs/foundry/knowledge-layer/**`; no path under `layers/substrate/**` changes. | Green |
 | Read-only default | Knowledge CLI help and `cli.spec.ts` prove scans write JSON to stdout by default; `--out` is required before report files are written. | Green |
