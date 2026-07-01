@@ -11,6 +11,7 @@ refs:
     - de-braighter/workbench:artifact-graph-plan-tree-projection
     - de-braighter/workbench:artifact-graph-first-cluster-snapshot-review
     - de-braighter/workbench:artifact-graph-g0-zero-kernel-change-evidence
+    - de-braighter/workbench:artifact-graph-g3-ready-to-operate-evidence
 ---
 
 # Artifact Graph Foundry Ingestion Handoff
@@ -34,10 +35,13 @@ names the evidence bundle and the rules a future ingestion/sync path must obey.
 | `artifact-graph-slice-0-design.md` | Slice design that fixes boundaries: Knowledge owns artifact discovery, citations, snapshots, and reports; substrate stays untouched. |
 | `artifact-graph-g0-zero-kernel-change-evidence.md` | Gate evidence for the zero-kernel-change invariant. |
 | `artifact-graph-first-cluster-snapshot-review.md` | E7.1 cluster-scan triage and report index. |
+| `artifact-graph-g3-ready-to-operate-evidence.md` | Final G3 evidence bundle for CI, Markdown quality, zero-kernel-change, read-only default, secret safety, and report determinism. |
 | `reports/cluster/artifact-graph-first-cluster-snapshot.json` | Historical full-cluster scan output from E7.1. It is immutable evidence for that run, not the current cluster state. |
 | `reports/{workbench,specs,knowledge}/` | Deterministic focused projections for artifacts, citation graph, stale snapshots, and registration candidates from E7.1. |
 | [workbench#241](https://github.com/de-braighter/workbench/pull/241) | E7.1 PR: first cluster snapshot and report projections. |
 | [workbench#243](https://github.com/de-braighter/workbench/pull/243) | E7.2 PR: first Workbench registration pass over ten high-signal specs. |
+| [workbench#245](https://github.com/de-braighter/workbench/pull/245) | E7.3 PR: Foundry ingestion handoff and dependency map. |
+| [knowledge#68](https://github.com/de-braighter/knowledge/pull/68) | G2 PR: report projection determinism and Knowledge `ci:local` evidence on current main. |
 
 ## Ingestion Rules
 
@@ -116,18 +120,19 @@ G3 may pass when all rows are green on the current mainline:
 
 | Check | Evidence Source | Status |
 |---|---|---|
-| Knowledge `ci:local` | Knowledge repo PR wave for the latest runtime/report changes. | Pending G2/current-main verification. |
-| Markdown quality for Foundry handoff docs | `npx markdownlint-cli "docs/foundry/knowledge-layer/**/*.md"` in Workbench. | Required for E7.3. |
-| Zero kernel change | `git diff --name-only origin/main...HEAD` has no `layers/substrate/**` path, plus charter-checker review. | Required for E7.3/G3. |
-| Read-only default | E7.1/E6 runtime evidence: scans write JSON to stdout unless `--out` is explicit. | Evidence exists; re-confirm in G3. |
-| Secret safety | G1 runtime tests and E7.1 redacted fail diagnostics. | Evidence exists; re-confirm in G3. |
-| Report determinism | G2 report-projection gate over `libs/knowledge-runtime`. | Pending G2. |
+| Knowledge `ci:local` | [knowledge#68](https://github.com/de-braighter/knowledge/pull/68) verifier wave and post-merge ritual at `df22c7512399d876c5cf1b9f470651a38a812d28`. | Green. |
+| Markdown quality for Foundry handoff docs | `npx markdownlint-cli "docs/foundry/knowledge-layer/**/*.md"` in the G3 Workbench worktree. | Green. |
+| Zero kernel change | `git diff --name-only origin/main...HEAD` has no `layers/substrate/**` path, plus charter-checker review. | Green for the intended G3 docs-only diff. |
+| Read-only default | E7.1/E6 runtime evidence and `cli.spec.ts`: scans write JSON to stdout unless `--out` is explicit. | Green. |
+| Secret safety | G1 runtime tests, E7.1 redacted fail diagnostics, and G2 report-redaction regression. | Green. |
+| Report determinism | [knowledge#68](https://github.com/de-braighter/knowledge/pull/68) report-projection gate over `libs/knowledge-runtime`. | Green. |
 | Registration handoff | PR #243 focused scan assertion over the ten first-pass files. | Complete. |
 
 ## Open Backlog After E7.3
 
-- **G2 remains claimable.** It should prove report projection determinism from
-  `libs/knowledge-runtime` and snapshot diff behavior before G3.
+- **G2 is complete.** [knowledge#68](https://github.com/de-braighter/knowledge/pull/68)
+  proves report projection determinism from `libs/knowledge-runtime` on the
+  current Knowledge mainline.
 - **Specs repo registration is still open.** E7.1 identified ADR-176, ADR-127,
   north-star, ADR-154, and ADR-027 as high-value specs-corpus candidates. E7.2
   only changed Workbench-scoped docs, so these remain a follow-up lane in the
