@@ -1,3 +1,12 @@
+---
+artifact_id: foundry-workflow-conductor-walk-design
+artifact_kind: design-note
+artifact_level: technical
+status: proposed
+authority: local-decision
+owner_role: technical-architect
+---
+
 # The conductor WALKS the workflow tree — the workflow finally RUNS
 
 > Slice 1 ([ADR-263](../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md))

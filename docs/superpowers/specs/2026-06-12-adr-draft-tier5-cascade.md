@@ -1,3 +1,37 @@
+---
+artifact_id: adr-draft-tier5-cascade
+artifact_kind: adr
+artifact_level: technical
+authority: technical
+owner_role: technical-architect
+title: "ADR-225: Tier-5 down-cascade — a typed allocation algebra for team-level counterfactuals cascading to per-member intervention assignments (AllocationRule, the down-dual of AggregationRule)"
+status: ratified
+legacy_status: accepted
+tier: charter
+scope: substrate
+date: 2026-06-12
+decision-makers: [stibe]
+authors: [stibe]
+applies-to: layers/substrate
+relates-to:
+
+- concepts/design/north-star-vision-capture-2026-05-17.md
+- concepts/design/inference-port-contract.md
+- adr/adr-127-kernel-substrate-v1.md
+- adr/adr-149-amend-adr-127-subject-widening-and-api-versioned-reproducibility.md
+- adr/adr-154-algebraic-effect-declarations-and-composition-operators.md
+- adr/adr-165-inference-backbone-port-acid-test-demo-1-scoping.md
+- adr/adr-176-substrate-kernel-minimality-inclusion-test.md
+- adr/adr-198-amend-adr-127-149-aggregate-subject-widening-for-hierarchical-twins.md
+- adr/adr-199-effect-composition-feedback-contracts-only-roll-up.md
+- adr/adr-205-tenant-scope-on-inference-input-singleton-safe-evidence-reads.md
+- adr/adr-213-generalize-subject-ontology-beyond-person.md
+- adr/adr-218-north-star-critical-path-sequencing.md
+- adr/adr-220-reproducibility-proof-minimal-run-manifest-and-distribution-catalog.md
+- adr/adr-224-inference-side-distribution-aware-effect-consumption.md
+
+---
+
 <!--
   STAGING ARTIFACT (workbench). Founder review COMPLETE 2026-06-12 — all three open
   questions decided (§Open-question resolutions), status flipped to accepted.
@@ -7,31 +41,6 @@
   and currently sits on a stale branch). Lint gates to run on the specs PR:
   `bash tools/lint-md.sh <file>` + `node tools/validators/frontmatter-schema.mjs <file>`.
 -->
----
-title: "ADR-225: Tier-5 down-cascade — a typed allocation algebra for team-level counterfactuals cascading to per-member intervention assignments (AllocationRule, the down-dual of AggregationRule)"
-status: accepted
-tier: charter
-scope: substrate
-date: 2026-06-12
-decision-makers: [stibe]
-authors: [stibe]
-applies-to: layers/substrate
-relates-to:
-  - concepts/design/north-star-vision-capture-2026-05-17.md
-  - concepts/design/inference-port-contract.md
-  - adr/adr-127-kernel-substrate-v1.md
-  - adr/adr-149-amend-adr-127-subject-widening-and-api-versioned-reproducibility.md
-  - adr/adr-154-algebraic-effect-declarations-and-composition-operators.md
-  - adr/adr-165-inference-backbone-port-acid-test-demo-1-scoping.md
-  - adr/adr-176-substrate-kernel-minimality-inclusion-test.md
-  - adr/adr-198-amend-adr-127-149-aggregate-subject-widening-for-hierarchical-twins.md
-  - adr/adr-199-effect-composition-feedback-contracts-only-roll-up.md
-  - adr/adr-205-tenant-scope-on-inference-input-singleton-safe-evidence-reads.md
-  - adr/adr-213-generalize-subject-ontology-beyond-person.md
-  - adr/adr-218-north-star-critical-path-sequencing.md
-  - adr/adr-220-reproducibility-proof-minimal-run-manifest-and-distribution-catalog.md
-  - adr/adr-224-inference-side-distribution-aware-effect-consumption.md
----
 
 # ADR-225: Tier-5 down-cascade — a typed allocation algebra for team-level counterfactuals cascading to per-member intervention assignments
 

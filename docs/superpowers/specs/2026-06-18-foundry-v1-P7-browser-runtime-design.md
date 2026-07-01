@@ -1,3 +1,12 @@
+---
+artifact_id: foundry-v1-p7-browser-runtime-design
+artifact_kind: design-note
+artifact_level: technical
+status: proposed
+authority: local-decision
+owner_role: technical-architect
+---
+
 # Foundry v1 P7 — Live browser-runtime compile target (the crown)
 
 > The CROWN of the multi-target compiler vision (ADR-250 deferred this explicitly): a THIRD
@@ -405,7 +414,7 @@ effect, `leaf-active` carries two, `leaf-quiet` carries NONE — the negative co
 replace the draft's WHALES/FOUNDRY production fixtures: those products carry ZERO `effectDeclarations`,
 so they are POOR intervention fixtures (no positive button binding to assert, no node-with-effect for
 the crown). Independent fixtures WITH effects are strictly stronger for the binding + negative-control
-+ crown acids. The PRODUCTION-binding bite is supplied by a dedicated acid (ACID 2b) over the REAL
+crown acids. The PRODUCTION-binding bite is supplied by a dedicated acid (ACID 2b) over the REAL
 `ARC_CASCADE` cascade (`src/plan/cascade.ts`), whose `pr:devloop-scaffold` node carries one real
 declared effect — so the battery still bites on real kernel data, not only synthetic fixtures.
 
@@ -440,7 +449,7 @@ declared effect — so the battery still bites on real kernel data, not only syn
    production kernel data, not only the synthetic fixtures
    (`p7-browser-runtime.acid.test.ts:299-330`).
 
-3. **Agnosticism + registration.** `listTargets()` contains `browser-runtime` and has length 3;
+1. **Agnosticism + registration.** `listTargets()` contains `browser-runtime` and has length 3;
    `compile(blueprint, 'browser-runtime')` via the registry deep-equals the direct
    `browserRuntimeTarget.compile(blueprint)`. The ADR-243 glob gate re-runs over `src/compiler/*.ts`
    inside this file (asserting the new `target-browser-runtime.ts` + `materialize-html.ts` are present
@@ -449,7 +458,7 @@ declared effect — so the battery still bites on real kernel data, not only syn
    by DATA (node counts, ids, which nodes carry effects), not by code path
    (`p7-browser-runtime.acid.test.ts:334-358, 482-500`).
 
-4. **LIVE-runtime wiring — eval the REAL emitted runtime (the crown, COMMITTED + deterministic).**
+2. **LIVE-runtime wiring — eval the REAL emitted runtime (the crown, COMMITTED + deterministic).**
    `materializeHtml(descriptor)` → a self-contained HTML string. The acid (a) asserts one wired
    `<button data-node-id data-effect-id>` per binding with attributes that round-trip the descriptor,
    the page is self-contained (no external `src=`/`href="http`), and an effect-less node has NO
@@ -462,18 +471,18 @@ declared effect — so the battery still bites on real kernel data, not only syn
    deterministic, no real browser needed (`p7-browser-runtime.acid.test.ts:387-477`). The
    real-browser run is the coordinator's one-time chrome-MCP demonstration (§3.5(b)), not a CI test.
 
-5. **Generic across ≥2 independent fixtures + determinism.** Compiling `FIXTURE_A` and `FIXTURE_B`
+3. **Generic across ≥2 independent fixtures + determinism.** Compiling `FIXTURE_A` and `FIXTURE_B`
    (different SHAPES) produces faithful descriptors that differ by data, not code path (different view
    ids + edges; `FIXTURE_B`'s single root-effect → exactly one binding resolving on the root). And
    `browserRuntimeTarget.compile(bp)` twice + `materializeHtml(descriptor)` twice are deep-equal
    (`p7-browser-runtime.acid.test.ts:482-507`). The agnosticism gate auto-covers the new files (the
    existing ADR-243 glob test, `compiler.acid.test.ts:338-393`, plus the in-file re-check in ACID 3).
 
-6. **Determinism.** `browserRuntimeTarget.compile(bp)` called twice on the same blueprint →
+4. **Determinism.** `browserRuntimeTarget.compile(bp)` called twice on the same blueprint →
    deep-equal output; `materializeHtml(descriptor)` is a pure string function (deep-equal on the same
    descriptor). Mirrors `compiler.acid.test.ts:209-219`.
 
-7. **Builds green.** Full foundry suite stays green; Target A + Target B + the registry + the MCP
+5. **Builds green.** Full foundry suite stays green; Target A + Target B + the registry + the MCP
    compile tool are untouched in behaviour (the registry gains one additive entry; the shared
    `plan-tree-to-render-node.ts` refactor is behaviour-preserving — Target B's existing acid still
    passes).
@@ -546,7 +555,7 @@ edit.
   (`src/compiler/materialize-html.ts`, new); add the SINGLE deterministic acid battery
   (`test/p7-browser-runtime.acid.test.ts`, new — faithful-projection + button-binding +
   negative-control + the `ARC_CASCADE` production binding + the real-emitted-runtime eval (ACID 4)
-  + agnosticism + determinism). **No standalone `test/browser-runtime-live.acid.test.ts`** — the
+  - agnosticism + determinism). **No standalone `test/browser-runtime-live.acid.test.ts`** — the
   live real-browser proof is the coordinator's one-time chrome-MCP demonstration (§3.5(b)), which
   lives in the MCP/coordinator layer, not the unit-test runner (foundry has no Playwright dep, no
   DOM lib). **No `@de-braighter/substrate-*` change. No `@de-braighter/design-system-core` change.**

@@ -1,3 +1,12 @@
+---
+artifact_id: foundry-workflow-cockpit-design
+artifact_kind: design-note
+artifact_level: technical
+status: proposed
+authority: local-decision
+owner_role: technical-architect
+---
+
 # The cockpit drives the workflow — the founder authorizes from the dashboard (Slice 5, the LAST rung)
 
 > Slice 1 ([ADR-263](../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md))
@@ -39,7 +48,7 @@
   [ADR-263](../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md) (Slice 1 — the
   `FOUNDRY_WORKFLOW` tree + `actuate`/`actuateNode`),
   [ADR-262](../../../layers/specs/adr/adr-262-foundry-dashboard-interactive-actions.md) (the served-mode
-  + confirm-gated button + the founder-click-as-authorization governance model — the cockpit REUSES it
+  - confirm-gated button + the founder-click-as-authorization governance model — the cockpit REUSES it
   verbatim),
   [ADR-261](../../../layers/specs/adr/adr-261-foundry-observability-dashboard.md) (the dashboard + the
   `src/dashboard/` agnosticism exemption — `render.ts` is OUTSIDE the ADR-243 compiler-agnosticism glob,
@@ -205,7 +214,7 @@ Both new endpoints adopt every ADR-262 D1/safety property unchanged:
   (`server.ts:18`, `:266`). The new routes add no new bind; the localhost boundary IS the access control
   (a click can mutate ONLY the local log, by someone at the founder's keyboard — no auth layer needed).
 - **Two new SCOPED mutation routes** — `POST /api/authorize-workflow-stage` authorizes a named founder gate
-  + conducts forward; `POST /api/conduct-workflow` is a bare conduct (no authorize, no body params) that
+  - conducts forward; `POST /api/conduct-workflow` is a bare conduct (no authorize, no body params) that
   advances NON-gated automation up to a gate. Both are scoped to the workflow; nothing else. No
   arbitrary-mutation surface, no general event-append route, no eval. (The existing
   `POST /api/reprioritize-product` is the only other mutation route; `GET /` stays read-only.)

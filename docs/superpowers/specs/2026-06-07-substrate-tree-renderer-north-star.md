@@ -1,4 +1,9 @@
 ---
+artifact_id: substrate-tree-renderer-north-star
+artifact_kind: design-note
+artifact_level: technical
+authority: advisory
+owner_role: technical-architect
 title: "Substrate tree renderer — one generic renderer+editor over presentation trees, with pack-registered render definitions (north-star capture)"
 status: proposed
 created: 2026-06-07
@@ -120,7 +125,7 @@ something enters the kernel **only if both** (a) it is one of the four concerns,
 **and** (b) it is needed by ≥2 packs *and* the kernel must validate/query/version it
 (not merely store it).
 
-**Candidate 1 — "board geometry as kernel plan-tree nodes."**
+#### Candidate 1 — "board geometry as kernel plan-tree nodes."
 
 - (a) Core-concern? **No.** Geometry is *representation*. It is not "recurse the
   plan" (it declares no effect), not "flat the observation," not inference, not

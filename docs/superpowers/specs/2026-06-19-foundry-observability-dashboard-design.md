@@ -1,3 +1,12 @@
+---
+artifact_id: foundry-observability-dashboard-design
+artifact_kind: design-note
+artifact_level: technical
+status: proposed
+authority: local-decision
+owner_role: technical-architect
+---
+
 # Foundry observability dashboard — a "mission-control" overview of the machine
 
 > A self-contained HTML page that answers, in ONE glance: **is the machine healthy?
@@ -9,13 +18,14 @@
 > badges), falling back to a one-line summary for products without an authored model
 > (labelled `(log-derived — flat until re-cutover)` — the live-flat-vs-authored-model gap
 > made visible). A PURE renderer over foundry's OWN derived state (`fold` → `DerivedState`
+>
 > + `planFrontierAll`) — the authored models are INJECTED via `opts.models` so the renderer
 > stays pure — a thin CLI that writes the file, and a read-only MCP tool. **Zero kernel
 > change** — pack-level rendering over a derived view ("store generators, derive graphs"
 > upheld; ADR-176 NOT triggered).
 
-- **Date:** 2026-06-19
-- **Scope:** `domains/foundry` — a NEW `src/dashboard/` module:
++ **Date:** 2026-06-19
++ **Scope:** `domains/foundry` — a NEW `src/dashboard/` module:
   `src/dashboard/render.ts` (new — the pure renderer
   `renderFoundryDashboard(state, nowMs, opts?): string`), `src/dashboard/cli.ts` (new — the
   thin `dashboard` CLI that folds the live log, builds the authored model via
@@ -24,7 +34,7 @@
   script in `package.json`, and `test/dashboard.acid.test.ts` (new — the signal-quality
   acid battery). `layers/specs` (ADR-261, status proposed).
   **No `@de-braighter/substrate-*` change. No `@de-braighter/design-system-*` change.**
-- **Predecessors / boundary:**
++ **Predecessors / boundary:**
   [ADR-243](../../../layers/specs/adr/adr-243-scenario-lab-engine-purity.md)
   (the compiler-agnosticism gate the dashboard is INTENTIONALLY OUTSIDE — see §3),
   [ADR-259](../../../layers/specs/adr/adr-259-foundry-browser-runtime-compile-target.md)
@@ -39,7 +49,7 @@
   (the inclusion test — §7),
   [ADR-127](../../../layers/specs/adr/adr-127-kernel-substrate-v1.md) (the four kernel
   concerns).
-- **Provenance.** Designed + iterated with the founder against a working throwaway demo
++ **Provenance.** Designed + iterated with the founder against a working throwaway demo
   (`domains/foundry/.git/sdd/foundry-dashboard-demo.mts`, NOT committed) — the demo rendered
   the live canonical log to a self-contained HTML and was approved after the overview-first
   inversion (below). This spec productionizes the demo into a tested `src/dashboard/` module:
@@ -52,6 +62,7 @@
 ## 1. Problem — the founder cannot see the machine at a glance
 
 Foundry is a multi-product machine: products register, items queue, conductors claim + build
+
 + merge them, gates await founder decisions, claims go stale. ALL of this is in the canonical
 event log and folds to `DerivedState` (`src/state.ts:97`) — but the founder has no
 single surface that answers the three operating questions:
@@ -93,13 +104,13 @@ collapsing flat fallback. The two are different by construction (and acid-locked
 
 The approved design INVERTS the information hierarchy:
 
-- **Lead with deltas + decisions.** The first thing on the page is the machine-state pill, the
++ **Lead with deltas + decisions.** The first thing on the page is the machine-state pill, the
   KPI strip, and the attention row ("needs attention" + "up next"). These are what the founder
   acts on.
-- **Collapse inventory into bars.** Done items NEVER render as individual rows. They collapse
++ **Collapse inventory into bars.** Done items NEVER render as individual rows. They collapse
   into per-product progress bars + counts (`done/total` + a `%` bar). A product that is 100%
   done is ONE compact green row, not N done-item rows.
-- **One drill-down, scoped to open work.** The only place individual items appear is the
++ **One drill-down, scoped to open work.** The only place individual items appear is the
   "active work · what's left" panel — and it lists ONLY the NON-done items of products that
   still have open work. A fully-done product contributes nothing there.
 
@@ -145,11 +156,11 @@ unit-testable: a fixture state + a fixed `nowMs` (+ fixed `opts.models`) produce
 HTML string the acids assert against (§6). **The `opts` companion carries the two values the
 renderer cannot derive from `DerivedState` alone, BOTH injected to keep purity intact:**
 
-- **`opts.models`** — the AUTHORED hierarchy trees (one `PlanTree` per product) the plan-tree-
++ **`opts.models`** — the AUTHORED hierarchy trees (one `PlanTree` per product) the plan-tree-
   structure panel (§4 panel 6) renders. The renderer never builds them; the CLI/MCP build them
   via `buildCascadeTree(FOUNDRY_PRODUCT)` and inject them. A product with no entry falls back to
   the flat log-derived summary.
-- **`opts.merges`** — the merge count for the delivery-pulse footer (§4 panel 7). When omitted,
++ **`opts.merges`** — the merge count for the delivery-pulse footer (§4 panel 7). When omitted,
   the renderer derives it from the items' own `merged` field (`items.filter(it => it.merged != null).length`);
   the CLI/MCP MAY pass it explicitly. Either way the renderer never touches the log.
 
@@ -264,11 +275,11 @@ gap. The demo source remains the byte-level reference for panels 1–5 + 7.)
    (the acid-tested invariant `planFrontierAll ≡ claimableItems`, `plan-frontier-all.ts:7`).
 
 3. **Attention row (two columns).**
-   - **LEFT — "needs attention".** Pending gates (one red flag each, awaiting a founder
+   + **LEFT — "needs attention".** Pending gates (one red flag each, awaiting a founder
      decision), stale claims (one amber flag each, reclaimable, with minutes-since-last-beat),
      and the DERIVED **priority-anomaly advisory** (below). When NOTHING is flagged, it renders
      a calm `✓ all clear — machine idle, queue healthy.` — the panel must not cry wolf.
-   - **RIGHT — "up next — frontier".** The top-5 of `planFrontierAll` (rank · itemId · title ·
+   + **RIGHT — "up next — frontier".** The top-5 of `planFrontierAll` (rank · itemId · title ·
      productKey). Empty frontier → `frontier empty — nothing queued.`
 
 4. **Products · health at a glance.** ONE compact row per product — NOT a tree. Each row:
@@ -286,7 +297,7 @@ gap. The demo source remains the byte-level reference for panels 1–5 + 7.)
 6. **Plan tree · structure (the modeling-level answer).** For each product, a COMPACT view of
    its AUTHORED hierarchy — directly answering the founder's "on which level did we model this
    product". Two modes, chosen per-product by whether an authored model was injected (`opts.models[productKey]`):
-   - **Modeled product → the authored tree.** Renders the injected `PlanTree` as an indented
+   + **Modeled product → the authored tree.** Renders the injected `PlanTree` as an indented
      Product → Capability → Feature → work-item tree: capability/feature HEADERS each carry a
      rollup CHIP summarizing their descendant work-items (e.g. `8 items · 4✓ 4 queued`), each
      work-item LEAF is ONE compact line (a status-colored dot + the title + a status badge,
@@ -295,7 +306,7 @@ gap. The demo source remains the byte-level reference for panels 1–5 + 7.)
      `N levels · C capabilities / F features / W work-items · depth D` (e.g. for foundry's
      authored model, the `"4 levels · 5 cap / 8 feat / 17 wi"`-shape line). The renderer NEVER
      dumps per-leaf scope/dependsOn/yields metadata — one compact line per leaf (acid 6c).
-   - **Un-modeled product → a one-line flat summary (the gap made visible).** A product WITHOUT
+   + **Un-modeled product → a one-line flat summary (the gap made visible).** A product WITHOUT
      an injected model falls back to a COMPACT summary, NOT a per-item list: a status mini-bar +
      a count phrase (`N work-items · all done`, or `X done / Y open`), labelled
      `(log-derived — flat until re-cutover)` on the product header. Only the OPEN
@@ -421,15 +432,16 @@ ones collapse into the count). **MUTATION → RED:** enumerating the flat produc
 leaf rows blows the exact open-row count and surfaces a done title in the flat block.
 
 **(c) Priority-anomaly fires when it should + does NOT false-fire.**
-- **Fires:** a fixture where `foundry` (priority 1, the lowest number) has its OWN queued items
+
++ **Fires:** a fixture where `foundry` (priority 1, the lowest number) has its OWN queued items
   (`foundry/p5`, `foundry/p6`) leading the global frontier while a real product (`oncology`,
   priority 5) has freshly-queued work → assert `priorityAnomaly()` returns non-null naming
   `foundry`, and the "needs attention" panel contains the `PRIORITY` flag + the word `preempt`.
-- **No false-fire (legitimate top):** a fixture where a REAL product (`oncology`, priority 1) tops
++ **No false-fire (legitimate top):** a fixture where a REAL product (`oncology`, priority 1) tops
   the frontier with its own first-time work (`foundry` is priority 9, lower-favored) → assert
   `priorityAnomaly()` returns `null` (no `PRIORITY` flag). The `head.productKey !== 'foundry'`
   guard is exactly what makes a real product topping legitimate, not an anomaly.
-- **No false-fire (all-clear):** all-done / empty-frontier fixture → assert `priorityAnomaly()`
++ **No false-fire (all-clear):** all-done / empty-frontier fixture → assert `priorityAnomaly()`
   returns `null`, the panel renders `✓ all clear`, and emits NO `PRIORITY` flag. **MUTATION →
   RED:** dropping the `head.productKey !== 'foundry'` guard makes the anomaly fire on the
   legitimate real-product top → the no-false-fire assertion catches it.
@@ -486,11 +498,11 @@ new kernel shape.** Applying the inclusion test
 ([ADR-176](../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md) §2 —
 BOTH legs must hold for a thing to be kernel):
 
-- **(a) Is "render a foundry operator dashboard" one of the four kernel concerns?** No. The four
++ **(a) Is "render a foundry operator dashboard" one of the four kernel concerns?** No. The four
   concerns are recurse the plan, flat the observation, inference, reproducibility
   ([ADR-127](../../../layers/specs/adr/adr-127-kernel-substrate-v1.md) §1). A dashboard is
   PRESENTATION over a derived view — none of the four.
-- **(b) Is it needed by ≥2 packs as shared infrastructure the kernel must validate/query/version?**
++ **(b) Is it needed by ≥2 packs as shared infrastructure the kernel must validate/query/version?**
   No. It is a single-consumer (`domains/foundry`) operator surface over foundry-specific state
   (`products`, `FOUNDRY_PRODUCT`, `planFrontierAll`). No second pack needs it, and the kernel
   must not validate/version a presentation surface.
@@ -509,16 +521,16 @@ Charter-checker is the governance gate.
 
 Recorded as deferred so v1 stays the static overview-first page:
 
-- **(i) Unified delivery-analytics.** Fold the SDLC twin's `snapshotToHtml` analytics panels
++ **(i) Unified delivery-analytics.** Fold the SDLC twin's `snapshotToHtml` analytics panels
   (now co-located in `domains/foundry/twin` per
   [ADR-258](../../../layers/specs/adr/adr-258-foundry-absorb-devloop-twin.md)) into the
   dashboard as an additional section — cycle-time, findings, per-producer calibration — so the
   one page carries BOTH the machine-state overview AND the delivery analytics. Demand-driven; v1
   reads only foundry's own derived state.
-- **(ii) Live-refresh.** A tiny local poller (a small `setInterval` re-fetch, or an SSE feed off
++ **(ii) Live-refresh.** A tiny local poller (a small `setInterval` re-fetch, or an SSE feed off
   the CLI) so the page auto-updates without a manual `dashboard` re-run. v1 is a static snapshot;
   this adds a thin refresh loop without changing the renderer.
-- **(iii) INTERACTIVE via the P7 browser-runtime crown
++ **(iii) INTERACTIVE via the P7 browser-runtime crown
   ([ADR-259](../../../layers/specs/adr/adr-259-foundry-browser-runtime-compile-target.md)).** The
   dashboard's rows become BUTTONS that fire interventions — approve a gate, claim an item,
   trigger the foundry re-cutover — reusing the P7 `materializeHtml` + `window.__fireIntervention`
@@ -531,22 +543,22 @@ Recorded as deferred so v1 stays the static overview-first page:
 
 ## 9. What does NOT change
 
-- **No kernel contract.** `@de-braighter/substrate-contracts` is byte-unchanged — the dashboard
++ **No kernel contract.** `@de-braighter/substrate-contracts` is byte-unchanged — the dashboard
   reads foundry's own `DerivedState`, no new kernel shape (§7).
-- **No design-system change.** The renderer emits hand-written inline-CSS HTML; it imports NO
++ **No design-system change.** The renderer emits hand-written inline-CSS HTML; it imports NO
   `@de-braighter/design-system-*` type (it is a standalone operator page, not a board-kit render
   tree). The P7 interactive evolution (§8 iii) MAY later pull in board-kit; v1 does not.
-- **Not a compile target.** The dashboard is NOT a `CompileTarget` and does NOT register in
++ **Not a compile target.** The dashboard is NOT a `CompileTarget` and does NOT register in
   `src/compiler/registry.ts` (ADR-250/252). It reads `DerivedState`, not a `ProductBlueprint`;
   it lives in `src/dashboard/`, not `src/compiler/` (§3).
-- **`foundry_status` unchanged.** The text board stays; the dashboard is an additional visual
++ **`foundry_status` unchanged.** The text board stays; the dashboard is an additional visual
   surface, not a replacement. `foundry_dashboard` is one additive MCP entry alongside it.
 
 ---
 
 ## 10. Slice scope
 
-- **foundry:** add `src/dashboard/render.ts` (the pure renderer, carried from the approved demo —
++ **foundry:** add `src/dashboard/render.ts` (the pure renderer, carried from the approved demo —
   the overview panels, the `esc()`, the exported `priorityAnomaly()` — PLUS the added plan-tree-
   structure panel: `renderModelTree` for authored products, `renderFlatFallback` for un-modeled
   ones), `src/dashboard/cli.ts` (the thin live-log → HTML CLI that injects
@@ -559,7 +571,7 @@ Recorded as deferred so v1 stays the static overview-first page:
   `src/plan/cascade.ts` + `src/instances/foundry-product.ts` and the `PlanTree` / `PlanNode` types
   from `@de-braighter/substrate-contracts` (read-only — no kernel change). **No `@de-braighter/*`
   change.**
-- **specs:** ADR-261 (proposed) — codifies (1) foundry gets a first-class observability surface
++ **specs:** ADR-261 (proposed) — codifies (1) foundry gets a first-class observability surface
   (overview-first, pure renderer over derived state); (2) the agnosticism boundary
   (`src/dashboard/`, exempt from the ADR-243 compiler gate by design); (3) static-first with the
   P7 interactive evolution recorded as a follow-up.
