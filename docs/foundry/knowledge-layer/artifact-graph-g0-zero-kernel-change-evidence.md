@@ -1,6 +1,7 @@
 ---
 artifact_id: artifact-graph-g0-zero-kernel-change-evidence
 artifact_kind: evidence
+evidence_class: quality
 artifact_level: technical
 status: draft
 authority: local-decision

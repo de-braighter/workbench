@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "knowledge-artifact-snapshot-manifest.v1",
+  "repo": "de-braighter/knowledge",
+  "generatedAt": "2026-07-01T16:51:23.109Z",
+  "artifacts": [
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:artifact-graph-g1-readonly-secret-safe-evidence",
+      "artifactId": "artifact-graph-g1-readonly-secret-safe-evidence",
+      "repo": "de-braighter/knowledge",
+      "path": "docs/foundry/knowledge-layer/artifact-graph-g1-readonly-secret-safe-evidence.md",
+      "artifactKind": "evidence",
+      "status": "draft",
+      "authority": "local-decision",
+      "ownerRole": "technical-architect",
+      "evidenceClass": "review"
+    },
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:config/package",
+      "artifactId": "config/package",
+      "repo": "de-braighter/knowledge",
+      "path": "package.json",
+      "artifactKind": "config",
+      "configClass": "package"
+    },
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:config/pnpm-workspace",
+      "artifactId": "config/pnpm-workspace",
+      "repo": "de-braighter/knowledge",
+      "path": "pnpm-workspace.yaml",
+      "artifactKind": "config",
+      "configClass": "workspace"
+    },
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:config/tsconfig",
+      "artifactId": "config/tsconfig",
+      "repo": "de-braighter/knowledge",
+      "path": "tsconfig.json",
+      "artifactKind": "config",
+      "configClass": "tool"
+    }
+  ],
+  "snapshots": [
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:artifact-graph-g1-readonly-secret-safe-evidence",
+      "contentHash": "sha256:432e55e14165b1590683ae153f888e8b55a2df2ddbb2a51f681d708068a00ab1",
+      "expectedStatus": "draft"
+    }
+  ],
+  "edges": [],
+  "diagnostics": [
+    {
+      "code": "unregisteredArtifacts",
+      "severity": "warn",
+      "path": "README.md",
+      "artifact": "de-braighter/knowledge:unregistered/readme--b33563055168"
+    }
+  ]
+}

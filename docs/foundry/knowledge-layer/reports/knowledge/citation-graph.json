@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "knowledge-report.citation-graph.v1",
+  "repo": "de-braighter/knowledge",
+  "generatedAt": "2026-07-01T16:51:23.109Z",
+  "nodeCount": 4,
+  "edgeCount": 0,
+  "nodes": [
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:artifact-graph-g1-readonly-secret-safe-evidence",
+      "registered": true
+    },
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:config/package",
+      "registered": true
+    },
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:config/pnpm-workspace",
+      "registered": true
+    },
+    {
+      "canonicalArtifactId": "de-braighter/knowledge:config/tsconfig",
+      "registered": true
+    }
+  ],
+  "edges": []
+}
