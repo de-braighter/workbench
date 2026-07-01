@@ -60,6 +60,9 @@ the cluster's registration and hygiene backlog instead of hiding it.
 
 ## Diagnostic Triage
 
+The table includes every repo with fail-level diagnostics plus the Knowledge
+repo as a green reference point.
+
 | Repo | Artifacts | Edges | Diagnostics | Fail | Main codes |
 |---|---:|---:|---:|---:|---|
 | `de-braighter/workbench` | 3 | 173 | 681 | 21 | `sensitiveContentDetected`, `missingLinkTargets`, `unregisteredArtifacts` |
@@ -67,6 +70,9 @@ the cluster's registration and hygiene backlog instead of hiding it.
 | `de-braighter/exercir` | 3 | 584 | 550 | 1 | `sensitiveContentDetected`, `missingLinkTargets`, `unregisteredArtifacts` |
 | `de-braighter/design-system` | 3 | 185 | 141 | 1 | `sensitiveContentDetected`, `missingLinkTargets`, `unregisteredArtifacts` |
 | `de-braighter/platform` | 2 | 40 | 47 | 4 | `sensitiveContentDetected`, `missingLinkTargets`, `unregisteredArtifacts` |
+| `de-braighter/conservation` | 4 | 21 | 25 | 1 | `sensitiveContentDetected`, `missingLinkTargets`, `unregisteredArtifacts` |
+| `de-braighter/herdbook` | 3 | 60 | 35 | 1 | `sensitiveContentDetected`, `unregisteredArtifacts` |
+| `de-braighter/studio` | 2 | 19 | 39 | 1 | `sensitiveContentDetected`, `missingLinkTargets`, `unregisteredArtifacts` |
 | `de-braighter/knowledge` | 4 | 0 | 1 | 0 | `unregisteredArtifacts` |
 
 The previous local `malformedFrontmatter` finding on
