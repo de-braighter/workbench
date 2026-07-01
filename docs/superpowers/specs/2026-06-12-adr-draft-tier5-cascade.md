@@ -6,7 +6,6 @@ authority: technical
 owner_role: technical-architect
 title: "ADR-225: Tier-5 down-cascade — a typed allocation algebra for team-level counterfactuals cascading to per-member intervention assignments (AllocationRule, the down-dual of AggregationRule)"
 status: ratified
-legacy_status: accepted
 tier: charter
 scope: substrate
 date: 2026-06-12
@@ -35,6 +34,8 @@ relates-to:
 <!--
   STAGING ARTIFACT (workbench). Founder review COMPLETE 2026-06-12 — all three open
   questions decided (§Open-question resolutions), status flipped to accepted.
+  Knowledge metadata records this as `ratified`; the ADR body preserves the original
+  staged-status wording until the Specs repo copy lands.
   Destination (next step — the specs PR landing this file):
   layers/specs/adr/adr-225-tier5-down-cascade-allocation-algebra.md
   (specs is PR-gated; this draft is parked here because the specs main clone is shared
