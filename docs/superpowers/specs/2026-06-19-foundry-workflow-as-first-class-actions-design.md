@@ -1,3 +1,12 @@
+---
+artifact_id: foundry-workflow-as-first-class-actions
+artifact_kind: design-note
+artifact_level: technical
+status: proposed
+authority: local-decision
+owner_role: technical-architect
+---
+
 # Foundry workflow as a first-class plan tree + a kind-keyed action registry
 
 > Foundry already models per-PRODUCT plan trees — the WHAT (`Product → Capability → Feature →

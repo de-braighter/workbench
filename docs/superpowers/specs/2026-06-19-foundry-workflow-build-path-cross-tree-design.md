@@ -1,3 +1,12 @@
+---
+artifact_id: foundry-workflow-build-path-cross-tree-design
+artifact_kind: design-note
+artifact_level: technical
+status: proposed
+authority: local-decision
+owner_role: technical-architect
+---
+
 # Cross-tree `build-path` — the workflow spawns a product tree (the HOW kicks off a WHAT)
 
 > Slice 1 ([ADR-263](../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md))
@@ -16,27 +25,28 @@
 > [ADR-127](../../../layers/specs/adr/adr-127-kernel-substrate-v1.md); north-star §20): two
 > INDEPENDENT single-parent trees, the cross-link a SEPARATE DERIVED relation — never a parent edge.
 > This resolves ADR-263 **OQ-2**. **Zero kernel change** — the action rides `metadata`, the handler
+>
 > + registry are pack code, the generate machinery is existing, and the cross-link is a derived
 > `PlanNodeId` reference (ADR-176 NOT triggered, both legs fail → pack territory).
 
-- **Date:** 2026-06-19
-- **Scope:** `domains/foundry` — extend the Slice-1 workflow module:
-  - `src/workflow/actions.ts` (extend) — register a third action `build-path → buildPathAction`. The
++ **Date:** 2026-06-19
++ **Scope:** `domains/foundry` — extend the Slice-1 workflow module:
+  + `src/workflow/actions.ts` (extend) — register a third action `build-path → buildPathAction`. The
     handler reuses the EXISTING generate path: it calls `blueprintToSpec(blueprint, newKey)` +
     `queuePush` (the same machinery `foundry_generate_from_blueprint` runs, `src/mcp/tools.ts:100-135`),
     emitting `ProductRegistered` + `WorkItemQueued` for the spawned tree. NO new event type.
-  - `src/instances/foundry-workflow.ts` (extend) — the EXISTING `stage-build-path` node
+  + `src/instances/foundry-workflow.ts` (extend) — the EXISTING `stage-build-path` node
     (`foundry-workflow.ts:57-62`) gains `meta.action = 'build-path'`; its concrete target
     (`blueprint`, `newKey`) is supplied at ACTUATION via `actuateNode`'s `args` override
     (`actions.ts:63-71`), so the workflow tree carries the COMMAND, not a baked-in target.
-  - `test/workflow-build-path.acid.test.ts` (new) — the five acids below, every one against a TEMP
+  + `test/workflow-build-path.acid.test.ts` (new) — the five acids below, every one against a TEMP
     log.
-  - It REUSES `blueprintToSpec` (`src/metamodel/generate.ts:99`), `queuePush` (`src/ops.ts:44`,
+  + It REUSES `blueprintToSpec` (`src/metamodel/generate.ts:99`), `queuePush` (`src/ops.ts:44`,
     store-locked), the deterministic id scheme `uuidv5('cascade:' + key)` (`src/plan/cascade.ts:25`
     + `src/scope.ts:15`), `planFrontierAll` (`src/plan/plan-frontier-all.ts:24`), and the Slice-1
     `actuate`/`actuateNode`/`ACTION_REGISTRY` (`src/workflow/actions.ts:37-71`). **No
     `@de-braighter/substrate-*` change. No `@de-braighter/design-system-*` change.**
-- **Predecessors / boundary:**
++ **Predecessors / boundary:**
   [ADR-263](../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md) (Slice 1 — the
   workflow tree + the action registry + `actuate`; D5 cross-tree triggers + OQ-2, the spawn linkage
   this slice resolves),
@@ -53,7 +63,7 @@
   [ADR-154](../../../layers/specs/adr/adr-154-algebraic-effect-declarations-and-composition-operators.md)
   (effect declarations — the spawned tree carries its work-items' declarations through the log
   unchanged, the existing P9 generate-path behaviour).
-- **Provenance.** Recon-confirmed against the live foundry source: the generate path
++ **Provenance.** Recon-confirmed against the live foundry source: the generate path
   (`blueprintToSpec(bp, newKey)` `generate.ts:99`, then `queuePush(deps, { product, items })`
   `ops.ts:44`, store-locked under `withStoreLock(deps.dataDir, …)`, appending `productRegistered`
   `events.ts:192` + `itemQueued` `events.ts:195`) as wired in `foundry_generate_from_blueprint`
@@ -81,6 +91,7 @@ the spawn itself.
 The mechanism is already in the building. Foundry has a GENERATION machinery that instantiates a NEW
 product tree from a blueprint: `blueprintToSpec(blueprint, newKey)` re-keys the blueprint into a
 `CascadeNodeSpec[]` (`generate.ts:99`), and `queuePush` (`ops.ts:44`) appends one `ProductRegistered`
+
 + one `WorkItemQueued` per work-item under the store lock — exactly what
 `foundry_generate_from_blueprint` runs (`tools.ts:100-135`). Slice 2 does NOT author new spawn
 machinery; it wraps this EXISTING path in a `build-path` action handler so a workflow intervention can
@@ -110,14 +121,14 @@ tree's null-parent root identity AND the workflow node), which the kernel forbid
 north-star §20). The correct encoding keeps **two INDEPENDENT single-parent trees** and relates them
 with a SEPARATE relation:
 
-- The workflow tree stays intact: `stage-build-path`'s `parentId` is the workflow root, and its
++ The workflow tree stays intact: `stage-build-path`'s `parentId` is the workflow root, and its
   `childrenIds` do NOT include the spawned product root (`cascade.ts:49` derives `childrenIds` only
   from `spec` entries whose `parent` names this node — the spawned product is in a DIFFERENT spec, so
   it can never appear there).
-- The spawned product tree stays intact: its root is the null-parent root of its OWN tree
++ The spawned product tree stays intact: its root is the null-parent root of its OWN tree
   (`treeFromQueue(newKey, state)` builds it from the spawned `WorkItemQueued` events), with the
   workflow nowhere in its parent chain.
-- The link "workflow `build-path` node → spawned product root" is a SINGLE `PlanNodeId` — a typed
++ The link "workflow `build-path` node → spawned product root" is a SINGLE `PlanNodeId` — a typed
   edge OFF the spine, the same `metadata.crossRefs` discipline `cascade.ts:16,68` already uses for the
   ADR-graph cross-links. It is a reference (one id), never a parent list.
 
@@ -199,14 +210,14 @@ const buildPathAction: ActionHandler = (deps, args) => {
 ACTION_REGISTRY:  // …add ['build-path', buildPathAction]
 ```
 
-- It REUSES `blueprintToSpec` + `queuePush` — the same path `foundry_generate_from_blueprint` runs
++ It REUSES `blueprintToSpec` + `queuePush` — the same path `foundry_generate_from_blueprint` runs
   (`tools.ts:100-135`); a small `generateFromSpec` helper (extracted from that tool body, or the tool
   body called directly) maps the spec's work-items into `queuePush` items (carrying `ancestry`,
   `yields`, `effects` exactly as the existing tool does, `tools.ts:117-131`).
-- It is STORE-LOCKED transitively: `queuePush` runs under `withStoreLock(deps.dataDir, …)`
++ It is STORE-LOCKED transitively: `queuePush` runs under `withStoreLock(deps.dataDir, …)`
   (`ops.ts:45`), so the spawn inherits concurrency safety — `actuate` adds no lock of its own (the
   Slice-1 invariant, `actions.ts:47`).
-- It FIRES ONCE: `actuate`/`actuateNode` call the handler synchronously, once, at actuation time. The
++ It FIRES ONCE: `actuate`/`actuateNode` call the handler synchronously, once, at actuation time. The
   emitted `ProductRegistered` + `WorkItemQueued` events land in the log; replay folds THOSE events and
   never re-runs the handler — the Command-pattern-event-sourced invariant from ADR-263 D3.
 
@@ -295,12 +306,12 @@ folds the emitted events.
 
 ### 3.3 What Slice 2 deliberately does NOT do
 
-- It does NOT derive workflow advancement / scheduled-wake (Slice 3) — `actuate` is called directly by
++ It does NOT derive workflow advancement / scheduled-wake (Slice 3) — `actuate` is called directly by
   the acid, proving the spawn mechanism.
-- It does NOT wire the conductor to walk the workflow tree and fire `build-path` on a ready node
++ It does NOT wire the conductor to walk the workflow tree and fire `build-path` on a ready node
   (Slice 4).
-- It does NOT surface `build-path` as a dashboard button (Slice 5).
-- It does NOT add a new event type — the spawn rides the EXISTING `ProductRegistered` + `WorkItemQueued`
++ It does NOT surface `build-path` as a dashboard button (Slice 5).
++ It does NOT add a new event type — the spawn rides the EXISTING `ProductRegistered` + `WorkItemQueued`
   (the ADR-249 generate path).
 
 ---
@@ -311,14 +322,14 @@ Applying the inclusion test
 ([ADR-176](../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md) §2 — BOTH
 legs must hold for a thing to be kernel):
 
-- **(a) Is "a `build-path` action + a cross-tree `PlanNodeId` reference" one of the four kernel
++ **(a) Is "a `build-path` action + a cross-tree `PlanNodeId` reference" one of the four kernel
   concerns?** No new kernel shape. The plan tree IS a kernel concern (recurse the plan, ADR-127 §1.1),
   but the SPAWNED product tree is the EXISTING plan-tree primitive — `build-path` instantiates another
   `CascadeNodeSpec[]`, adding nothing new. The action `kind` rides the `metadata` JSONB boundary
   (ADR-176 §3); the handler + registry entry are pack code; the cross-link is a DERIVED `PlanNodeId`
   reference (ADR-176 §4, store-generators-derive-graphs — a view, never stored), and the optional
   `metadata.spawnedBy` provenance rides the same JSONB boundary (no typed kernel field).
-- **(b) Is the `build-path` action / the cross-tree link needed by ≥2 packs as shared infrastructure
++ **(b) Is the `build-path` action / the cross-tree link needed by ≥2 packs as shared infrastructure
   the kernel must validate / query / version?** No. Single consumer (`domains/foundry`). No second
   pack needs a foundry-workflow `build-path` action or its spawn linkage; the kernel must not validate
   / version a pack's action handler or its derived cross-DAG.
@@ -351,23 +362,23 @@ ADR-263 left open.
 
 ## 6. What does NOT change
 
-- **No kernel contract.** `@de-braighter/substrate-contracts` is byte-unchanged — the spawned product
++ **No kernel contract.** `@de-braighter/substrate-contracts` is byte-unchanged — the spawned product
   tree is the EXISTING plan-tree primitive (`buildCascadeTree` / `PlanTreeSchema`), the action `kind`
   rides the EXISTING `metadata` JSONB boundary, the optional provenance rides the EXISTING envelope
   `metadata` (`events.ts:175-188`), and no new event type is added (the spawn emits the EXISTING
   `ProductRegistered` + `WorkItemQueued`).
-- **No design-system change.** Slice 2 has no UI; the handler + the derived helper are pure pack code.
-- **No new dependency.** The handler reuses existing functions; `ACTION_REGISTRY` is the same `Map`.
-- **No new write machinery.** The handler wraps the EXISTING store-locked `queuePush`; `actuate` adds
++ **No design-system change.** Slice 2 has no UI; the handler + the derived helper are pure pack code.
++ **No new dependency.** The handler reuses existing functions; `ACTION_REGISTRY` is the same `Map`.
++ **No new write machinery.** The handler wraps the EXISTING store-locked `queuePush`; `actuate` adds
   only kind-keyed dispatch (the Slice-1 invariant).
-- **The kernel, the conductor, and the dashboard are untouched in Slice 2.** They are extended, not
++ **The kernel, the conductor, and the dashboard are untouched in Slice 2.** They are extended, not
   modified, by later rungs.
 
 ---
 
 ## 7. Slice scope
 
-- **foundry:** extend `src/workflow/actions.ts` (register `build-path → buildPathAction` reusing
++ **foundry:** extend `src/workflow/actions.ts` (register `build-path → buildPathAction` reusing
   `blueprintToSpec` + `queuePush`), extend `src/instances/foundry-workflow.ts` (the
   `stage-build-path` node gains `meta.action = 'build-path'`, target supplied at actuation), add
   `src/workflow/cross-tree.ts` (`spawnedProductRootOf` / `crossTreeLinks` — the DERIVED helper), and
@@ -378,7 +389,7 @@ ADR-263 left open.
   (`ops.ts:44`), `uuidv5('cascade:' + key)` (`cascade.ts:25` / `scope.ts:15`), `planFrontierAll`
   (`plan-frontier-all.ts:24`), and the Slice-1 `actuate`/`actuateNode`/`ACTION_REGISTRY`
   (`actions.ts:37-71`). **No `@de-braighter/*` change.**
-- **specs:** ADR-264 — codifies the four key decisions: (KD-1) the cross-tree reach is a `PlanNodeId`
++ **specs:** ADR-264 — codifies the four key decisions: (KD-1) the cross-tree reach is a `PlanNodeId`
   reference, never multi-parent (two independent single-parent trees); (KD-2) OQ-2 resolved → the
   cross-link is DERIVED (store-generators-derive-graphs), provenance-in-metadata preferred; (KD-3) the
   handler COMPOSES (reuses the ADR-249 generate path, store-locked, fires once, replay folds events);

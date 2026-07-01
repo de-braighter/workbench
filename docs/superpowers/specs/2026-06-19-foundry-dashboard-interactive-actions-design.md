@@ -1,3 +1,12 @@
+---
+artifact_id: foundry-dashboard-interactive-actions-design
+artifact_kind: design-note
+artifact_level: technical
+status: proposed
+authority: local-decision
+owner_role: technical-architect
+---
+
 # Foundry dashboard interactive actions — the founder's click fixes the footgun
 
 > The interactive-cockpit follow-up to the observability dashboard (ADR-261). The static
