@@ -1,0 +1,1362 @@
+{
+  "schemaVersion": "knowledge-report.citation-graph.v1",
+  "repo": "de-braighter/workbench",
+  "generatedAt": "2026-07-01T16:51:19.133Z",
+  "nodeCount": 34,
+  "edgeCount": 173,
+  "nodes": [
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-g0-zero-kernel-change-evidence",
+      "registered": true
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-plan-tree-projection",
+      "registered": true
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-slice-0-design",
+      "registered": true
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/agents--a54ff182c7e8",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/foundry/whales-and-bubbles/assets/overexposed-economic-strategy-game--7d364336fd47",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/plans/2026-06-04-drill-board-skins--577688e7f4d3",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/plans/2026-06-09-adr-224-inference-distribution-aware-effects--63de24da4598",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/runbooks/2026-06-08-devloop-swisspost-private-validation-spike--f21d816c4cab",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-05-29-devloop-pack-technical-design--1cc7ce4c1f56",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-03-markets-external-source-integration-design--47e2b5c29a6f",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-04-drill-board-skins-design--90104ff96ffa",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws3-legacy-inference-port-retirement-design--83c15f4c60af",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design--99fee899bdf8",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws8-subject-ontology-design--d61922e65e1a",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-football-board-runtime-design--96a9d526cbe2",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-09-gridiron-approach-b-decision-value-design--60e04f6d6c1a",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-14-survival-family-roadmap-post-cure-fraction--5fba2a7651c8",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design--2efd5bb1d718",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-17-foundry-v1-conductor-drives-plan-tree-design--2ad091c77437",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p6-scheduled-wake-design--7e8a03cb43a2",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p8-absorb-twin-design--2f2d45ef81cd",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/policies/git--e55ed651b1e1",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/templates/adr/template--d60d97c87ea1",
+      "registered": false
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:unregistered/templates/concept/template--73ae4d2b573b",
+      "registered": false
+    }
+  ],
+  "edges": [
+    {
+      "edgeType": "declared",
+      "source": "de-braighter/workbench:artifact-graph-g0-zero-kernel-change-evidence",
+      "target": "de-braighter/workbench:artifact-graph-plan-tree-projection",
+      "targetRef": "de-braighter/workbench:artifact-graph-plan-tree-projection",
+      "relation": "supports",
+      "sourcePath": "docs/foundry/knowledge-layer/artifact-graph-g0-zero-kernel-change-evidence.md",
+      "sourceLine": 11
+    },
+    {
+      "edgeType": "declared",
+      "source": "de-braighter/workbench:artifact-graph-g0-zero-kernel-change-evidence",
+      "target": "de-braighter/workbench:artifact-graph-slice-0-design",
+      "targetRef": "de-braighter/workbench:artifact-graph-slice-0-design",
+      "relation": "supports",
+      "sourcePath": "docs/foundry/knowledge-layer/artifact-graph-g0-zero-kernel-change-evidence.md",
+      "sourceLine": 12
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/agents--a54ff182c7e8",
+      "targetRef": "layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "AGENTS.md",
+      "sourceLine": 18
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/agents--a54ff182c7e8",
+      "targetRef": "layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "AGENTS.md",
+      "sourceLine": 16
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/foundry/whales-and-bubbles/assets/overexposed-economic-strategy-game--7d364336fd47",
+      "targetRef": "../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/foundry/whales-and-bubbles/assets/overexposed-economic-strategy-game.md",
+      "sourceLine": 215
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/foundry/whales-and-bubbles/assets/overexposed-economic-strategy-game--7d364336fd47",
+      "targetRef": "../../layers/specs/adr/adr-154-effect-declaration-algebra.md",
+      "sourcePath": "docs/foundry/whales-and-bubbles/assets/overexposed-economic-strategy-game.md",
+      "sourceLine": 219
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/foundry/whales-and-bubbles/assets/overexposed-economic-strategy-game--7d364336fd47",
+      "targetRef": "../../layers/specs/adr/adr-203-wire-inference-to-observation-log-and-second-conjugate-family.md",
+      "sourcePath": "docs/foundry/whales-and-bubbles/assets/overexposed-economic-strategy-game.md",
+      "sourceLine": 226
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/plans/2026-06-04-drill-board-skins--577688e7f4d3",
+      "targetRef": "../specs/2026-06-04-drill-board-skins-design.md",
+      "sourcePath": "docs/superpowers/plans/2026-06-04-drill-board-skins.md",
+      "sourceLine": 11
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/plans/2026-06-09-adr-224-inference-distribution-aware-effects--63de24da4598",
+      "targetRef": "../../../layers/specs/adr/adr-224-inference-side-distribution-aware-effect-consumption.md",
+      "sourcePath": "docs/superpowers/plans/2026-06-09-adr-224-inference-distribution-aware-effects.md",
+      "sourceLine": 14
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/runbooks/2026-06-08-devloop-swisspost-private-validation-spike--f21d816c4cab",
+      "targetRef": "../specs/2026-06-07-devloop-delivery-audit-concierge-pilot-design.md",
+      "sourcePath": "docs/superpowers/runbooks/2026-06-08-devloop-swisspost-private-validation-spike.md",
+      "sourceLine": 4
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-05-29-devloop-pack-technical-design--1cc7ce4c1f56",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-05-29-devloop-pack-technical-design.md",
+      "sourceLine": 32
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-03-markets-external-source-integration-design--47e2b5c29a6f",
+      "targetRef": "../../layers/specs/adr/adr-027-pack-architecture.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-03-markets-external-source-integration-design.md",
+      "sourceLine": 227
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-03-markets-external-source-integration-design--47e2b5c29a6f",
+      "targetRef": "../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-03-markets-external-source-integration-design.md",
+      "sourceLine": 225
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-03-markets-external-source-integration-design--47e2b5c29a6f",
+      "targetRef": "../../layers/specs/adr/adr-203-wire-inference-to-observation-log-and-second-conjugate-family.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-03-markets-external-source-integration-design.md",
+      "sourceLine": 228
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-03-markets-external-source-integration-design--47e2b5c29a6f",
+      "targetRef": "./2026-05-29-devloop-pack-technical-design.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-03-markets-external-source-integration-design.md",
+      "sourceLine": 231
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-04-drill-board-skins-design--90104ff96ffa",
+      "targetRef": "./2026-05-25-drill-board-v1-design.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-04-drill-board-skins-design.md",
+      "sourceLine": 8
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws3-legacy-inference-port-retirement-design--83c15f4c60af",
+      "targetRef": "../../../layers/specs/adr/adr-212-retire-legacy-inference-backbone-port.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-06-ws3-legacy-inference-port-retirement-design.md",
+      "sourceLine": 6
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws3-legacy-inference-port-retirement-design--83c15f4c60af",
+      "targetRef": "../../../layers/specs/adr/adr-218-north-star-critical-path-sequencing.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-06-ws3-legacy-inference-port-retirement-design.md",
+      "sourceLine": 7
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design--99fee899bdf8",
+      "targetRef": "../../../layers/specs/adr/adr-027-pack-architecture.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design.md",
+      "sourceLine": 47
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design--99fee899bdf8",
+      "targetRef": "../../../layers/specs/adr/adr-204-demote-fhir-runtime-from-kernel.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design.md",
+      "sourceLine": 6
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design--99fee899bdf8",
+      "targetRef": "../../../layers/specs/adr/adr-218-north-star-critical-path-sequencing.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-06-ws6-fhir-eviction-design.md",
+      "sourceLine": 7
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws8-subject-ontology-design--d61922e65e1a",
+      "targetRef": "../../../layers/specs/adr/adr-213-generalize-subject-ontology-beyond-person.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-06-ws8-subject-ontology-design.md",
+      "sourceLine": 6
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-06-ws8-subject-ontology-design--d61922e65e1a",
+      "targetRef": "../../../layers/specs/adr/adr-218-north-star-critical-path-sequencing.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-06-ws8-subject-ontology-design.md",
+      "sourceLine": 7
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-football-board-runtime-design--96a9d526cbe2",
+      "targetRef": "2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-football-board-runtime-design.md",
+      "sourceLine": 7
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 82
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-168-design-system-eyecatchers-split-workshop-graduates-into-production.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 139
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-168-design-system-eyecatchers-split-workshop-graduates-into-production.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 284
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-168-design-system-eyecatchers-split-workshop-graduates-into-production.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 383
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 84
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 101
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 118
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 130
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 271
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 434
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "2026-06-07-football-board-runtime-design.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 41
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star--a9b2f87241c0",
+      "targetRef": "2026-06-07-football-board-runtime-design.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourceLine": 263
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-09-gridiron-approach-b-decision-value-design--60e04f6d6c1a",
+      "targetRef": "./2026-06-09-gridiron-nfl-4th-down-what-if-design.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-09-gridiron-approach-b-decision-value-design.md",
+      "sourceLine": 6
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "../concepts/design/north-star-vision-capture-2026-05-17.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 60
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "../concepts/design/north-star-vision-capture-2026-05-17.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 69
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "../concepts/design/north-star-vision-capture-2026-05-17.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 815
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-154-algebraic-effect-declarations-and-composition-operators.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 124
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-154-algebraic-effect-declarations-and-composition-operators.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 789
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-165-inference-backbone-port-acid-test-demo-1-scoping.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 799
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 155
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 802
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-198-amend-adr-127-149-aggregate-subject-widening-for-hierarchical-twins.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 43
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-198-amend-adr-127-149-aggregate-subject-widening-for-hierarchical-twins.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 125
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-198-amend-adr-127-149-aggregate-subject-widening-for-hierarchical-twins.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 785
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-199-effect-composition-feedback-contracts-only-roll-up.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 124
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-199-effect-composition-feedback-contracts-only-roll-up.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 808
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-205-tenant-scope-on-inference-input-singleton-safe-evidence-reads.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 812
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-213-generalize-subject-ontology-beyond-person.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 149
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-213-generalize-subject-ontology-beyond-person.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 810
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-218-north-star-critical-path-sequencing.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 79
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-218-north-star-critical-path-sequencing.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 805
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-220-reproducibility-proof-minimal-run-manifest-and-distribution-catalog.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 813
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-224-inference-side-distribution-aware-effect-consumption.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 48
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade--7bf3883fc0ad",
+      "targetRef": "adr-224-inference-side-distribution-aware-effect-consumption.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-12-adr-draft-tier5-cascade.md",
+      "sourceLine": 793
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-14-survival-family-roadmap-post-cure-fraction--5fba2a7651c8",
+      "targetRef": "../../../layers/specs/concepts/design/2026-06-14-numpyro-bayesian-sidecar-design-deferred.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-14-survival-family-roadmap-post-cure-fraction.md",
+      "sourceLine": 614
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-14-survival-family-roadmap-post-cure-fraction--5fba2a7651c8",
+      "targetRef": "../../../layers/specs/concepts/design/2026-06-14-numpyro-bayesian-sidecar-design-deferred.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-14-survival-family-roadmap-post-cure-fraction.md",
+      "sourceLine": 649
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design--2efd5bb1d718",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design.md",
+      "sourceLine": 71
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design--2efd5bb1d718",
+      "targetRef": "../../../layers/specs/adr/adr-154-algebraic-effect-declarations-and-composition-operators.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design.md",
+      "sourceLine": 290
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design--2efd5bb1d718",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design.md",
+      "sourceLine": 32
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design--2efd5bb1d718",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design.md",
+      "sourceLine": 76
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design--2efd5bb1d718",
+      "targetRef": "2026-06-07-substrate-tree-renderer-north-star.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-16-substrate-tree-renderer-board-kit-design.md",
+      "sourceLine": 22
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-17-foundry-v1-conductor-drives-plan-tree-design--2ad091c77437",
+      "targetRef": "../../../layers/specs/adr/adr-241-sanction-domains-foundry-meta-product-rehome-sdlc-twin.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-17-foundry-v1-conductor-drives-plan-tree-design.md",
+      "sourceLine": 44
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p6-scheduled-wake-design--7e8a03cb43a2",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P6-scheduled-wake-design.md",
+      "sourceLine": 76
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p6-scheduled-wake-design--7e8a03cb43a2",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P6-scheduled-wake-design.md",
+      "sourceLine": 360
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p6-scheduled-wake-design--7e8a03cb43a2",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P6-scheduled-wake-design.md",
+      "sourceLine": 399
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p6-scheduled-wake-design--7e8a03cb43a2",
+      "targetRef": "../../../layers/specs/adr/adr-247-foundry-doing-side-unified-queue-shadow-retired.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P6-scheduled-wake-design.md",
+      "sourceLine": 8
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p6-scheduled-wake-design--7e8a03cb43a2",
+      "targetRef": "../../../layers/specs/adr/adr-247-foundry-doing-side-unified-queue-shadow-retired.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P6-scheduled-wake-design.md",
+      "sourceLine": 54
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 46
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 135
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-154-algebraic-effect-declarations-and-composition-operators.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 42
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 44
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 130
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-239-generic-substrate-tree-renderer-board-kit-design-system-brick.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 35
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-240-render-tree-contract-home-and-shape.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 36
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-240-render-tree-contract-home-and-shape.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 143
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-243-scenario-lab-engine-purity.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 40
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-250-foundry-multi-target-product-compiler.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 30
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-250-foundry-multi-target-product-compiler.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 52
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-252-foundry-mcp-surface-completeness.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 33
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-252-foundry-mcp-surface-completeness.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 82
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p7-browser-runtime-design--3531a9194fe2",
+      "targetRef": "../../../layers/specs/adr/adr-252-foundry-mcp-surface-completeness.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P7-browser-runtime-design.md",
+      "sourceLine": 281
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p8-absorb-twin-design--2f2d45ef81cd",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P8-absorb-twin-design.md",
+      "sourceLine": 23
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p8-absorb-twin-design--2f2d45ef81cd",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P8-absorb-twin-design.md",
+      "sourceLine": 22
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p8-absorb-twin-design--2f2d45ef81cd",
+      "targetRef": "../../../layers/specs/adr/adr-241-sanction-domains-foundry-meta-product-rehome-sdlc-twin.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P8-absorb-twin-design.md",
+      "sourceLine": 19
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p8-absorb-twin-design--2f2d45ef81cd",
+      "targetRef": "../../../layers/specs/adr/adr-245-foundry-canonical-log-collapse.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P8-absorb-twin-design.md",
+      "sourceLine": 5
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-18-foundry-v1-p8-absorb-twin-design--2f2d45ef81cd",
+      "targetRef": "../../../layers/specs/adr/adr-245-foundry-canonical-log-collapse.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-18-foundry-v1-P8-absorb-twin-design.md",
+      "sourceLine": 20
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 41
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 390
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 39
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 385
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-254-foundry-self-event-sourcing.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 36
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-254-foundry-self-event-sourcing.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 57
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-259-foundry-browser-runtime-compile-target.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 33
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-259-foundry-browser-runtime-compile-target.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 112
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-261-foundry-observability-dashboard.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 31
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design--47a938cede8b",
+      "targetRef": "../../../layers/specs/adr/adr-261-foundry-observability-dashboard.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-dashboard-interactive-actions-design.md",
+      "sourceLine": 468
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 40
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 491
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 38
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 486
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 500
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-242-product-substance-face-derived-projection.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 35
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-243-scenario-lab-engine-purity.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 28
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-243-scenario-lab-engine-purity.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 228
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-250-foundry-multi-target-product-compiler.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 32
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-258-foundry-absorb-devloop-twin.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 514
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-259-foundry-browser-runtime-compile-target.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 30
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design--0ce72417cbae",
+      "targetRef": "../../../layers/specs/adr/adr-259-foundry-browser-runtime-compile-target.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-observability-dashboard-design.md",
+      "sourceLine": 522
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 55
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-154-algebraic-effect-declarations-and-composition-operators.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 48
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 53
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 402
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-246-foundry-queue-events-are-plan-node-declarations.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 50
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-259-foundry-browser-runtime-compile-target.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 45
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-261-foundry-observability-dashboard.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 43
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design--97482966b369",
+      "targetRef": "../../../layers/specs/adr/adr-262-foundry-dashboard-interactive-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-as-first-class-actions-design.md",
+      "sourceLine": 40
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 16
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 51
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 109
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-154-algebraic-effect-declarations-and-composition-operators.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 53
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 48
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 139
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 311
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-248-foundry-product-blueprint-extraction.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 46
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-249-foundry-blueprint-generation.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 13
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-249-foundry-blueprint-generation.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 43
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 3
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design--6097b8191b9b",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-19-foundry-workflow-build-path-cross-tree-design.md",
+      "sourceLine": 40
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 49
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 47
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 533
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-261-foundry-observability-dashboard.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 14
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-261-foundry-observability-dashboard.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 44
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-262-foundry-dashboard-interactive-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 15
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-262-foundry-dashboard-interactive-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 41
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 3
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 39
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-264-foundry-workflow-build-path-cross-tree.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 5
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-265-foundry-workflow-derived-advancement.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 7
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-265-foundry-workflow-derived-advancement.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 37
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-266-foundry-workflow-conductor-walk.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 10
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design--0e03203bda8a",
+      "targetRef": "../../../layers/specs/adr/adr-266-foundry-workflow-conductor-walk.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-cockpit-design.md",
+      "sourceLine": 35
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 79
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 77
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 562
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-256-foundry-scheduled-wake-actuation.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 75
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-262-foundry-dashboard-interactive-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 72
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 3
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 70
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-264-foundry-workflow-build-path-cross-tree.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 6
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-264-foundry-workflow-build-path-cross-tree.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 68
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-265-foundry-workflow-derived-advancement.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 8
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design--1ad800f033c7",
+      "targetRef": "../../../layers/specs/adr/adr-265-foundry-workflow-derived-advancement.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-conductor-walk-design.md",
+      "sourceLine": 66
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-127-kernel-substrate-v1.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 108
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 106
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-176-substrate-kernel-minimality-inclusion-test.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 571
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-244-foundry-conductor-drives-plan-tree-frontier.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 96
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-246-foundry-queue-events-are-plan-node-declarations.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 99
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-247-foundry-doing-side-unified-queue-shadow-retired.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 100
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-256-foundry-scheduled-wake-actuation.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 93
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 3
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-263-foundry-workflow-first-class-actions.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 89
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-264-foundry-workflow-build-path-cross-tree.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 7
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design--9b2016514676",
+      "targetRef": "../../../layers/specs/adr/adr-264-foundry-workflow-build-path-cross-tree.md",
+      "sourcePath": "docs/superpowers/specs/2026-06-20-foundry-workflow-derived-advancement-design.md",
+      "sourceLine": 91
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/policies/git--e55ed651b1e1",
+      "targetRef": "../layers/specs/adr/adr-193-pack-devloop-effect-declarations-are-calibratable-claims.md",
+      "sourcePath": "policies/git.md",
+      "sourceLine": 85
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/templates/adr/template--d60d97c87ea1",
+      "targetRef": "../concepts/<name>.md",
+      "sourcePath": "templates/adr/template.md",
+      "sourceLine": 39
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/templates/adr/template--d60d97c87ea1",
+      "targetRef": "./adr-NNN-...md",
+      "sourcePath": "templates/adr/template.md",
+      "sourceLine": 38
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/templates/concept/template--73ae4d2b573b",
+      "targetRef": "../adr/adr-NNN-...md",
+      "sourcePath": "templates/concept/template.md",
+      "sourceLine": 36
+    },
+    {
+      "edgeType": "discovered",
+      "source": "de-braighter/workbench:unregistered/templates/concept/template--73ae4d2b573b",
+      "targetRef": "./<name>.md",
+      "sourcePath": "templates/concept/template.md",
+      "sourceLine": 37
+    }
+  ]
+}

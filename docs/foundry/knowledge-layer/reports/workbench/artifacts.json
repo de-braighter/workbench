@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "knowledge-report.artifacts.v1",
+  "repo": "de-braighter/workbench",
+  "generatedAt": "2026-07-01T16:51:19.133Z",
+  "artifactCount": 3,
+  "snapshotCount": 3,
+  "artifacts": [
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-g0-zero-kernel-change-evidence",
+      "artifactId": "artifact-graph-g0-zero-kernel-change-evidence",
+      "repo": "de-braighter/workbench",
+      "path": "docs/foundry/knowledge-layer/artifact-graph-g0-zero-kernel-change-evidence.md",
+      "artifactKind": "evidence",
+      "artifactLevel": "technical",
+      "status": "draft",
+      "authority": "local-decision",
+      "ownerRole": "charter-checker",
+      "evidenceClass": "quality"
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-plan-tree-projection",
+      "artifactId": "artifact-graph-plan-tree-projection",
+      "repo": "de-braighter/workbench",
+      "path": "docs/foundry/knowledge-layer/artifact-graph.plan-tree.md",
+      "artifactKind": "design-note",
+      "artifactLevel": "technical",
+      "status": "draft",
+      "authority": "local-decision",
+      "ownerRole": "technical-architect"
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-slice-0-design",
+      "artifactId": "artifact-graph-slice-0-design",
+      "repo": "de-braighter/workbench",
+      "path": "docs/foundry/knowledge-layer/artifact-graph-slice-0-design.md",
+      "artifactKind": "design-note",
+      "artifactLevel": "technical",
+      "status": "draft",
+      "authority": "local-decision",
+      "ownerRole": "technical-architect"
+    }
+  ],
+  "snapshots": [
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-g0-zero-kernel-change-evidence",
+      "contentHash": "sha256:c18cc0614f2fe7d55d0d10b82f54af2a53602e9136248097ef03a9ee0b891ba8",
+      "expectedStatus": "draft"
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-plan-tree-projection",
+      "contentHash": "sha256:5123dd8769f8086374477d61c89bdaf11224ea27eb2ff58aafaadfd59c25b2f2",
+      "expectedStatus": "draft"
+    },
+    {
+      "canonicalArtifactId": "de-braighter/workbench:artifact-graph-slice-0-design",
+      "contentHash": "sha256:82d13c261e673f0674cc01aa510364ac168a19e8e4db46e10bbe51cb81395f58",
+      "expectedStatus": "draft"
+    }
+  ]
+}
